@@ -241,7 +241,7 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
         sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
         return (sr,audio),"完成！"
  
-def read_srt(filename):
+def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
         file=f.readlines()
     subtitle_list=[]

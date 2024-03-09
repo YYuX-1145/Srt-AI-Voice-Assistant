@@ -362,7 +362,9 @@ if __name__ == "__main__":
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     args, unknown = parser.parse_known_args()
     config=settings()
-    load_cfg()                 
+    load_cfg()
+    if config.clear_tmp:
+        cls_cache()                 
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="版本240309，支持HiyoriUI和GPT-SoVITS-0306整合包")

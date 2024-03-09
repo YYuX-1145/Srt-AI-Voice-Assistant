@@ -320,9 +320,9 @@ def save(proj,dir,subid,text,language,port,mid,sid,speaker_name,sdp_ratio,noise_
 
 def switch_spk(choice):
     if choice=="输入id":
-        return gr.Number(label="说话人ID",value=0,visible=True,interactive=True),gr.Textbox(label="说话人名称",visible=False,value="",interactive=True)
+        return gr.update(label="说话人ID",value=0,visible=True,interactive=True),gr.update(label="说话人名称",visible=False,value="",interactive=True)
     else:
-        return gr.Number(label="说话人ID",value=0,visible=False,interactive=True),gr.Textbox(label="说话人名称",visible=True,value="",interactive=True)
+        return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
         
 def cls_cache():
     dir=os.path.join("SAVAdata","temp")
@@ -365,7 +365,8 @@ if __name__ == "__main__":
     load_cfg()                 
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        with gr.Tabs():
+        gr.Markdown(value="版本240309，支持HiyoriUI和GPT-SoVITS-0306整合包")
+        with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
                     textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)

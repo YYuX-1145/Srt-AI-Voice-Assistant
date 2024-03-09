@@ -12,6 +12,14 @@ import logging
 import soundfile as sf
 import datetime
 
+readme="""
+# Srt-AI-Voice-Assistant
+`Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
+当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈
+"""
+
+
+
 log_colors = {
     'DEBUG': 'white',
     'INFO': 'green',
@@ -409,7 +417,7 @@ if __name__ == "__main__":
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
                         save_settings_btn=gr.Button(value="保存当前设置和偏好",variant="primary")
                     with gr.Column():
-                        gr.Markdown(value="none")
+                        gr.Markdown(value=readme)
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])

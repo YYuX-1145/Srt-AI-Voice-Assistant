@@ -53,9 +53,9 @@ class subtitle:
         self.text = text.strip()
     def normalize(self,ntype:str,fps=30):
          if ntype=="prcsv":
-              h,m,s,fs=self.start_time.split(";")#seconds
+              h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
               self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
-              h,m,s,fs=self.end_time.split(";")
+              h,m,s,fs=(self.end_time.replace(';',':')).split(":")
               self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
          elif ntype=="srt":
              h,m,s=self.start_time.split(":")
@@ -278,7 +278,7 @@ def read_srt(filename):
 
 def read_prcsv(filename,fps):
     try:           
-        with open(filename,"r",encoding="utf-8") as csvfile:
+        with open(filename,"r",encoding="utf-8",newline='') as csvfile:
             reader = list(csv.reader(csvfile))
             lenth=len(reader)
             subtitle_list=[]

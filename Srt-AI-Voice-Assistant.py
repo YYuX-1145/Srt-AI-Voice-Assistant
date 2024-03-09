@@ -51,19 +51,19 @@ class subtitle:
         self.start_time = start_time
         self.end_time = end_time
         self.text = text.strip()
-    def normalize(self,ntype:str,fps=30):
+    def normalize(self,ntype:str,fps=30,offset=0):
          if ntype=="prcsv":
               h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
-              self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
+              self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))+offset
               h,m,s,fs=(self.end_time.replace(';',':')).split(":")
-              self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
+              self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))+offset
          elif ntype=="srt":
              h,m,s=self.start_time.split(":")
              s=s.replace(",",".")
-             self.start_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
+             self.start_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))+offset
              h,m,s=self.end_time.split(":")
              s=s.replace(",",".")
-             self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
+             self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))+offset
          else:
              raise ValueError
          #return self
@@ -204,16 +204,16 @@ def temp_ra(a:tuple):
 
 
 
-def generate(proj,in_file,sr,fps,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang):
+def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang):
         if in_file is None:
             return None,"请上传文件！"
     #try:
         sr,fps,mid,spkid,port=positive_int(sr,fps,mid,spkid,port)
         audiolist=[]
         if in_file.name.endswith(".csv"):
-           subtitle_list=read_prcsv(in_file.name,fps)
+           subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name.endswith(".srt"):
-            subtitle_list=read_srt(in_file.name)
+            subtitle_list=read_srt(in_file.name,offset)
         else:
             return None,"未知的格式，请确保扩展名正确！"
         ptr=0
@@ -261,7 +261,7 @@ def read_srt(filename):
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]
         st=subtitle(id,st,et,text)
-        st.normalize(ntype="srt")
+        st.normalize(ntype="srt",offset=offset)
         subtitle_list.append(st)
     st,et=file[indexlist[-1]].split(" --> ")
     id=file[indexlist[-1]-1]
@@ -269,14 +269,14 @@ def read_srt(filename):
     for x in range(indexlist[-1]+1,filelength):
         text+=file[x]
     st=subtitle(id,st,et,text)
-    st.normalize(ntype="srt")
+    st.normalize(ntype="srt",offset=offset)
     subtitle_list.append(st)
     return subtitle_list
 
 
 
 
-def read_prcsv(filename,fps):
+def read_prcsv(filename,fps,offset):
     try:           
         with open(filename,"r",encoding="utf-8",newline='') as csvfile:
             reader = list(csv.reader(csvfile))
@@ -287,7 +287,7 @@ def read_prcsv(filename,fps):
              if reader[index]==[]:
                   continue
              st=subtitle(stid,reader[index][0],reader[index][1],reader[index][2])
-             st.normalize("prcsv",fps)
+             st.normalize(ntype="prcsv",fps=fps,offset=offset)
              subtitle_list.append(st)
              stid+=1
             return subtitle_list
@@ -408,8 +408,8 @@ if __name__ == "__main__":
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                       input_file = gr.Files(label="上传文件",file_types=['text'],file_count='single')
-                       #sampling_rate1=                   
+                       offset=gr.Slider(minimum=0, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
+                       input_file = gr.Files(label="上传文件",file_types=['text'],file_count='single')                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
             with gr.TabItem("设置"):
@@ -424,10 +424,10 @@ if __name__ == "__main__":
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
-        refer_audio.upload(temp_ra,inputs=[refer_audio],outputs=[])
+        refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate,inputs=[proj1,input_file,sampling_rate1,fps,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate,inputs=[proj2,input_file,sampling_rate2,fps,language2,api_port2,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn1.click(generate,inputs=[proj1,input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate,inputs=[proj2,input_file,sampling_rate2,fps,offset,language2,api_port2,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         load_cfg_btn.click(load_cfg,inputs=[],outputs=[theme,clear_cache,refer_audio,refer_text,refer_lang])
         save_settings_btn.click(save_settngs,inputs=[theme,clear_cache,refer_audio,refer_text,refer_lang],outputs=[])

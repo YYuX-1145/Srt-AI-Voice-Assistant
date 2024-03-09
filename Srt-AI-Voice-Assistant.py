@@ -181,13 +181,13 @@ def gsv_api(ra,text,prompt_text,prompt_language,text_language,port):
 
 def file_show(file):
     if file is None:
-        return gr.TextArea(value="",interactive=False)
+        return ""
     try:
       with open(file.name, "r", encoding="utf-8") as file:
          text = file.read()
-      return gr.TextArea(value=text,interactive=False)
+      return text
     except Exception as error:
-        return gr.TextArea(value=error,interactive=False)
+        return error
 
 def temp_ra(a:tuple):
     sr,wav=a

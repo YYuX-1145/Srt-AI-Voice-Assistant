@@ -9,9 +9,33 @@ import argparse
 import csv
 import json
 import logging
-import colorlog
 import soundfile as sf
 import datetime
+
+log_colors = {
+    'DEBUG': 'white',
+    'INFO': 'green',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'bold_red',}
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+try:
+    import colorlog    
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+    fmt='%(log_color)s[%(levelname)s][%(asctime)s]:%(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d_%H:%M:%S',
+    log_colors=log_colors
+))
+    logger.addHandler(handler)    
+except ImportError:
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    formatter=logging.Formatter('[%(levelname)s][%(asctime)s]:%(funcName)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
 class subtitle:
     def __init__(self,index, start_time, end_time, text):
@@ -325,29 +349,12 @@ def load_cfg():
     return config.theme,config.clear_tmp,config.gsv_dra,config.gsv_drt,config.gsv_dtl
 
 if __name__ == "__main__":
-    log_colors = {
-    'DEBUG': 'white',
-    'INFO': 'green',
-    'WARNING': 'yellow',
-    'ERROR': 'red',
-    'CRITICAL': 'bold_red',}
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-    fmt='%(log_color)s[%(levelname)s][%(asctime)s]:%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d_%H:%M:%S',
-    log_colors=log_colors
-))
-    logger.addHandler(handler)
-
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port", default=6666,type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     args, unknown = parser.parse_known_args()
     config=settings()
-    load_cfg()   
-              
+    load_cfg()                 
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         with gr.Tabs():

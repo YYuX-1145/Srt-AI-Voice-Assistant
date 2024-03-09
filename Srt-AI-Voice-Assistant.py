@@ -358,7 +358,7 @@ def load_cfg():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-p", "--server_port", default=6666,type=int,help="server_port")
+    parser.add_argument("-p", "--server_port", default=6661,type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     args, unknown = parser.parse_known_args()
     config=settings()

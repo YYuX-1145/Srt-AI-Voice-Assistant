@@ -424,7 +424,7 @@ if __name__ == "__main__":
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
                        offset=gr.Slider(minimum=0, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
-                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well with gradio==3.50.2                 
+                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.50.2                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
             with gr.TabItem("设置"):

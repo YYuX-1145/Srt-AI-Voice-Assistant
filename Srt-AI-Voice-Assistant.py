@@ -223,6 +223,13 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join("SAVAdata","temp",t)
         os.makedirs(dirname,exist_ok=True)
+        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+        if proj=="gsv":
+            if refer_audio is None or refer_text == "":
+                return None,"你必须指定参考音频和文本"                
+            if not os.path.exists(refer_audio_path):
+                temp_ra(refer_audio) 
+
         for i in subtitle_list:
             start_frame=int(i.start_time*sr)
             if ptr<start_frame:
@@ -231,12 +238,7 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
                 ptr+=silence_len
             elif ptr>start_frame:
                 logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")                
-            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
-            if proj=="gsv":
-                if refer_audio is None or refer_text == "":
-                    return None,"你必须指定参考音频和文本"                
-                if not os.path.exists(refer_audio_path):
-                    temp_ra(refer_audio)            
+           
             f_path=save(proj,dirname,i.index,i.text,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio_path,refer_text,refer_lang)
             if f_path is not None:
                 wav, _ = librosa.load(f_path, sr=sr)
@@ -422,7 +424,7 @@ if __name__ == "__main__":
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
                        offset=gr.Slider(minimum=0, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
-                       input_file = gr.Files(label="上传文件",file_types=['text'],file_count='single')                 
+                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well with gradio==3.50.2                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
             with gr.TabItem("设置"):

@@ -210,6 +210,7 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
         if in_file is None:
             return None,"请上传文件！"
     #try:
+        exception_exists=False
         sr,fps,mid,spkid,port=positive_int(sr,fps,mid,spkid,port)
         audiolist=[]
         if in_file.name.endswith(".csv"):
@@ -242,9 +243,14 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
                 dur=wav.shape[-1]             #frames
                 ptr+=dur
                 audiolist.append(wav)
+            else:
+                exception_exists=True
         audio=np.concatenate(audiolist)
+        assert len(os.listdir(dirname))!=0,"所有的字幕合成都出错了，请检查API服务！"
         os.makedirs(os.path.join("SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
+        if exception_exists:
+            return (sr,audio),"完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。"
         return (sr,audio),"完成！"
  
 def read_srt(filename,offset):

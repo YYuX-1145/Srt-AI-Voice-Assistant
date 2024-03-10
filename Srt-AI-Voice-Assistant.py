@@ -169,6 +169,7 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,styl
                 return response.content
     except Exception as e:
             logger.error(f'bert-vits2推理发生错误，请检查HiyoriUI是否正确运行。报错内容: {e}')
+            return None
 
 
 def gsv_api(ra,text,prompt_text,prompt_language,text_language,port):
@@ -186,6 +187,7 @@ def gsv_api(ra,text,prompt_text,prompt_language,text_language,port):
         return response.content
     except Exception as e:
         logger.error(f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}')
+        return None
 
 def file_show(file):
     if file is None:
@@ -227,9 +229,9 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
                 audiolist.append(np.zeros(silence_len))
                 ptr+=silence_len
             elif ptr>start_frame:
-                logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")
-            if proj=="gsv":
-                refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))
+                logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")                
+            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+            if proj=="gsv":                
                 if not os.path.exists(refer_audio_path):
                     temp_ra(refer_audio)            
             f_path=save(proj,dirname,i.index,i.text,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio_path,refer_text,refer_lang)
@@ -314,6 +316,7 @@ def save(proj,dir,subid,text,language,port,mid,sid,speaker_name,sdp_ratio,noise_
             else:
                 data=json.loads(audio)
                 logger.error(f"出错字幕id：{subid},接收报错数据为：{str(data)}")
+                return None
     else:
         logger.error(f"出错字幕id：{subid}")
         return None

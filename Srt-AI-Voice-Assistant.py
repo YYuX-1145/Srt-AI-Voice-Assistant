@@ -228,9 +228,10 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
                 ptr+=silence_len
             elif ptr>start_frame:
                 logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")
-            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))
-            if not os.path.exists(refer_audio_path):
-                temp_ra(refer_audio)            
+            if proj=="gsv":
+                refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))
+                if not os.path.exists(refer_audio_path):
+                    temp_ra(refer_audio)            
             f_path=save(proj,dirname,i.index,i.text,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio_path,refer_text,refer_lang)
             if f_path is not None:
                 wav, _ = librosa.load(f_path, sr=sr)

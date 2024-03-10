@@ -231,7 +231,9 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
             elif ptr>start_frame:
                 logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")                
             refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
-            if proj=="gsv":                
+            if proj=="gsv":
+                if refer_audio is None or refer_text == "":
+                    return None,"你必须指定参考音频和文本"                
                 if not os.path.exists(refer_audio_path):
                     temp_ra(refer_audio)            
             f_path=save(proj,dirname,i.index,i.text,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio_path,refer_text,refer_lang)

@@ -16,6 +16,11 @@ readme="""
 # Srt-AI-Voice-Assistant
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈
+
+0311更新：
+1.offset可以为负值
+2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备
+
 """
 
 
@@ -51,22 +56,31 @@ class subtitle:
         self.start_time = start_time
         self.end_time = end_time
         self.text = text.strip()
-    def normalize(self,ntype:str,fps=30,offset=0):
+    def normalize(self,ntype:str,fps=30):
          if ntype=="prcsv":
               h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
-              self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))+offset
+              self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
               h,m,s,fs=(self.end_time.replace(';',':')).split(":")
-              self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))+offset
+              self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
          elif ntype=="srt":
              h,m,s=self.start_time.split(":")
              s=s.replace(",",".")
-             self.start_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))+offset
+             self.start_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
              h,m,s=self.end_time.split(":")
              s=s.replace(",",".")
-             self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))+offset
+             self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
          else:
              raise ValueError
          #return self
+    def add_offset(self,offset=0):
+        self.start_time+=offset
+        if self.start_time<0:
+            self.start_time=0
+        self.end_time+=offset
+        if self.end_time<0:
+            self.end_time=0
+
+
     def __str__(self) -> str:
         return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
 
@@ -162,7 +176,7 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,styl
                     "style_text": style_text,
                     "style_weight": style_weight
                 }
-                #print(data_json)
+                print(data_json)
 
                 response = requests.get(url=API_URL,params=data_json)
                 response.raise_for_status()  # 检查响应的状态码
@@ -181,6 +195,7 @@ def gsv_api(ra,text,prompt_text,prompt_language,text_language,port):
         "text": text,
         "text_language": text_language
     }   
+        print(data_json)
         API_URL = f'http://127.0.0.1:{port}'
         response = requests.get(url=API_URL,params=data_json)
         response.raise_for_status()  # 检查响应的状态码
@@ -193,8 +208,8 @@ def file_show(file):
     if file is None:
         return ""
     try:
-      with open(file.name, "r", encoding="utf-8") as file:
-         text = file.read()
+      with open(file.name, "r", encoding="utf-8") as f:
+         text = f.read()
       return text
     except Exception as error:
         return error
@@ -206,13 +221,25 @@ def temp_ra(a:tuple):
 
 
 
-def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang):
-        if in_file is None:
-            return None,"请上传文件！"
+def generate(*args,proj,in_file,sr,fps,offset):
+        '''
+        if proj=="bv2":
+            pass
+        elif proj=="gsv":       
+            
+            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+            if refer_audio is None or refer_text == "":
+                return None,"你必须指定参考音频和文本"                
+            if not os.path.exists(refer_audio_path):
+                temp_ra(refer_audio) 
+        '''
     #try:
+        
         exception_exists=False
-        sr,fps,mid,spkid,port=positive_int(sr,fps,mid,spkid,port)
+        sr,fps=positive_int(sr,fps)
         audiolist=[]
+        if in_file is None:
+            return None,"请上传字幕文件！"
         if in_file.name.endswith(".csv"):
            subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name.endswith(".srt"):
@@ -223,12 +250,6 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join("SAVAdata","temp",t)
         os.makedirs(dirname,exist_ok=True)
-        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
-        if proj=="gsv":
-            if refer_audio is None or refer_text == "":
-                return None,"你必须指定参考音频和文本"                
-            if not os.path.exists(refer_audio_path):
-                temp_ra(refer_audio) 
 
         for i in subtitle_list:
             start_frame=int(i.start_time*sr)
@@ -237,9 +258,9 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
                 audiolist.append(np.zeros(silence_len))
                 ptr+=silence_len
             elif ptr>start_frame:
-                logger.warning(f"序号为{i.index}的字幕由于之前的音频过长而被延迟")                
+                logger.warning(f"序号为{i.index},内容为:{i.text} 的字幕由于之前的音频过长而被延迟")                
            
-            f_path=save(proj,dirname,i.index,i.text,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio_path,refer_text,refer_lang)
+            f_path=save(args,proj=proj,text=i.text,dir=dirname,subid=i.index)
             if f_path is not None:
                 wav, _ = librosa.load(f_path, sr=sr)
                 dur=wav.shape[-1]             #frames
@@ -254,7 +275,17 @@ def generate(proj,in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp
         if exception_exists:
             return (sr,audio),"完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。"
         return (sr,audio),"完成！"
- 
+
+def generate_bv2(in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
+        return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2")    
+def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refer_lang):
+        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+        if refer_audio is None or refer_text == "":
+            return None,"你必须指定参考音频和文本"                
+        if not os.path.exists(refer_audio_path):
+            temp_ra(refer_audio)         
+        return generate(language,port,refer_audio_path,refer_text,refer_lang,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
+
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
         file=f.readlines()
@@ -275,7 +306,8 @@ def read_srt(filename,offset):
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]
         st=subtitle(id,st,et,text)
-        st.normalize(ntype="srt",offset=offset)
+        st.normalize(ntype="srt")
+        st.add_offset(offset=offset)
         subtitle_list.append(st)
     st,et=file[indexlist[-1]].split(" --> ")
     id=file[indexlist[-1]-1]
@@ -283,7 +315,8 @@ def read_srt(filename,offset):
     for x in range(indexlist[-1]+1,filelength):
         text+=file[x]
     st=subtitle(id,st,et,text)
-    st.normalize(ntype="srt",offset=offset)
+    st.normalize(ntype="srt")
+    st.add_offset(offset=offset)
     subtitle_list.append(st)
     return subtitle_list
 
@@ -296,12 +329,13 @@ def read_prcsv(filename,fps,offset):
             reader = list(csv.reader(csvfile))
             lenth=len(reader)
             subtitle_list=[]
-            stid=0  
+            stid=1  
             for index in range(1,lenth):
              if reader[index]==[]:
                   continue
              st=subtitle(stid,reader[index][0],reader[index][1],reader[index][2])
-             st.normalize(ntype="prcsv",fps=fps,offset=offset)
+             st.normalize(ntype="prcsv",fps=fps)
+             st.add_offset(offset=offset)
              subtitle_list.append(st)
              stid+=1
             return subtitle_list
@@ -309,14 +343,18 @@ def read_prcsv(filename,fps,offset):
     except Exception as e:
          logger.error(f"读取字幕文件出错：{str(e)}")
 
-def save(proj,dir,subid,text,language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang):
+def save(args,proj,text,dir,subid):
     if proj=="bv2":
+        language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale=args
+        sid,port,mid=positive_int(sid,port,mid)
         if speaker_name is not None and speaker_name!="":
             audio = bert_vits2_api(text=text,mid=mid,spk_name=speaker_name,sid=None,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
     elif proj=="gsv":
-        audio = gsv_api(refer_audio,text,refer_text,refer_lang,language,port)
+        language,port,refer_audio_path,refer_text,refer_lang=args
+        port=positive_int(port)[0]
+        audio = gsv_api(refer_audio_path,text,refer_text,refer_lang,language,port)
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
                 filepath=os.path.join(dir,f"{subid}.wav")
@@ -382,7 +420,7 @@ if __name__ == "__main__":
         cls_cache()                 
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        gr.Markdown(value="版本240309，支持HiyoriUI和GPT-SoVITS-0306整合包")
+        gr.Markdown(value="版本240311，支持HiyoriUI和GPT-SoVITS-0306整合包")
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -423,7 +461,7 @@ if __name__ == "__main__":
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                       offset=gr.Slider(minimum=0, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
+                       offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.50.2                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
@@ -441,8 +479,8 @@ if __name__ == "__main__":
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate,inputs=[proj1,input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate,inputs=[proj2,input_file,sampling_rate2,fps,offset,language2,api_port2,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         load_cfg_btn.click(load_cfg,inputs=[],outputs=[theme,clear_cache,refer_audio,refer_text,refer_lang])
         save_settings_btn.click(save_settngs,inputs=[theme,clear_cache,refer_audio,refer_text,refer_lang],outputs=[])

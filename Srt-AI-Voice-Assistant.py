@@ -51,7 +51,7 @@ except ImportError:
     logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
 class subtitle:
-    def __init__(self,index, start_time, end_time, text):
+    def __init__(self,index:int, start_time, end_time, text:str):
         self.index = int(index)
         self.start_time = start_time
         self.end_time = end_time

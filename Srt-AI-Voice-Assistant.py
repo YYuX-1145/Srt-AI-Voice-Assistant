@@ -294,10 +294,13 @@ def read_srt(filename,offset):
     filelength=len(file)
     for i in range(0,filelength):
         if " --> " in file[i]:
-            for char in file[i-1]:
-                if char not in [0,1,2,3,4,5,6,7,8,9]:
-                    continue
-            indexlist.append(i) #get line id
+            is_st=True
+            for char in file[i-1].strip().replace("\ufeff",""):
+                if char not in ['0','1','2','3','4','5','6','7','8','9']:
+                    is_st=False
+                    break
+            if is_st:
+                indexlist.append(i) #get line id
     listlength=len(indexlist)
     for i in range(0,listlength-1):
         st,et=file[indexlist[i]].split(" --> ")

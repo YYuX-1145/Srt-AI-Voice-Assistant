@@ -51,8 +51,8 @@ except ImportError:
     logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
 class subtitle:
-    def __init__(self,index, start_time, end_time, text):
-        self.index = int(index.strip().replace("\ufeff","")) if type(index)==str else index
+    def __init__(self,index:int, start_time, end_time, text:str):
+        self.index = int(index)
         self.start_time = start_time
         self.end_time = end_time
         self.text = text.strip()
@@ -222,19 +222,7 @@ def temp_ra(a:tuple):
 
 
 def generate(*args,proj,in_file,sr,fps,offset):
-        '''
-        if proj=="bv2":
-            pass
-        elif proj=="gsv":       
-            
-            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
-            if refer_audio is None or refer_text == "":
-                return None,"你必须指定参考音频和文本"                
-            if not os.path.exists(refer_audio_path):
-                temp_ra(refer_audio) 
-        '''
-    #try:
-        
+    #try:       
         exception_exists=False
         sr,fps=positive_int(sr,fps)
         audiolist=[]
@@ -282,8 +270,7 @@ def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refe
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
-        if not os.path.exists(refer_audio_path):
-            temp_ra(refer_audio)         
+        temp_ra(refer_audio)         
         return generate(language,port,refer_audio_path,refer_text,refer_lang,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
 
 def read_srt(filename,offset):
@@ -294,14 +281,17 @@ def read_srt(filename,offset):
     filelength=len(file)
     for i in range(0,filelength):
         if " --> " in file[i]:
-            for char in file[i-1]:
-                if char not in [0,1,2,3,4,5,6,7,8,9]:
-                    continue
-            indexlist.append(i) #get line id
+            is_st=True
+            for char in file[i-1].strip().replace("\ufeff",""):
+                if char not in ['0','1','2','3','4','5','6','7','8','9']:
+                    is_st=False
+                    break
+            if is_st:
+                indexlist.append(i) #get line id
     listlength=len(indexlist)
     for i in range(0,listlength-1):
         st,et=file[indexlist[i]].split(" --> ")
-        id=file[indexlist[i]-1]
+        id=int(file[indexlist[i]-1].strip().replace("\ufeff",""))
         text=""
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]
@@ -477,7 +467,7 @@ if __name__ == "__main__":
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
-        refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
+        #refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])

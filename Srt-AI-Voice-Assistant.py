@@ -52,7 +52,7 @@ except ImportError:
 
 class subtitle:
     def __init__(self,index, start_time, end_time, text):
-        self.index = int(index.strip().replace("\ufeff","")) if type(index)==str else index
+        self.index = int(index)
         self.start_time = start_time
         self.end_time = end_time
         self.text = text.strip()
@@ -304,7 +304,7 @@ def read_srt(filename,offset):
     listlength=len(indexlist)
     for i in range(0,listlength-1):
         st,et=file[indexlist[i]].split(" --> ")
-        id=file[indexlist[i]-1]
+        id=int(file[indexlist[i]-1].strip().replace("\ufeff",""))
         text=""
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]

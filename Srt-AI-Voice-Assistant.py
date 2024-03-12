@@ -222,19 +222,7 @@ def temp_ra(a:tuple):
 
 
 def generate(*args,proj,in_file,sr,fps,offset):
-        '''
-        if proj=="bv2":
-            pass
-        elif proj=="gsv":       
-            
-            refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
-            if refer_audio is None or refer_text == "":
-                return None,"你必须指定参考音频和文本"                
-            if not os.path.exists(refer_audio_path):
-                temp_ra(refer_audio) 
-        '''
-    #try:
-        
+    #try:       
         exception_exists=False
         sr,fps=positive_int(sr,fps)
         audiolist=[]
@@ -282,8 +270,7 @@ def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refe
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
-        if not os.path.exists(refer_audio_path):
-            temp_ra(refer_audio)         
+        temp_ra(refer_audio)         
         return generate(language,port,refer_audio_path,refer_text,refer_lang,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
 
 def read_srt(filename,offset):
@@ -480,7 +467,7 @@ if __name__ == "__main__":
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
-        refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
+        #refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])

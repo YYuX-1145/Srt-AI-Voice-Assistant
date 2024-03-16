@@ -378,7 +378,7 @@ def load_cfg():
     config_path=os.path.join("SAVAdata","configs","config.json")
     if os.path.exists(config_path):        
         try:
-            config.from_dict(json.load(open(config_path, encoding="utf-8")))            
+            config=config.from_dict(json.load(open(config_path, encoding="utf-8")))            
         except Exception as e:
             config=settings()
             logger.warning(f"用户设置加载失败，恢复默认设置！{e}")

@@ -79,8 +79,6 @@ class subtitle:
         self.end_time+=offset
         if self.end_time<0:
             self.end_time=0
-
-
     def __str__(self) -> str:
         return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
 
@@ -93,27 +91,16 @@ class settings:
         self.gsv_dra=gsv_dra
         self.gsv_drt=gsv_drt
         self.gsv_dtl=gsv_dtl
+    def to_dict(self):
+        return self.__dict__        
     def save(self):
-        dict={
-            "theme":self.theme,
-            "clear_tmp":self.clear_tmp,
-            "bv2_pydir":self.bv2_pydir,
-            "gsv_pydir":self.gsv_pydir,
-            "gsv_dra":self.gsv_dra,
-            "gsv_drt":self.gsv_drt,
-            "gsv_dtl":self.gsv_dtl
-        }
+        dict= self.to_dict()
         os.makedirs(os.path.join("SAVAdata","configs"),exist_ok=True)
         with open(os.path.join("SAVAdata","configs","config.json"), 'w', encoding='utf-8') as f:
             json.dump(dict, f, indent=2, ensure_ascii=False) 
-    def load(self,d:dict):
-        self.theme=d["theme"]
-        self.clear_tmp=d["clear_tmp"]
-        self.bv2_pydir=d["bv2_pydir"]
-        self.gsv_pydir=d["gsv_pydir"]
-        self.gsv_dra=d["gsv_dra"]
-        self.gsv_drt=d["gsv_drt"]
-        self.gsv_dtl=d["gsv_dtl"]
+    @classmethod
+    def from_dict(cls, dict):
+        return cls(**dict)
 
 # https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
 gradio_hf_hub_themes = [
@@ -391,10 +378,10 @@ def load_cfg():
     config_path=os.path.join("SAVAdata","configs","config.json")
     if os.path.exists(config_path):        
         try:
-            config.load(json.load(open(config_path, encoding="utf-8")))            
-        except:
+            config.from_dict(json.load(open(config_path, encoding="utf-8")))            
+        except Exception as e:
             config=settings()
-            logger.warning("用户设置加载失败，恢复默认设置！")
+            logger.warning(f"用户设置加载失败，恢复默认设置！{e}")
     else:
         logger.info("当前没有自定义设置")
     return config.theme,config.clear_tmp,config.gsv_dra,config.gsv_drt,config.gsv_dtl

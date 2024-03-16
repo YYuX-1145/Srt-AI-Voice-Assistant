@@ -11,15 +11,22 @@ import json
 import logging
 import soundfile as sf
 import datetime
+import time
+import subprocess
 
 readme="""
 # Srt-AI-Voice-Assistant
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
-当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈
+当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
-0311更新：
-1.offset可以为负值
-2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备
+0316功能更新：  
+1.支持启动API服务，请在设置中填写并保存  
+2.支持GSV模型切换（*重要！你可能需要拉取代码更新api.py）  
+3.支持保存GSV提示音频和模型预设  
+
+0311修复更新：  
+1.offset可以为负值  
+2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
 
@@ -71,7 +78,6 @@ class subtitle:
              self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
          else:
              raise ValueError
-         #return self
     def add_offset(self,offset=0):
         self.start_time+=offset
         if self.start_time<0:
@@ -82,21 +88,27 @@ class subtitle:
     def __str__(self) -> str:
         return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
 
-class settings:
-    def __init__(self,theme="default",clear_tmp=False,bv2_pydir=None,gsv_pydir=None,gsv_dra=None,gsv_drt=None,gsv_dtl=None):
+class Settings:
+    def __init__(self,server_port:int=6661,theme:str="default",clear_tmp:bool=False,bv2_pydir:str=None,gsv_pydir:str=None,bv2_dir:str=None,gsv_dir:str=None):
+        self.server_port=int(server_port)
         self.theme=theme
         self.clear_tmp=clear_tmp
         self.bv2_pydir=bv2_pydir
         self.gsv_pydir=gsv_pydir
-        self.gsv_dra=gsv_dra
-        self.gsv_drt=gsv_drt
-        self.gsv_dtl=gsv_dtl
+        self.bv2_dir=bv2_dir
+        self.gsv_dir=gsv_dir
+        if bv2_pydir is not None and bv2_pydir!="":
+            if bv2_dir is None or bv2_dir=="":
+                self.bv2_dir=os.path.dirname(os.path.dirname(bv2_pydir))
+        if gsv_pydir is not None and gsv_pydir!="":        
+            if gsv_dir is None or gsv_dir=="":   
+                self.gsv_dir=os.path.dirname(os.path.dirname(gsv_pydir))
     def to_dict(self):
         return self.__dict__        
     def save(self):
         dict= self.to_dict()
-        os.makedirs(os.path.join("SAVAdata","configs"),exist_ok=True)
-        with open(os.path.join("SAVAdata","configs","config.json"), 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.join("SAVAdata"),exist_ok=True)
+        with open(os.path.join("SAVAdata","config.json"), 'w', encoding='utf-8') as f:
             json.dump(dict, f, indent=2, ensure_ascii=False) 
     @classmethod
     def from_dict(cls, dict):
@@ -208,8 +220,7 @@ def temp_ra(a:tuple):
 
 
 
-def generate(*args,proj,in_file,sr,fps,offset):
-    #try:       
+def generate(*args,proj,in_file,sr,fps,offset):     
         exception_exists=False
         sr,fps=positive_int(sr,fps)
         audiolist=[]
@@ -297,8 +308,11 @@ def read_srt(filename,offset):
     subtitle_list.append(st)
     return subtitle_list
 
-
-
+def run_command(command,dir):
+    command=f'start cmd /k "{command}"'
+    subprocess.Popen(command,cwd=dir,shell=True)
+    logger.info(f'执行命令:'+command)
+    time.sleep(0.1)
 
 def read_prcsv(filename,fps,offset):
     try:           
@@ -362,42 +376,140 @@ def cls_cache():
     else:
         logger.info("目前没有缓存！")
 
-def save_settngs(theme,clear_temp,gsv_dra,gsv_drt,gsv_dtl):
+def save_settngs(server_port,clear_tmp,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir):
     global config
-    if gsv_dra is not None:
-        sr,wav=gsv_dra
-        gsv_dra=os.path.join("SAVAdata","configs","default_reference_audio.wav")
-        sf.write(gsv_dra, wav, sr)
-    config=settings(theme=theme,clear_tmp=clear_temp,gsv_dra=gsv_dra,gsv_drt=gsv_drt,gsv_dtl=gsv_dtl)
+    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'))
     config.save()
     logger.info("已经保存了设置")
+    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir
 
 def load_cfg():
-    global config 
-    config=settings()   
-    config_path=os.path.join("SAVAdata","configs","config.json")
+    global config    
+    config_path=os.path.join("SAVAdata","config.json")
     if os.path.exists(config_path):        
         try:
-            config=config.from_dict(json.load(open(config_path, encoding="utf-8")))            
+            config=Settings.from_dict(json.load(open(config_path, encoding="utf-8")))          
         except Exception as e:
-            config=settings()
+            config=Settings()
             logger.warning(f"用户设置加载失败，恢复默认设置！{e}")
     else:
+        config=Settings()
         logger.info("当前没有自定义设置")
-    return config.theme,config.clear_tmp,config.gsv_dra,config.gsv_drt,config.gsv_dtl
+
+def start_hiyoriui():
+    global config
+    if config.bv2_pydir=="":
+        return "请前往设置页面指定环境路径并保存!"    
+    command=f'"{config.bv2_pydir}" "{os.path.join(config.bv2_dir,"hiyoriUI.py")}"'
+    run_command(command=command,dir=config.bv2_dir)
+    time.sleep(0.1)
+    return "HiyoriUI已启动，请确保其配置文件无误"
+
+def start_gsv():
+    global config
+    if config.gsv_pydir=="":
+        return "请前往设置页面指定环境路径并保存!"
+    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"api.py")}"'
+    run_command(command=command,dir=config.gsv_dir)
+    time.sleep(0.1)
+    return "GSV-API服务已启动，请确保其配置文件无误"
+
+def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
+    try:
+        if name=="None" or name=="":
+            return "请输入名称"
+        if ra is None:
+            return "请上传参考音频"
+        dir=os.path.join("SAVAdata","presets",name)
+        os.makedirs(dir,exist_ok=True)
+        data={"name":name,
+              "description":description,
+              "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
+              "reference_audio_text":rt,
+              "reference_audio_lang":rl,
+              "sovits_path":sovits_path,
+              "gpt_path":gpt_path
+              }
+        sr,wav=ra
+        sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
+        with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False) 
+        time.sleep(0.1)
+        return "预设保存成功"
+    except Exception as e:
+        return f"出错：{e}"
+
+def load_preset(name,port):
+    try:
+        global current_sovits_model
+        global current_gpt_model
+        if name=='None'or not os.path.exists(os.path.join("SAVAdata","presets",name)):
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+        data=json.load(open(os.path.join("SAVAdata","presets",name,"info.json"), encoding="utf-8"))
+        if data["sovits_path"] !="" and data["gpt_path"] != "":
+            if data["sovits_path"]==current_sovits_model and data["gpt_path"]==current_gpt_model:
+               switch=False
+               time.sleep(0.1)
+            else:
+               assert switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)=='模型切换成功',"模型切换失败"
+               current_sovits_model=data["sovits_path"]
+               current_gpt_model=data["gpt_path"]
+               switch=True
+        return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
+    except Exception as e:
+        return None,None,None,None,None,None,f"加载失败:{e}"
+
+def switch_gsvmodel(sovits_path,gpt_path,port):
+    if sovits_path=="" or gpt_path=="":
+        return "请指定模型路径！"
+    try:
+        data_json={
+        "sovits_model_path": sovits_path.strip('"'),
+        "gpt_model_path": gpt_path.strip('"'),
+    }   
+        print(data_json)
+        port=int(port)
+        API_URL = f'http://127.0.0.1:{port}/set_model'
+        response = requests.post(url=API_URL,json=data_json)
+        response.raise_for_status()
+        #print(response.content)
+        logger.info(f"模型已切换：{data_json.values()}")
+        return '模型切换成功'
+    except Exception as e:
+        err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
+        logger.error(err)
+        return err
+
+def refresh_presets_list():
+    global presets_list
+    presets_list=['None']
+    try:
+        presets_list+=[i for i in os.listdir(os.path.join("SAVAdata","presets")) if os.path.isdir(os.path.join("SAVAdata","presets",i))]
+    except Exception as e:
+        presets_list=['None']
+        logger.error(f"刷新预设失败：{e}")
+    time.sleep(0.1)
+    return gr.update(value="None",choices=presets_list)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-p", "--server_port", default=6661,type=int,help="server_port")
+    parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     args, unknown = parser.parse_known_args()
-    config=settings()
+    
+    refresh_presets_list()
+    current_sovits_model=None
+    current_gpt_model=None   
     load_cfg()
     if config.clear_tmp:
         cls_cache()                 
+    if args.server_port is None:
+        server_port=config.server_port
+    else:
+        server_port=args.server_port
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        gr.Markdown(value="版本240311，支持HiyoriUI和GPT-SoVITS-0306整合包")
+        gr.Markdown(value="版本240316，支持HiyoriUI和GPT-SoVITS-0306整合包")
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -413,7 +525,7 @@ if __name__ == "__main__":
                                     spkid=gr.Number(label="说话人ID",value=0,visible=True,interactive=True)
                                     speaker_name = gr.Textbox(label="说话人名称",visible=False,interactive=True)
                                 language1 = gr.Dropdown(choices=['ZH','JP','EN','AUTO'], value='ZH', label="Language",interactive=True)
-                                with gr.Accordion(label="参数"):
+                                with gr.Accordion(label="参数",open=False):
                                     sdp_ratio = gr.Slider(minimum=0, maximum=1, value=0.2, step=0.1, label="SDP Ratio")
                                     noise_scale = gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise Scale")
                                     noise_scale_w = gr.Slider(minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise Scale W")
@@ -429,37 +541,63 @@ if __name__ == "__main__":
                         with gr.Row():
                             refer_text=gr.Textbox(label="参考音频文本")
                             refer_lang = gr.Dropdown(choices=['zh','ja','en'], value='zh', label="参考音频语言",interactive=True)
+                        with gr.Accordion("模型切换",open=False):
+                            sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
+                            gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
+                            switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
                         with gr.Row():
                             sampling_rate2=gr.Number(label="采样率",value=32000,visible=True,interactive=True)
                             api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
+                        with gr.Accordion("预设",open=False):
+                            choose_presets=gr.Dropdown(label="",value='None',choices=presets_list,interactive=True,allow_custom_value=True)
+                            desc_presets=gr.Textbox(label="",placeholder="描述信息，可选",interactive=True)
+                            with gr.Row():
+                                save_presets_btn=gr.Button(value="保存预设",variant="primary")
+                                refresh_presets_btn=gr.Button(value="刷新",variant="secondary")
                         with gr.Row():
                             gen_btn2=gr.Button(value="生成",variant="primary",visible=True)
-                            load_cfg_btn=gr.Button(value="加载设置",variant="secondary",visible=True)                       
+                                                   
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                       offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后所有语音的时间")
+                       offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.50.2                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
+                       with gr.Accordion("启动服务"):
+                           gr.Markdown(value="请先在设置中应用项目路径")
+                           start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
+                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                           
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():
+                        gr.Markdown("点击应用后，这些设置才会生效。")
+                        server_port_set=gr.Number(label="本程序所使用的端口，重启生效。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port)
                         clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
                         theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
-                        save_settings_btn=gr.Button(value="保存当前设置和偏好",variant="primary")
+                        bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)
+                        bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=config.bv2_dir)
+                        gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
+                        gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)                        
+                        save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
                     with gr.Column():
                         gr.Markdown(value=readme)
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
-        #refer_audio.change(temp_ra,inputs=[refer_audio],outputs=[])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
-        load_cfg_btn.click(load_cfg,inputs=[],outputs=[theme,clear_cache,refer_audio,refer_text,refer_lang])
-        save_settings_btn.click(save_settngs,inputs=[theme,clear_cache,refer_audio,refer_text,refer_lang],outputs=[])
-    webbrowser.open(f"http://127.0.0.1:{args.server_port}")
-    app.launch(share=args.share,server_port=args.server_port)
+        start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
+        start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
+        switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input])
+
+        save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
+        choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,refer_text,refer_lang,gen_textbox_output_text])
+        refresh_presets_btn.click(refresh_presets_list,outputs=[choose_presets])
+    webbrowser.open(f"http://127.0.0.1:{server_port}")
+    app.launch(share=args.share,server_port=server_port)

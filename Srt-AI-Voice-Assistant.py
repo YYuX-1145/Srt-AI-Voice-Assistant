@@ -427,8 +427,8 @@ def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
               "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
               "reference_audio_text":rt,
               "reference_audio_lang":rl,
-              "sovits_path":sovits_path,
-              "gpt_path":gpt_path
+              "sovits_path":sovits_path.strip('"'),
+              "gpt_path":gpt_path.strip('"')
               }
         sr,wav=ra
         sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)

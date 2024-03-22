@@ -457,7 +457,7 @@ def load_preset(name,port):
                switch=True
         return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
     except Exception as e:
-        return None,None,None,None,None,None,f"加载失败:{e}"
+        return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
 
 def switch_gsvmodel(sovits_path,gpt_path,port):
     if sovits_path=="" or gpt_path=="":

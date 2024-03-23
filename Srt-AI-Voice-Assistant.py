@@ -19,6 +19,10 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
+
+0323：
+[请注意]：你现在正在使用测试版本，只适配fast-inference分支的测试API，更新的API文件见仓库（仅用于测试，分支合并后有可能会发生变动）！
+
 0316功能更新：  
 1.支持启动API服务，请在设置中填写并保存  
 2.支持GSV模型切换（*重要！你可能需要拉取代码更新api.py）  
@@ -185,15 +189,17 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,styl
             return None
 
 
-def gsv_api(ra,text,prompt_text,prompt_language,text_language,port):
+def gsv_api(port,**kwargs):
     try:
+        '''
         data_json={
         "refer_wav_path": ra,
         "prompt_text": prompt_text,
         "prompt_language": prompt_language,
         "text": text,
         "text_language": text_language
-    }   
+    }   '''
+        data_json=kwargs
         print(data_json)
         API_URL = f'http://127.0.0.1:{port}'
         response = requests.get(url=API_URL,params=data_json)
@@ -264,12 +270,12 @@ def generate(*args,proj,in_file,sr,fps,offset):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2")    
-def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refer_lang):
+def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket):
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
         temp_ra(refer_audio)         
-        return generate(language,port,refer_audio_path,refer_text,refer_lang,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
+        return generate(language,port,refer_audio_path,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
@@ -343,9 +349,9 @@ def save(args,proj,text,dir,subid):
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
     elif proj=="gsv":
-        language,port,refer_audio_path,refer_text,refer_lang=args
+        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket=args
         port=positive_int(port)[0]
-        audio = gsv_api(refer_audio_path,text,refer_text,refer_lang,language,port)
+        audio = gsv_api(port,text=text,text_language=text_language,refer_wav_path=refer_wav_path,prompt_text=prompt_text,prompt_language=prompt_language,batch_size=batch_size,fragment_interval=fragment_interval,speed_factor=speed_factor,top_k=top_k,top_p=top_p,temperature=temperature,split_bucket=split_bucket)
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
                 filepath=os.path.join(dir,f"{subid}.wav")
@@ -409,7 +415,7 @@ def start_gsv():
     global config
     if config.gsv_pydir=="":
         return "请前往设置页面指定环境路径并保存!"
-    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"api.py")}"'
+    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"GPT_SoVITS","api_simple.py")}"'
     run_command(command=command,dir=config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
@@ -524,7 +530,7 @@ if __name__ == "__main__":
                                     model_id=gr.Number(label="模型id",value=0,visible=True,interactive=True)
                                     spkid=gr.Number(label="说话人ID",value=0,visible=True,interactive=True)
                                     speaker_name = gr.Textbox(label="说话人名称",visible=False,interactive=True)
-                                language1 = gr.Dropdown(choices=['ZH','JP','EN','AUTO'], value='ZH', label="Language",interactive=True)
+                                language1 = gr.Dropdown(choices=['ZH','JP','EN','AUTO'], value='ZH', label="Language",interactive=True,allow_custom_value=False)
                                 with gr.Accordion(label="参数",open=False):
                                     sdp_ratio = gr.Slider(minimum=0, maximum=1, value=0.2, step=0.1, label="SDP Ratio")
                                     noise_scale = gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise Scale")
@@ -536,11 +542,11 @@ if __name__ == "__main__":
                                 gen_btn1 = gr.Button("生成", variant="primary",visible=True)
                     with gr.TabItem("GPT-SoVITS"):
                         proj2=gr.Radio(choices=['gsv'], value="gsv",interactive=False,visible=False)
-                        language2 = gr.Dropdown(choices=['zh','ja','en'], value='zh', label="Language",interactive=True)
+                        language2 = gr.Dropdown(choices=["中文","日文","英文","中英混合","日英混合","多语种混合"], value="中英混合", label="Language",interactive=True,allow_custom_value=False)
                         refer_audio=gr.Audio(label="参考音频")
                         with gr.Row():
                             refer_text=gr.Textbox(label="参考音频文本")
-                            refer_lang = gr.Dropdown(choices=['zh','ja','en'], value='zh', label="参考音频语言",interactive=True)
+                            refer_lang = gr.Dropdown(choices=["中文","日文","英文","中英混合","日英混合","多语种混合"], value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
                         with gr.Accordion("模型切换",open=False):
                             sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
                             gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
@@ -548,6 +554,14 @@ if __name__ == "__main__":
                         with gr.Row():
                             sampling_rate2=gr.Number(label="采样率",value=32000,visible=True,interactive=True)
                             api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
+                        with gr.Accordion("高级合成参数",open=False):
+                            batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
+                            fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label="分段间隔(秒)",value=0.3,interactive=True)
+                            speed_factor = gr.Slider(minimum=0.25,maximum=4,step=0.05,label="speed_factor",value=1.0,interactive=True)
+                            top_k = gr.Slider(minimum=1,maximum=100,step=1,label="top_k",value=5,interactive=True)
+                            top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label="top_p",value=1,interactive=True)
+                            temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label="temperature",value=1,interactive=True)
+                            split_bucket = gr.Checkbox(label="数据分桶", value=True, interactive=True, show_label=True)
                         with gr.Accordion("预设",open=False):
                             choose_presets=gr.Dropdown(label="",value='None',choices=presets_list,interactive=True,allow_custom_value=True)
                             desc_presets=gr.Textbox(label="",placeholder="描述信息，可选",interactive=True)
@@ -567,8 +581,7 @@ if __name__ == "__main__":
                        with gr.Accordion("启动服务"):
                            gr.Markdown(value="请先在设置中应用项目路径")
                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
-                           
+                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")               
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():
@@ -589,7 +602,7 @@ if __name__ == "__main__":
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

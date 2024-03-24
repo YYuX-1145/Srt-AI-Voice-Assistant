@@ -524,7 +524,7 @@ if __name__ == "__main__":
         server_port=args.server_port
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        gr.Markdown(value="版本240316，支持HiyoriUI和GPT-SoVITS-0306整合包")
+        gr.Markdown(value="版本240324dev，支持HiyoriUI和GPT-SoVITS-FastInference分支")
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():

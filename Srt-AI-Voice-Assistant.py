@@ -13,7 +13,8 @@ import soundfile as sf
 import datetime
 import time
 import subprocess
-
+import concurrent.futures
+import sys
 readme="""
 # Srt-AI-Voice-Assistant
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
@@ -226,8 +227,8 @@ def temp_ra(a:tuple):
 
 
 
-def generate(*args,proj,in_file,sr,fps,offset):     
-        exception_exists=False
+def generate(*args,proj,in_file,sr,fps,offset,max_workers):
+        t1 = time.time()
         sr,fps=positive_int(sr,fps)
         audiolist=[]
         if in_file is None:
@@ -242,7 +243,10 @@ def generate(*args,proj,in_file,sr,fps,offset):
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join("SAVAdata","temp",t)
         os.makedirs(dirname,exist_ok=True)
-
+        print(max_workers)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
+        file_list=[i for i in file_list if i is not None]
         for i in subtitle_list:
             start_frame=int(i.start_time*sr)
             if ptr<start_frame:
@@ -250,32 +254,32 @@ def generate(*args,proj,in_file,sr,fps,offset):
                 audiolist.append(np.zeros(silence_len))
                 ptr+=silence_len
             elif ptr>start_frame:
-                logger.warning(f"序号为{i.index},内容为:{i.text} 的字幕由于之前的音频过长而被延迟")                
-           
-            f_path=save(args,proj=proj,text=i.text,dir=dirname,subid=i.index)
-            if f_path is not None:
+                logger.warning(f"序号为{i.index},内容为:{i.text} 的字幕由于之前的音频过长而被延迟")                   
+            f_path=os.path.join(dirname,f"{i.index}.wav")
+            if f_path in file_list:
                 wav, _ = librosa.load(f_path, sr=sr)
                 dur=wav.shape[-1]             #frames
                 ptr+=dur
                 audiolist.append(wav)
-            else:
-                exception_exists=True
         audio=np.concatenate(audiolist)
-        assert len(os.listdir(dirname))!=0,"所有的字幕合成都出错了，请检查API服务！"
+        assert len(file_list)!=0,"所有的字幕合成都出错了，请检查API服务！"
         os.makedirs(os.path.join("SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
-        if exception_exists:
-            return (sr,audio),"完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。"
-        return (sr,audio),"完成！"
+        t2 = time.time()
+        m, s = divmod(t2-t1, 60)
+        use_time="%02d:%02d"%(m, s)
+        if len(file_list)!=len(subtitle_list):
+            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}'
+        return (sr,audio),f'完成！所用时间:{use_time}'
 
-def generate_bv2(in_file,sr,fps,offset,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
-        return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2")    
-def generate_gsv(in_file,sr,fps,offset,language,port,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket):
+def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
+        return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
+def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method):
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
         temp_ra(refer_audio)         
-        return generate(language,port,refer_audio_path,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv")
+        return generate(language,port,refer_audio_path,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
@@ -340,7 +344,7 @@ def read_prcsv(filename,fps,offset):
     except Exception as e:
          logger.error(f"读取字幕文件出错：{str(e)}")
 
-def save(args,proj,text,dir,subid):
+def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     if proj=="bv2":
         language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale=args
         sid,port,mid=positive_int(sid,port,mid)
@@ -349,9 +353,9 @@ def save(args,proj,text,dir,subid):
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
     elif proj=="gsv":
-        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket=args
+        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method=args
         port=positive_int(port)[0]
-        audio = gsv_api(port,text=text,text_language=text_language,refer_wav_path=refer_wav_path,prompt_text=prompt_text,prompt_language=prompt_language,batch_size=batch_size,fragment_interval=fragment_interval,speed_factor=speed_factor,top_k=top_k,top_p=top_p,temperature=temperature,split_bucket=split_bucket)
+        audio = gsv_api(port,text=text,text_language=text_language,refer_wav_path=refer_wav_path,prompt_text=prompt_text,prompt_language=prompt_language,batch_size=batch_size,fragment_interval=fragment_interval,speed_factor=speed_factor,top_k=top_k,top_p=top_p,temperature=temperature,split_bucket=split_bucket,text_split_method=text_split_method)
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
                 filepath=os.path.join(dir,f"{subid}.wav")
@@ -497,6 +501,9 @@ def refresh_presets_list():
     time.sleep(0.1)
     return gr.update(value="None",choices=presets_list)
 
+def restart():
+    os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
@@ -562,6 +569,8 @@ if __name__ == "__main__":
                             top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label="top_p",value=1,interactive=True)
                             temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label="temperature",value=1,interactive=True)
                             split_bucket = gr.Checkbox(label="数据分桶", value=True, interactive=True, show_label=True)
+                            how_to_cut = gr.Radio(label="怎么切",choices=["不切","凑四句一切","凑50字一切","按中文句号。切","按英文句号.切","按标点符号切"],
+                                                 value="凑四句一切",interactive=True)
                         with gr.Accordion("预设",open=False):
                             choose_presets=gr.Dropdown(label="",value='None',choices=presets_list,interactive=True,allow_custom_value=True)
                             desc_presets=gr.Textbox(label="",placeholder="描述信息，可选",interactive=True)
@@ -574,8 +583,9 @@ if __name__ == "__main__":
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
+                       workers=gr.Number(label="调取合成线程数(几乎没用)",value=1,visible=True,interactive=True,minimum=1)
                        offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
-                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.50.2                 
+                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.38                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                        audio_output = gr.Audio(label="Output Audio")
                        with gr.Accordion("启动服务"):
@@ -595,19 +605,21 @@ if __name__ == "__main__":
                         gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
                         gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)                        
                         save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
+                        restart_btn=gr.Button(value="重启UI",variant="stop")
                     with gr.Column():
                         gr.Markdown(value=readme)
 
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
         save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input])
+        restart_btn.click(restart)
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
         choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,refer_text,refer_lang,gen_textbox_output_text])

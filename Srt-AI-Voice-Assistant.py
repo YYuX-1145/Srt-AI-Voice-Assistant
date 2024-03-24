@@ -94,7 +94,7 @@ class subtitle:
         return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
 
 class Settings:
-    def __init__(self,server_port:int=6661,theme:str="default",clear_tmp:bool=False,bv2_pydir:str=None,gsv_pydir:str=None,bv2_dir:str=None,gsv_dir:str=None):
+    def __init__(self,server_port:int=6661,theme:str="default",clear_tmp:bool=False,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
         self.server_port=int(server_port)
         self.theme=theme
         self.clear_tmp=clear_tmp
@@ -102,11 +102,13 @@ class Settings:
         self.gsv_pydir=gsv_pydir
         self.bv2_dir=bv2_dir
         self.gsv_dir=gsv_dir
-        if bv2_pydir is not None and bv2_pydir!="":
-            if bv2_dir is None or bv2_dir=="":
+        self.bv2_args=bv2_args
+        self.gsv_args=gsv_args
+        if bv2_pydir!="":
+            if bv2_dir=="":
                 self.bv2_dir=os.path.dirname(os.path.dirname(bv2_pydir))
-        if gsv_pydir is not None and gsv_pydir!="":        
-            if gsv_dir is None or gsv_dir=="":   
+        if gsv_pydir!="":        
+            if gsv_dir=="":   
                 self.gsv_dir=os.path.dirname(os.path.dirname(gsv_pydir))
     def to_dict(self):
         return self.__dict__        
@@ -386,12 +388,12 @@ def cls_cache():
     else:
         logger.info("目前没有缓存！")
 
-def save_settngs(server_port,clear_tmp,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir):
+def save_settngs(server_port,clear_tmp,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args):
     global config
-    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'))
+    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args)
     config.save()
     logger.info("已经保存了设置")
-    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir
+    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args
 
 def load_cfg():
     global config    
@@ -410,7 +412,7 @@ def start_hiyoriui():
     global config
     if config.bv2_pydir=="":
         return "请前往设置页面指定环境路径并保存!"    
-    command=f'"{config.bv2_pydir}" "{os.path.join(config.bv2_dir,"hiyoriUI.py")}"'
+    command=f'"{config.bv2_pydir}" "{os.path.join(config.bv2_dir,"hiyoriUI.py")}" {config.bv2_args}'
     run_command(command=command,dir=config.bv2_dir)
     time.sleep(0.1)
     return "HiyoriUI已启动，请确保其配置文件无误"
@@ -419,7 +421,7 @@ def start_gsv():
     global config
     if config.gsv_pydir=="":
         return "请前往设置页面指定环境路径并保存!"
-    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"GPT_SoVITS","api_simple.py")}"'
+    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"GPT_SoVITS","api_simple.py")}" {config.gsv_args}'
     run_command(command=command,dir=config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
@@ -600,10 +602,16 @@ if __name__ == "__main__":
                         clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
                         theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
-                        bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)
-                        bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=config.bv2_dir)
-                        gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
-                        gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)                        
+                        with gr.Group():
+                            gr.Markdown(value="BV2")
+                            bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)
+                            bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=config.bv2_dir)
+                            bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=config.bv2_args)
+                        with gr.Group():
+                            gr.Markdown(value="GSV")
+                            gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
+                            gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)
+                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=config.gsv_args)        
                         save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
                         restart_btn=gr.Button(value="重启UI",variant="stop")
                     with gr.Column():
@@ -618,7 +626,7 @@ if __name__ == "__main__":
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args])
         restart_btn.click(restart)
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])

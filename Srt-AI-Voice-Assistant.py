@@ -66,16 +66,16 @@ class subtitle:
     def normalize(self,ntype:str,fps=30):
          if ntype=="prcsv":
               h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
-              self.start_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
+              self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
               h,m,s,fs=(self.end_time.replace(';',':')).split(":")
-              self.end_time=int(h)*3600+int(m)*60+int(s)+float(format(int(fs)/fps,'.2f'))
+              self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
          elif ntype=="srt":
              h,m,s=self.start_time.split(":")
              s=s.replace(",",".")
-             self.start_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
+             self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
              h,m,s=self.end_time.split(":")
              s=s.replace(",",".")
-             self.end_time=int(h)*3600+int(m)*60+float(format(float(s),'.2f'))
+             self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
          else:
              raise ValueError
     def add_offset(self,offset=0):

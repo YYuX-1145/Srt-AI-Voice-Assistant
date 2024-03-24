@@ -496,7 +496,11 @@ def refresh_presets_list():
     global presets_list
     presets_list=['None']
     try:
-        presets_list+=[i for i in os.listdir(os.path.join("SAVAdata","presets")) if os.path.isdir(os.path.join("SAVAdata","presets",i))]
+        preset_dir=os.path.join("SAVAdata","presets")
+        if os.path.isdir(preset_dir):
+            presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
+        else:
+            logger.info("当前没有预设")
     except Exception as e:
         presets_list=['None']
         logger.error(f"刷新预设失败：{e}")

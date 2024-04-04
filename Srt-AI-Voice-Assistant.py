@@ -21,8 +21,9 @@ readme="""
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
 
-0323：
-[请注意]：你现在正在使用测试版本，只适配fast-inference分支的测试API，更新的API文件见仓库（仅用于测试，分支合并后有可能会发生变动）！
+0404：
+[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用
+
 
 0316功能更新：  
 1.支持启动API服务，请在设置中填写并保存  
@@ -34,9 +35,22 @@ readme="""
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
-
-
-
+dict_language = {
+    "中文": "all_zh",
+    "英文": "en",
+    "日文": "all_ja",
+    "中英混合": "zh",
+    "日英混合": "ja",
+    "多语种混合": "auto",
+}
+cut_method = {
+    "不切": "cut0",
+    "凑四句一切": "cut1",
+    "凑50字一切": "cut2",
+    "按中文句号。切": "cut3",
+    "按英文句号.切": "cut4",
+    "按标点符号切": "cut5",
+}
 log_colors = {
     'DEBUG': 'white',
     'INFO': 'green',
@@ -194,17 +208,9 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,styl
 
 def gsv_api(port,**kwargs):
     try:
-        '''
-        data_json={
-        "refer_wav_path": ra,
-        "prompt_text": prompt_text,
-        "prompt_language": prompt_language,
-        "text": text,
-        "text_language": text_language
-    }   '''
         data_json=kwargs
         print(data_json)
-        API_URL = f'http://127.0.0.1:{port}'
+        API_URL = f'http://127.0.0.1:{port}/tts'
         response = requests.get(url=API_URL,params=data_json)
         response.raise_for_status()  # 检查响应的状态码
         return response.content
@@ -276,12 +282,12 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
-def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method):
+def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method):
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
         temp_ra(refer_audio)         
-        return generate(language,port,refer_audio_path,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
+        return generate(dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
@@ -355,9 +361,25 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
     elif proj=="gsv":
-        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method=args
+        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method=args
         port=positive_int(port)[0]
-        audio = gsv_api(port,text=text,text_language=text_language,refer_wav_path=refer_wav_path,prompt_text=prompt_text,prompt_language=prompt_language,batch_size=batch_size,fragment_interval=fragment_interval,speed_factor=speed_factor,top_k=top_k,top_p=top_p,temperature=temperature,split_bucket=split_bucket,text_split_method=text_split_method)
+        audio = gsv_api(port,
+                        text=text,
+                        text_lang=text_language,###language->lang
+                        ref_audio_path=refer_wav_path,#ref
+                        prompt_text=prompt_text,
+                        prompt_lang=prompt_language,#
+                        batch_size=batch_size,
+                        batch_threshold=batch_threshold,
+                        fragment_interval=fragment_interval,
+                        speed_factor=speed_factor,
+                        top_k=top_k,
+                        top_p=top_p,
+                        temperature=temperature,
+                        split_bucket=split_bucket,
+                        text_split_method=text_split_method,
+                        media_type="wav",
+                        streaming_mode=False)
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
                 filepath=os.path.join(dir,f"{subid}.wav")
@@ -421,7 +443,7 @@ def start_gsv():
     global config
     if config.gsv_pydir=="":
         return "请前往设置页面指定环境路径并保存!"
-    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"GPT_SoVITS","api_simple.py")}" {config.gsv_args}'
+    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"api_v2.py")}" {config.gsv_args}'
     run_command(command=command,dir=config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
@@ -475,17 +497,20 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
     if sovits_path=="" or gpt_path=="":
         return "请指定模型路径！"
     try:
+        
         data_json={
         "sovits_model_path": sovits_path.strip('"'),
         "gpt_model_path": gpt_path.strip('"'),
-    }   
+        }   
         print(data_json)
         port=int(port)
-        API_URL = f'http://127.0.0.1:{port}/set_model'
-        response = requests.post(url=API_URL,json=data_json)
+        API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
+        response = requests.get(url=API_URL)
         response.raise_for_status()
-        #print(response.content)
-        logger.info(f"模型已切换：{data_json.values()}")
+        API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
+        response = requests.get(url=API_URL)
+        response.raise_for_status()
+        logger.info(f"模型已切换：{data_json}")
         return '模型切换成功'
     except Exception as e:
         err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
@@ -528,7 +553,7 @@ if __name__ == "__main__":
         server_port=args.server_port
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        gr.Markdown(value="版本240324dev，支持HiyoriUI和GPT-SoVITS-FastInference分支")
+        gr.Markdown(value="版本240404，支持HiyoriUI和GPT-SoVITS-fast_inference_分支")
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -569,6 +594,7 @@ if __name__ == "__main__":
                             api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
                         with gr.Accordion("高级合成参数",open=False):
                             batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
+                            batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
                             fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label="分段间隔(秒)",value=0.3,interactive=True)
                             speed_factor = gr.Slider(minimum=0.25,maximum=4,step=0.05,label="speed_factor",value=1.0,interactive=True)
                             top_k = gr.Slider(minimum=1,maximum=100,step=1,label="top_k",value=5,interactive=True)
@@ -625,7 +651,7 @@ if __name__ == "__main__":
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

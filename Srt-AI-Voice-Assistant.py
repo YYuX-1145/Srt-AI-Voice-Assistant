@@ -178,11 +178,10 @@ def positive_int(*a):
         r.append(int(x))
     return r
 
-def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,style_text,style_weight,port):
+def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,emotion,split,style_text,style_weight,port):
     try:
                 API_URL = f'http://127.0.0.1:{port}/voice'
-                data_json = {
-                    "text": text,
+                data_json = {                    
                     "model_id": mid,
                     "speaker_name": spk_name,
                     "speaker_id": sid,
@@ -191,10 +190,13 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,split,styl
                     "noise": noise,
                     "noisew": noisew,
                     "sdp_ratio": sdp,
+                    "emotion":emotion,
                     "auto_translate": False,
                     "auto_split": split,
                     "style_text": style_text,
-                    "style_weight": style_weight
+                    "style_weight": style_weight,                    
+                    "text": text
+
                 }
                 print(data_json)
 
@@ -280,8 +282,8 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
             return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}'
         return (sr,audio),f'完成！所用时间:{use_time}'
 
-def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale):
-        return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
+def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
+        return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method):
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
@@ -354,12 +356,12 @@ def read_prcsv(filename,fps,offset):
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     if proj=="bv2":
-        language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale=args
+        language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emotion_text=args
         sid,port,mid=positive_int(sid,port,mid)
         if speaker_name is not None and speaker_name!="":
-            audio = bert_vits2_api(text=text,mid=mid,spk_name=speaker_name,sid=None,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
+            audio = bert_vits2_api(text=text,mid=mid,spk_name=speaker_name,sid=None,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
         else:
-            audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port)
+            audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
     elif proj=="gsv":
         text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method=args
         port=positive_int(port)[0]
@@ -574,6 +576,7 @@ if __name__ == "__main__":
                                     noise_scale = gr.Slider(minimum=0.1, maximum=2, value=0.6, step=0.1, label="Noise Scale")
                                     noise_scale_w = gr.Slider(minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise Scale W")
                                     length_scale = gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Length Scale")
+                                    emo_text=gr.Textbox(label="text prompt",interactive=True,value="")
                                 with gr.Row(): 
                                     sampling_rate1=gr.Number(label="采样率",value=44100,visible=True,interactive=True)                                
                                     api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
@@ -615,7 +618,7 @@ if __name__ == "__main__":
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                       workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量)",value=1,visible=True,interactive=True,minimum=1)
+                       workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
                        offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.38                 
                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
@@ -650,7 +653,7 @@ if __name__ == "__main__":
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])

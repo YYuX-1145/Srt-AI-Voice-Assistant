@@ -3,7 +3,6 @@ import os
 import shutil
 import librosa
 import numpy as np
-import webbrowser
 import gradio as gr
 import argparse
 import csv
@@ -284,12 +283,12 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
-def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method):
+def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
         refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本"                
         temp_ra(refer_audio)         
-        return generate(dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
+        return generate(dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
@@ -363,7 +362,7 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
     elif proj=="gsv":
-        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,text_split_method=args
+        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         port=positive_int(port)[0]
         audio = gsv_api(port,
                         text=text,
@@ -378,6 +377,7 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
                         top_k=top_k,
                         top_p=top_p,
                         temperature=temperature,
+                        repetition_penalty=repetition_penalty,
                         split_bucket=split_bucket,
                         text_split_method=text_split_method,
                         media_type="wav",
@@ -603,6 +603,7 @@ if __name__ == "__main__":
                             top_k = gr.Slider(minimum=1,maximum=100,step=1,label="top_k",value=5,interactive=True)
                             top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label="top_p",value=1,interactive=True)
                             temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label="temperature",value=1,interactive=True)
+                            repetition_penalty = gr.Slider(minimum=0,maximum=2,step=0.05,label="repetition_penalty",value=1.35,interactive=True)
                             split_bucket = gr.Checkbox(label="数据分桶", value=True, interactive=True, show_label=True)
                             how_to_cut = gr.Radio(label="怎么切",choices=["不切","凑四句一切","凑50字一切","按中文句号。切","按英文句号.切","按标点符号切"],
                                                  value="凑四句一切",interactive=True)
@@ -654,7 +655,7 @@ if __name__ == "__main__":
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
@@ -665,5 +666,4 @@ if __name__ == "__main__":
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
         choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,refer_text,refer_lang,gen_textbox_output_text])
         refresh_presets_btn.click(refresh_presets_list,outputs=[choose_presets])
-    webbrowser.open(f"http://127.0.0.1:{server_port}")
-    app.launch(share=args.share,server_port=server_port)
+    app.launch(share=args.share,server_port=server_port,inbrowser=True)

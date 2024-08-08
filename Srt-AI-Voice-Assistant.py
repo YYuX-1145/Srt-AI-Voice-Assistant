@@ -19,28 +19,38 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
+240808更新：<br>
+[请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。
+1.增加错误提示
+2.自动检测项目路径
+3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。
 
-0404：
-[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用
+240404：<br>
+~~[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用~~
 
 
-0316功能更新：  
+240316功能更新：  
 1.支持启动API服务，请在设置中填写并保存  
 2.支持GSV模型切换（*重要！你可能需要拉取代码更新api.py）  
 3.支持保存GSV提示音频和模型预设  
 
-0311修复更新：  
+240311修复更新：  
 1.offset可以为负值  
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
 dict_language = {
     "中文": "all_zh",
+    "粤语": "all_yue",
     "英文": "en",
     "日文": "all_ja",
+    "韩文": "all_ko",
     "中英混合": "zh",
+    "粤英混合": "yue",
     "日英混合": "ja",
-    "多语种混合": "auto",
+    "韩英混合": "ko",
+    "多语种混合": "auto",    #多语种启动切分识别语种
+    "多语种混合(粤语)": "auto_yue",
 }
 cut_method = {
     "不切": "cut0",
@@ -107,22 +117,48 @@ class subtitle:
         return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
 
 class Settings:
-    def __init__(self,server_port:int=6661,theme:str="default",clear_tmp:bool=False,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
-        self.server_port=int(server_port)
+    def __init__(self,server_port:int=5001,theme:str="default",clear_tmp:bool=False,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
+        self.server_port=int(server_port) 
         self.theme=theme
         self.clear_tmp=clear_tmp
-        self.bv2_pydir=bv2_pydir
-        self.gsv_pydir=gsv_pydir
+        #detect python envs####
+        if bv2_pydir!="" :
+            if os.path.exists(bv2_pydir):
+                self.bv2_pydir=os.path.abspath(bv2_pydir) 
+            else:
+                self.bv2_pydir=""
+                gr.Warning("错误：填写的路径不存在！")
+        else:
+            if os.path.exists("venv\python.exe") and "VITS2" in os.path.dirname(__file__).upper():
+                self.bv2_pydir=os.path.abspath("venv\python.exe")
+                logger.info("已检测到Bert-VITS2环境")
+            else:
+                self.bv2_pydir=""
+
+        if gsv_pydir!="": 
+            if os.path.exists(gsv_pydir):
+                self.gsv_pydir=os.path.abspath(gsv_pydir) 
+            else:
+                self.gsv_pydir=""
+                gr.Warning("错误：填写的路径不存在！")               
+        else:
+            if os.path.exists("runtime\python.exe") and "GPT" in os.path.dirname(__file__).upper():
+                self.gsv_pydir=os.path.abspath("runtime\python.exe")
+                logger.info("已检测到GPT-SoVITS环境")
+            else:
+                self.gsv_pydir=""
+        ###################
         self.bv2_dir=bv2_dir
         self.gsv_dir=gsv_dir
         self.bv2_args=bv2_args
         self.gsv_args=gsv_args
-        if bv2_pydir!="":
+        if self.bv2_pydir!="":
             if bv2_dir=="":
-                self.bv2_dir=os.path.dirname(os.path.dirname(bv2_pydir))
-        if gsv_pydir!="":        
+                self.bv2_dir=os.path.dirname(os.path.dirname(self.bv2_pydir))     
+        if self.gsv_pydir!="":              
             if gsv_dir=="":   
-                self.gsv_dir=os.path.dirname(os.path.dirname(gsv_pydir))
+                self.gsv_dir=os.path.dirname(os.path.dirname(self.gsv_pydir))
+
     def to_dict(self):
         return self.__dict__        
     def save(self):
@@ -195,7 +231,6 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,emotion,sp
                     "style_text": style_text,
                     "style_weight": style_weight,                    
                     "text": text
-
                 }
                 print(data_json)
 
@@ -203,20 +238,36 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,emotion,sp
                 response.raise_for_status()  # 检查响应的状态码
                 return response.content
     except Exception as e:
-            logger.error(f'bert-vits2推理发生错误，请检查HiyoriUI是否正确运行。报错内容: {e}')
+            err=f'bert-vits2推理发生错误，请检查HiyoriUI是否正确运行。报错内容: {e}'
+            logger.error(err)
             return None
 
 
 def gsv_api(port,**kwargs):
+    global gsv_fallback
     try:
-        data_json=kwargs
-        print(data_json)
+        data_json=kwargs      
         API_URL = f'http://127.0.0.1:{port}/tts'
-        response = requests.get(url=API_URL,params=data_json)
+        if gsv_fallback:
+            data_json={
+                        "refer_wav_path": kwargs["ref_audio_path"],
+                        "prompt_text": kwargs["prompt_text"],
+                        "prompt_language": kwargs["prompt_lang"],
+                        "text": kwargs["text"],
+                        "text_language": kwargs["text_lang"],
+                        "top_k": kwargs["top_k"],
+                        "top_p":kwargs["top_p"],
+                        "temperature":kwargs["temperature"],
+                        "speed": kwargs["speed_factor"]
+                        } 
+            API_URL = f'http://127.0.0.1:{port}/'
+        print(data_json)       
+        response = requests.post(url=API_URL,json=data_json)
         response.raise_for_status()  # 检查响应的状态码
         return response.content
     except Exception as e:
-        logger.error(f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}')
+        err=f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}'
+        logger.error(err)
         return None
 
 def file_show(file):
@@ -271,7 +322,9 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
                 ptr+=dur
                 audiolist.append(wav)
         audio=np.concatenate(audiolist)
-        assert len(file_list)!=0,"所有的字幕合成都出错了，请检查API服务！"
+        if len(file_list)==0:
+            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+            #raise "所有的字幕合成都出错了，请检查API服务！"
         os.makedirs(os.path.join("SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
@@ -351,7 +404,9 @@ def read_prcsv(filename,fps,offset):
             return subtitle_list
         #            
     except Exception as e:
-         logger.error(f"读取字幕文件出错：{str(e)}")
+         err=f"读取字幕文件出错：{str(e)}"
+         logger.error(err)
+         gr.Warning(err)
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     if proj=="bv2":
@@ -376,6 +431,8 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
                         speed_factor=speed_factor,
                         top_k=top_k,
                         top_p=top_p,
+                        seed = -1,
+                        parallel_infer = True,
                         temperature=temperature,
                         repetition_penalty=repetition_penalty,
                         split_bucket=split_bucket,
@@ -409,14 +466,17 @@ def cls_cache():
     if os.path.exists(dir):
         shutil.rmtree(dir)
         logger.info("成功清除缓存！")
+        gr.Info("成功清除缓存！")
     else:
         logger.info("目前没有缓存！")
+        gr.Info("目前没有缓存！")
 
 def save_settngs(server_port,clear_tmp,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args):
     global config
     config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args)
     config.save()
-    logger.info("已经保存了设置")
+    logger.info("成功保存设置！")
+    gr.Info("成功保存设置！")
     return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args
 
 def load_cfg():
@@ -435,6 +495,7 @@ def load_cfg():
 def start_hiyoriui():
     global config
     if config.bv2_pydir=="":
+        gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"    
     command=f'"{config.bv2_pydir}" "{os.path.join(config.bv2_dir,"hiyoriUI.py")}" {config.bv2_args}'
     run_command(command=command,dir=config.bv2_dir)
@@ -443,9 +504,21 @@ def start_hiyoriui():
 
 def start_gsv():
     global config
+    global gsv_fallback
     if config.gsv_pydir=="":
+        gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"
-    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,"api_v2.py")}" {config.gsv_args}'
+    if os.path.exists(os.path.join(config.gsv_dir,"api_v2.py")):
+        apath="api_v2.py"
+        gsv_fallback=False
+    else:
+        apath="api.py"
+        gsv_fallback=True
+        assert os.path.exists(os.path.join(config.gsv_dir,"api.py")),"api文件丢失？？？"
+        gr.Warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
+        logger.warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
+
+    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,apath)}" {config.gsv_args}'
     run_command(command=command,dir=config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
@@ -487,7 +560,8 @@ def load_preset(name,port):
                switch=False
                time.sleep(0.1)
             else:
-               assert switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)=='模型切换成功',"模型切换失败"
+               if switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)!='模型切换成功':
+                   gr.Warning("模型切换失败")
                current_sovits_model=data["sovits_path"]
                current_gpt_model=data["gpt_path"]
                switch=True
@@ -506,16 +580,22 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
         }   
         print(data_json)
         port=int(port)
-        API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
-        response = requests.get(url=API_URL)
-        response.raise_for_status()
-        API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
-        response = requests.get(url=API_URL)
-        response.raise_for_status()
+        if gsv_fallback:
+            API_URL=f'http://127.0.0.1:{port}/set_model/'
+            response = requests.post(url=API_URL,json=data_json)
+            response.raise_for_status()
+        else:
+            API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
+            response = requests.get(url=API_URL)
+            response.raise_for_status()
+            API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
+            response = requests.get(url=API_URL)
+            response.raise_for_status()
         logger.info(f"模型已切换：{data_json}")
         return '模型切换成功'
     except Exception as e:
         err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
+        gr.Warning(err)
         logger.error(err)
         return err
 
@@ -530,7 +610,9 @@ def refresh_presets_list():
             logger.info("当前没有预设")
     except Exception as e:
         presets_list=['None']
-        logger.error(f"刷新预设失败：{e}")
+        err=f"刷新预设失败：{e}"
+        logger.error(err)
+        gr.Warning(err)
     time.sleep(0.1)
     return gr.update(value="None",choices=presets_list)
 
@@ -542,7 +624,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     args, unknown = parser.parse_known_args()
-    
+    gsv_fallback=False
     refresh_presets_list()
     current_sovits_model=None
     current_gpt_model=None   
@@ -583,11 +665,11 @@ if __name__ == "__main__":
                                 gen_btn1 = gr.Button("生成", variant="primary",visible=True)
                     with gr.TabItem("GPT-SoVITS"):
                         proj2=gr.Radio(choices=['gsv'], value="gsv",interactive=False,visible=False)
-                        language2 = gr.Dropdown(choices=["中文","日文","英文","中英混合","日英混合","多语种混合"], value="中英混合", label="Language",interactive=True,allow_custom_value=False)
+                        language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
                         refer_audio=gr.Audio(label="参考音频")
                         with gr.Row():
                             refer_text=gr.Textbox(label="参考音频文本")
-                            refer_lang = gr.Dropdown(choices=["中文","日文","英文","中英混合","日英混合","多语种混合"], value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
+                            refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
                         with gr.Accordion("模型切换",open=False):
                             sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
                             gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
@@ -632,7 +714,7 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown("点击应用后，这些设置才会生效。")
-                        server_port_set=gr.Number(label="本程序所使用的端口，重启生效。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port)
+                        server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
                         clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
                         theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
@@ -661,9 +743,14 @@ if __name__ == "__main__":
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
         save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args])
-        restart_btn.click(restart)
+        restart_btn.click(restart,[],[])
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
         choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,refer_text,refer_lang,gen_textbox_output_text])
         refresh_presets_btn.click(refresh_presets_list,outputs=[choose_presets])
-    app.launch(share=args.share,server_port=server_port,inbrowser=True)
+    app.queue().launch(
+            share=args.share,
+            server_port=server_port if server_port>5001 else None,
+            inbrowser=True,
+            )
+

@@ -637,7 +637,10 @@ if __name__ == "__main__":
         server_port=args.server_port
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
-        gr.Markdown(value="版本240808，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支")
+        gr.Markdown(value="""
+                    版本240808，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
+                    仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
+                    """)
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():

@@ -85,37 +85,60 @@ except ImportError:
     logger.addHandler(handler)
     logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
-class subtitle:
-    def __init__(self,index:int, start_time, end_time, text:str):
+class Base_subtitle:
+    def __init__(self,index:int, start_time, end_time, text:str,ntype:str,fps=30):
         self.index = int(index)
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time_raw = start_time
+        self.end_time_raw = end_time
         self.text = text.strip()
-    def normalize(self,ntype:str,fps=30):
-         if ntype=="prcsv":
-              h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
-              self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-              h,m,s,fs=(self.end_time.replace(';',':')).split(":")
-              self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-         elif ntype=="srt":
-             h,m,s=self.start_time.split(":")
-             s=s.replace(",",".")
-             self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
-             h,m,s=self.end_time.split(":")
-             s=s.replace(",",".")
-             self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
-         else:
-             raise ValueError
+    #def normalize(self,ntype:str,fps=30):
+        if ntype=="prcsv":
+            h,m,s,fs=(start_time.replace(';',':')).split(":")#seconds
+            self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
+            h,m,s,fs=(end_time.replace(';',':')).split(":")
+            self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
+        elif ntype=="srt":
+            h,m,s=start_time.split(":")
+            s=s.replace(",",".")
+            self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
+            h,m,s=end_time.split(":")
+            s=s.replace(",",".")
+            self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
+        else:
+            raise ValueError
+    def __str__(self) -> str:
+        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}'
+    
+class Subtitle(Base_subtitle):
+    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
+        super().__init__(index, start_time, end_time, text, ntype, fps)
+        self.is_success=False
+        self.is_delayed=False
     def add_offset(self,offset=0):
         self.start_time+=offset
         if self.start_time<0:
             self.start_time=0
         self.end_time+=offset
         if self.end_time<0:
-            self.end_time=0
+            self.end_time=0    
     def __str__(self) -> str:
-        return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
-
+        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}'
+    
+class Subtitles():
+    def __init__(self,proj:str=None) -> None:
+        self.subtitles=[]
+        self.proj=proj
+    def set_proj(self,proj:str):
+        self.proj=proj
+    def append(self, subtitle):
+        self.subtitles.append(subtitle)
+    def __iter__(self):
+        return iter(self.subtitles)
+    def __getitem__(self, index):
+        return self.subtitles[index]
+    def __len__(self):
+        return len(self.subtitles)
+    
 class Settings:
     def __init__(self,server_port:int=5001,theme:str="default",clear_tmp:bool=False,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
         self.server_port=int(server_port) 
@@ -303,17 +326,19 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join("SAVAdata","temp",t)
         os.makedirs(dirname,exist_ok=True)
-        print(max_workers)
+        #print(max_workers)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
         file_list=[i for i in file_list if i is not None]
-        for i in subtitle_list:
+        for id,i in enumerate(subtitle_list):
             start_frame=int(i.start_time*sr)
             if ptr<start_frame:
                 silence_len=start_frame-ptr
                 audiolist.append(np.zeros(silence_len))
                 ptr+=silence_len
+                subtitle_list[id].is_delayed=False
             elif ptr>start_frame:
+                subtitle_list[id].is_delayed=True
                 logger.warning(f"序号为{i.index},内容为:{i.text} 的字幕由于之前的音频过长而被延迟")                   
             f_path=os.path.join(dirname,f"{i.index}.wav")
             if f_path in file_list:
@@ -321,6 +346,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
                 dur=wav.shape[-1]             #frames
                 ptr+=dur
                 audiolist.append(wav)
+                subtitle_list[id].is_success=True
         audio=np.concatenate(audiolist)
         if len(file_list)==0:
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
@@ -346,7 +372,7 @@ def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,ref
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
         file=f.readlines()
-    subtitle_list=[]
+    subtitle_list=Subtitles()
     indexlist=[]
     filelength=len(file)
     for i in range(0,filelength):
@@ -365,8 +391,7 @@ def read_srt(filename,offset):
         text=""
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]
-        st=subtitle(id,st,et,text)
-        st.normalize(ntype="srt")
+        st=Subtitle(id,st,et,text,ntype="srt")
         st.add_offset(offset=offset)
         subtitle_list.append(st)
     st,et=file[indexlist[-1]].split(" --> ")
@@ -374,8 +399,7 @@ def read_srt(filename,offset):
     text=""
     for x in range(indexlist[-1]+1,filelength):
         text+=file[x]
-    st=subtitle(id,st,et,text)
-    st.normalize(ntype="srt")
+    st=Subtitle(id,st,et,text,ntype="srt")
     st.add_offset(offset=offset)
     subtitle_list.append(st)
     return subtitle_list
@@ -391,13 +415,12 @@ def read_prcsv(filename,fps,offset):
         with open(filename,"r",encoding="utf-8",newline='') as csvfile:
             reader = list(csv.reader(csvfile))
             lenth=len(reader)
-            subtitle_list=[]
+            subtitle_list=Subtitles()
             stid=1  
             for index in range(1,lenth):
              if reader[index]==[]:
                   continue
-             st=subtitle(stid,reader[index][0],reader[index][1],reader[index][2])
-             st.normalize(ntype="prcsv",fps=fps)
+             st=Subtitle(stid,reader[index][0],reader[index][1],reader[index][2],ntype="prcsv",fps=fps)
              st.add_offset(offset=offset)
              subtitle_list.append(st)
              stid+=1
@@ -617,6 +640,9 @@ def refresh_presets_list():
     return gr.update(value="None",choices=presets_list)
 
 def restart():
+    gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
+    time.sleep(0.5)
+    os.system("cls")
     os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
 
 if __name__ == "__main__":
@@ -644,8 +670,7 @@ if __name__ == "__main__":
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
-                    textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
-                     
+                    textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)                     
                     with gr.TabItem("Bert-VITS2-HiyoriUI"):
                         with gr.Row():            
                             with gr.Column():
@@ -712,7 +737,13 @@ if __name__ == "__main__":
                        with gr.Accordion("启动服务"):
                            gr.Markdown(value="请先在设置中应用项目路径")
                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")               
+                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                with gr.Column():
+                        for x in range(1):
+                            with gr.Row():                                
+                                gr.Textbox(scale=0,show_label=False,interactive=False)
+                                gr.Textbox(scale=5,show_label=False,interactive=False)
+                                gr.Button(scale=0)           
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():

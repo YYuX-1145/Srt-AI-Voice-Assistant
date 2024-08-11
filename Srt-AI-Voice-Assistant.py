@@ -19,11 +19,12 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
-240808更新：<br>
+240811更新：<br>
 [请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。
 1.增加错误提示
 2.自动检测项目路径
 3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。
+4.重大功能更新：支持重新抽卡合成
 
 240404：<br>
 ~~[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用~~
@@ -39,6 +40,13 @@ readme="""
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
+if getattr(sys, 'frozen', False):
+    current_path = os.path.dirname(sys.executable)
+    exe=True
+elif __file__:
+    current_path = os.path.dirname(__file__)
+    exe=False
+
 dict_language = {
     "中文": "all_zh",
     "粤语": "all_yue",
@@ -85,42 +93,116 @@ except ImportError:
     logger.addHandler(handler)
     logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
-class subtitle:
-    def __init__(self,index:int, start_time, end_time, text:str):
+class Base_subtitle:
+    def __init__(self,index:int, start_time, end_time, text:str,ntype:str,fps=30):
         self.index = int(index)
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time_raw = start_time
+        self.end_time_raw = end_time
         self.text = text.strip()
-    def normalize(self,ntype:str,fps=30):
-         if ntype=="prcsv":
-              h,m,s,fs=(self.start_time.replace(';',':')).split(":")#seconds
-              self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-              h,m,s,fs=(self.end_time.replace(';',':')).split(":")
-              self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-         elif ntype=="srt":
-             h,m,s=self.start_time.split(":")
-             s=s.replace(",",".")
-             self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
-             h,m,s=self.end_time.split(":")
-             s=s.replace(",",".")
-             self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
-         else:
-             raise ValueError
+    #def normalize(self,ntype:str,fps=30):
+        if ntype=="prcsv":
+            h,m,s,fs=(start_time.replace(';',':')).split(":")#seconds
+            self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
+            h,m,s,fs=(end_time.replace(';',':')).split(":")
+            self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
+        elif ntype=="srt":
+            h,m,s=start_time.split(":")
+            s=s.replace(",",".")
+            self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
+            h,m,s=end_time.split(":")
+            s=s.replace(",",".")
+            self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
+        else:
+            raise ValueError
+    def __str__(self) -> str:
+        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}'
+    
+class Subtitle(Base_subtitle):
+    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
+        super().__init__(index, start_time, end_time, text, ntype, fps)
+        self.is_success=False
+        self.is_delayed=False
     def add_offset(self,offset=0):
         self.start_time+=offset
         if self.start_time<0:
             self.start_time=0
         self.end_time+=offset
         if self.end_time<0:
-            self.end_time=0
+            self.end_time=0    
     def __str__(self) -> str:
-        return f'id:{self.index},start:{self.start_time},end:{self.end_time},text:{self.text}'
+        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}'
+    
+class Subtitles():
+    def __init__(self,proj:str=None,dir:str=None) -> None:
+        self.subtitles=[]
+        self.proj=proj
+        self.dir=dir
+    def set_proj(self,proj:str):
+        self.proj=proj
+    def set_dir(self,dir:str):
+        self.dir=dir 
+        os.makedirs(dir,exist_ok=True)
+    def audio_join(self,sr) :#-> tuple[int,np.array]
+        assert self.dir is not None
+        audiolist=[]
+        delayed_list=[]
+        failed_list=[]
+        ok=False
+        ptr=0
+        for id,i in enumerate(self.subtitles):
+            start_frame=int(i.start_time*sr)
+            if ptr<start_frame:
+                silence_len=start_frame-ptr
+                audiolist.append(np.zeros(silence_len))
+                ptr+=silence_len
+                self.subtitles[id].is_delayed=False
+            elif ptr>start_frame:
+                self.subtitles[id].is_delayed=True
+                delayed_list.append(self.subtitles[id].index)                                   
+            f_path=os.path.join(self.dir,f"{i.index}.wav")
+            if os.path.exists(f_path):
+                ok=True
+                wav, _ = librosa.load(f_path, sr=sr)
+                dur=wav.shape[-1]             #frames
+                ptr+=dur
+                audiolist.append(wav)
+                self.subtitles[id].is_success=True
+            else:
+                failed_list.append(self.subtitles[id].index)
+        if not ok:
+            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+        if delayed_list!=[]:
+            logger.warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
+            gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
+        if failed_list!=[]:
+            logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
+            gr.Warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
+        audio_content=np.concatenate(audiolist)
+        return audio_content
+    def get_state(self,idx):       
+        if self.subtitles[idx].is_delayed:
+            return 'delayed'
+        if self.subtitles[idx].is_success:
+            return 'ok' 
+        return "failed"
+    def append(self, subtitle:Subtitle):
+        self.subtitles.append(subtitle)
+    def sort(self):
+        self.subtitles.sort(key=lambda x: x.index)
+    def __iter__(self):
+        return iter(self.subtitles)
+    def __getitem__(self, index):
+        return self.subtitles[index]
+    def __len__(self):
+        return len(self.subtitles)
+subtitle_list= Subtitles()  
 
 class Settings:
-    def __init__(self,server_port:int=5001,theme:str="default",clear_tmp:bool=False,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
+    def __init__(self,server_port:int=5001,theme:str="default",clear_tmp:bool=False,num_edit_rows:int=7,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
         self.server_port=int(server_port) 
         self.theme=theme
         self.clear_tmp=clear_tmp
+        self.num_edit_rows=int(num_edit_rows)
         #detect python envs####
         if bv2_pydir!="" :
             if os.path.exists(bv2_pydir):
@@ -129,8 +211,8 @@ class Settings:
                 self.bv2_pydir=""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if os.path.exists("venv\python.exe") and "VITS2" in os.path.dirname(__file__).upper():
-                self.bv2_pydir=os.path.abspath("venv\python.exe")
+            if os.path.exists(os.path.join(current_path,"venv\\python.exe")) and "VITS2" in current_path.upper():
+                self.bv2_pydir=os.path.join(current_path,"venv\\python.exe")
                 logger.info("已检测到Bert-VITS2环境")
             else:
                 self.bv2_pydir=""
@@ -142,8 +224,8 @@ class Settings:
                 self.gsv_pydir=""
                 gr.Warning("错误：填写的路径不存在！")               
         else:
-            if os.path.exists("runtime\python.exe") and "GPT" in os.path.dirname(__file__).upper():
-                self.gsv_pydir=os.path.abspath("runtime\python.exe")
+            if os.path.exists(os.path.join(current_path,"runtime\\python.exe")) and "GPT" in current_path.upper():
+                self.gsv_pydir=os.path.join(current_path,"runtime\\python.exe")
                 logger.info("已检测到GPT-SoVITS环境")
             else:
                 self.gsv_pydir=""
@@ -163,8 +245,8 @@ class Settings:
         return self.__dict__        
     def save(self):
         dict= self.to_dict()
-        os.makedirs(os.path.join("SAVAdata"),exist_ok=True)
-        with open(os.path.join("SAVAdata","config.json"), 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.join(current_path,"SAVAdata"),exist_ok=True)
+        with open(os.path.join(current_path,"SAVAdata","config.json"), 'w', encoding='utf-8') as f:
             json.dump(dict, f, indent=2, ensure_ascii=False) 
     @classmethod
     def from_dict(cls, dict):
@@ -282,71 +364,53 @@ def file_show(file):
 
 def temp_ra(a:tuple):
     sr,wav=a
-    os.makedirs(os.path.join("SAVAdata","temp"),exist_ok=True)
-    sf.write(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"), wav, sr)
-
+    os.makedirs(os.path.join(current_path,"SAVAdata","temp"),exist_ok=True)
+    sf.write(os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav"), wav, sr)
 
 
 def generate(*args,proj,in_file,sr,fps,offset,max_workers):
+        global subtitle_list
         t1 = time.time()
         sr,fps=positive_int(sr,fps)
-        audiolist=[]
         if in_file is None:
-            return None,"请上传字幕文件！"
+            gr.Info("请上传字幕文件！")
+            return None,"请上传字幕文件！",*load_page()
         if in_file.name.endswith(".csv"):
            subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name.endswith(".srt"):
             subtitle_list=read_srt(in_file.name,offset)
         else:
-            return None,"未知的格式，请确保扩展名正确！"
-        ptr=0
+            return None,"未知的格式，请确保扩展名正确！",*load_page()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        dirname=os.path.join("SAVAdata","temp",t)
-        os.makedirs(dirname,exist_ok=True)
-        print(max_workers)
+        dirname=os.path.join(current_path,"SAVAdata","temp",t)
+        subtitle_list.sort()
+        subtitle_list.set_dir(dirname)
+        subtitle_list.set_proj(proj)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
-        file_list=[i for i in file_list if i is not None]
-        for i in subtitle_list:
-            start_frame=int(i.start_time*sr)
-            if ptr<start_frame:
-                silence_len=start_frame-ptr
-                audiolist.append(np.zeros(silence_len))
-                ptr+=silence_len
-            elif ptr>start_frame:
-                logger.warning(f"序号为{i.index},内容为:{i.text} 的字幕由于之前的音频过长而被延迟")                   
-            f_path=os.path.join(dirname,f"{i.index}.wav")
-            if f_path in file_list:
-                wav, _ = librosa.load(f_path, sr=sr)
-                dur=wav.shape[-1]             #frames
-                ptr+=dur
-                audiolist.append(wav)
-        audio=np.concatenate(audiolist)
-        if len(file_list)==0:
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
-            #raise "所有的字幕合成都出错了，请检查API服务！"
-        os.makedirs(os.path.join("SAVAdata","output"),exist_ok=True)
-        sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
+        audio = subtitle_list.audio_join(sr=sr)
+        os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
+        sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
         m, s = divmod(t2-t1, 60)
         use_time="%02d:%02d"%(m, s)
         if len(file_list)!=len(subtitle_list):
             return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}'
-        return (sr,audio),f'完成！所用时间:{use_time}'
+        return (sr,audio),f'完成！所用时间:{use_time}',*load_page()
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
-        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
         if refer_audio is None or refer_text == "":
-            return None,"你必须指定参考音频和文本"                
+            return None,"你必须指定参考音频和文本",*load_page()                
         temp_ra(refer_audio)         
         return generate(dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
         file=f.readlines()
-    subtitle_list=[]
+    subtitle_list=Subtitles()
     indexlist=[]
     filelength=len(file)
     for i in range(0,filelength):
@@ -365,8 +429,7 @@ def read_srt(filename,offset):
         text=""
         for x in range(indexlist[i]+1,indexlist[i+1]-2):
             text+=file[x]
-        st=subtitle(id,st,et,text)
-        st.normalize(ntype="srt")
+        st=Subtitle(id,st,et,text,ntype="srt")
         st.add_offset(offset=offset)
         subtitle_list.append(st)
     st,et=file[indexlist[-1]].split(" --> ")
@@ -374,8 +437,7 @@ def read_srt(filename,offset):
     text=""
     for x in range(indexlist[-1]+1,filelength):
         text+=file[x]
-    st=subtitle(id,st,et,text)
-    st.normalize(ntype="srt")
+    st=Subtitle(id,st,et,text,ntype="srt")
     st.add_offset(offset=offset)
     subtitle_list.append(st)
     return subtitle_list
@@ -391,16 +453,15 @@ def read_prcsv(filename,fps,offset):
         with open(filename,"r",encoding="utf-8",newline='') as csvfile:
             reader = list(csv.reader(csvfile))
             lenth=len(reader)
-            subtitle_list=[]
+            subtitle_list=Subtitles()
             stid=1  
             for index in range(1,lenth):
-             if reader[index]==[]:
-                  continue
-             st=subtitle(stid,reader[index][0],reader[index][1],reader[index][2])
-             st.normalize(ntype="prcsv",fps=fps)
-             st.add_offset(offset=offset)
-             subtitle_list.append(st)
-             stid+=1
+                if reader[index]==[]:
+                    continue
+                st=Subtitle(stid,reader[index][0],reader[index][1],reader[index][2],ntype="prcsv",fps=fps)
+                st.add_offset(offset=offset)
+                subtitle_list.append(st)
+                stid+=1
             return subtitle_list
         #            
     except Exception as e:
@@ -462,7 +523,7 @@ def switch_spk(choice):
         return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
         
 def cls_cache():
-    dir=os.path.join("SAVAdata","temp")
+    dir=os.path.join(current_path,"SAVAdata","temp")
     if os.path.exists(dir):
         shutil.rmtree(dir)
         logger.info("成功清除缓存！")
@@ -471,17 +532,22 @@ def cls_cache():
         logger.info("目前没有缓存！")
         gr.Info("目前没有缓存！")
 
-def save_settngs(server_port,clear_tmp,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args):
+def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args):
     global config
-    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args)
+    current_edit_rows=config.num_edit_rows
+    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args)
     config.save()
+    if config.num_edit_rows!=current_edit_rows:
+        config.num_edit_rows=current_edit_rows
+        logger.info("更改字幕栏数需要重启生效")
+        gr.Info("更改字幕栏数需要重启生效")
     logger.info("成功保存设置！")
     gr.Info("成功保存设置！")
     return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args
 
 def load_cfg():
-    global config    
-    config_path=os.path.join("SAVAdata","config.json")
+    global config 
+    config_path=os.path.join(current_path,"SAVAdata","config.json")
     if os.path.exists(config_path):        
         try:
             config=Settings.from_dict(json.load(open(config_path, encoding="utf-8")))          
@@ -526,10 +592,12 @@ def start_gsv():
 def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
     try:
         if name=="None" or name=="":
+            gr.Info("请输入名称")
             return "请输入名称"
         if ra is None:
+            gr.Info("请上传参考音频")
             return "请上传参考音频"
-        dir=os.path.join("SAVAdata","presets",name)
+        dir=os.path.join(current_path,"SAVAdata","presets",name)
         os.makedirs(dir,exist_ok=True)
         data={"name":name,
               "description":description,
@@ -544,17 +612,19 @@ def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
         with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False) 
         time.sleep(0.1)
+        gr.Info("预设保存成功")
         return "预设保存成功"
     except Exception as e:
+        gr.Warning(f"出错：{e}")
         return f"出错：{e}"
 
 def load_preset(name,port):
     try:
         global current_sovits_model
         global current_gpt_model
-        if name=='None'or not os.path.exists(os.path.join("SAVAdata","presets",name)):
+        if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
-        data=json.load(open(os.path.join("SAVAdata","presets",name,"info.json"), encoding="utf-8"))
+        data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
         if data["sovits_path"] !="" and data["gpt_path"] != "":
             if data["sovits_path"]==current_sovits_model and data["gpt_path"]==current_gpt_model:
                switch=False
@@ -565,12 +635,15 @@ def load_preset(name,port):
                current_sovits_model=data["sovits_path"]
                current_gpt_model=data["gpt_path"]
                switch=True
+        if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
+            data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
         return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
     except Exception as e:
         return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
 
 def switch_gsvmodel(sovits_path,gpt_path,port):
     if sovits_path=="" or gpt_path=="":
+        gr.Info("请指定模型路径！")
         return "请指定模型路径！"
     try:
         
@@ -603,7 +676,7 @@ def refresh_presets_list():
     global presets_list
     presets_list=['None']
     try:
-        preset_dir=os.path.join("SAVAdata","presets")
+        preset_dir=os.path.join(current_path,"SAVAdata","presets")
         if os.path.isdir(preset_dir):
             presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
         else:
@@ -617,7 +690,104 @@ def refresh_presets_list():
     return gr.update(value="None",choices=presets_list)
 
 def restart():
-    os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
+    gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
+    time.sleep(0.5)
+    os.system("cls")
+    if not exe:
+        os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
+    else:
+        run_command(command=f"{sys.executable}",dir=current_path)
+        os.system(f"taskkill /PID {os.getpid()} /F")
+
+def remake(*args):
+    global subtitle_list
+    fp=None
+    page=args[0]
+    if subtitle_list.proj is None:
+        gr.Info("请先点击生成！")
+        return fp,*show_page(page)
+    if int(args[1])==-1:
+        gr.Info("Not available !")
+        return fp,*show_page(page)
+    if subtitle_list.proj=="bv2":
+        page,idx,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
+        args=language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text
+        fp=save(args,proj="bv2",text=subtitle_list[int(idx)].text,dir=subtitle_list.dir, subid=subtitle_list[int(idx)].index)
+    else:
+        page,idx,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
+        if refer_audio is None or refer_text == "":
+            gr.Warning("你必须指定参考音频和文本")
+            return fp,*show_page(page)                
+        temp_ra(refer_audio)
+        args=dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
+        fp=save(args,proj="gsv",text=subtitle_list[int(idx)].text,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    if fp is not None:
+        subtitle_list[int(idx)].is_success=True
+        gr.Info("重新合成成功！点击重新拼接内容。")
+    else:
+        subtitle_list[int(idx)].is_success=False
+        gr.Warning("重新合成失败！")
+    return fp,*show_page(page)
+
+def recompose(sr1,sr2,page):
+    global subtitle_list
+    if len(subtitle_list)==0:
+        gr.Info("请先点击生成！")
+        return None,"请先点击生成！"
+    if subtitle_list.proj=="bv2":
+        sr=sr1
+    else:
+        sr=sr2
+    audio=subtitle_list.audio_join(sr=sr)
+    gr.Info("重新合成完毕！")
+    return (sr,audio),"OK",*show_page(page)
+
+def play_audio(idx):
+    global subtitle_list
+    i=int(idx)
+    if i==-1 or not subtitle_list[i].is_success:
+        gr.Info("Not available !")
+        return None
+    return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
+
+def load_page():
+    global subtitle_list
+    length=len(subtitle_list)
+    if length==0:
+        gr.Info("请先点击“生成”！")
+    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1)
+
+def show_page(page_start):
+    global subtitle_list
+    ret=[]
+    length=len(subtitle_list)
+    pageend=page_start+config.num_edit_rows
+    if pageend>length:
+        pageend=length
+    if subtitle_list.proj is not None:
+        if subtitle_list.proj=="bv2":
+            btn=[gr.update(visible=True),gr.update(visible=False)]
+        else:
+            btn=[gr.update(visible=False),gr.update(visible=True)]  
+    else:
+        btn=[gr.update(visible=True),gr.update(visible=False)]     
+    for i in range(page_start-1,pageend):
+        ret.append(gr.update(value=i,visible=False))
+        ret.append(gr.update(value=subtitle_list[i].index,visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time} -> {subtitle_list[i].end_time}",visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].text}",visible=True))
+        ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
+        ret+=btn
+    if pageend-page_start+1<config.num_edit_rows:
+        for i in range(config.num_edit_rows-pageend+page_start-1):
+            ret.append(gr.update(value=-1,visible=False))
+            ret.append(gr.update(value=-1,visible=True))
+            ret.append(gr.update(value="NO INFO",visible=True))
+            ret.append(gr.update(value="NO INFO",visible=True))
+            ret.append(gr.update(value="NO INFO",visible=True))  
+            ret+=btn        
+    return ret
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
@@ -638,14 +808,13 @@ if __name__ == "__main__":
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="""
-                    版本240808，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
+                    版本240811，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     """)
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
-                    textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
-                     
+                    textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)                     
                     with gr.TabItem("Bert-VITS2-HiyoriUI"):
                         with gr.Row():            
                             with gr.Column():
@@ -712,13 +881,43 @@ if __name__ == "__main__":
                        with gr.Accordion("启动服务"):
                            gr.Markdown(value="请先在设置中应用项目路径")
                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")               
+                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。",open=False):
+                    with gr.Column():
+                        edit_rows=[]
+                        with gr.Row():
+                            pageloadbtn=gr.Button(value="加载/刷新字幕内容")
+                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=1)
+                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True)
+                            recompose_btn=gr.Button(value="重新拼接内容")
+                        #gr.Markdown(value="Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。")
+                        for x in range(config.num_edit_rows):
+                            _=gr.Number(show_label=False,visible=False,value=-1)
+                            with gr.Row():
+                                edit_rows.append(_)  #real index                             
+                                edit_rows.append(gr.Number(scale=0,show_label=False,interactive=False,value=-1,min_width=80))#index(raw)
+                                edit_rows.append(gr.Textbox(scale=3,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
+                                edit_rows.append(gr.Textbox(scale=5,show_label=False,interactive=False,value="NO INFO",max_lines=1))#content
+                                edit_rows.append(gr.Textbox(value="NO INFO",label="状态",show_label=False,interactive=False,scale=1,max_lines=1))#is success or delayed?
+                                with gr.Row():
+                                    __=gr.Button(value="▶️",scale=1,min_width=60)  
+                                    __.click(play_audio,inputs=[_,],outputs=[audio_player])
+                                    bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
+                                    edit_rows.append(bv2regenbtn)
+                                    bv2regenbtn.click(remake,inputs=[page_slider,_,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
+                                    gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60)
+                                    edit_rows.append(gsvregenbtn)  
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])                                        
+                        page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
+                        pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
+                        recompose_btn.click(recompose,inputs=[sampling_rate1,sampling_rate2,page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown("点击应用后，这些设置才会生效。")
                         server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
                         clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
+                        num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
                         theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
                         with gr.Group():
@@ -739,13 +938,13 @@ if __name__ == "__main__":
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args])
         restart_btn.click(restart,[],[])
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])

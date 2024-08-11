@@ -697,7 +697,7 @@ def restart():
         os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
     else:
         run_command(command=f"{sys.executable}",dir=current_path)
-        sys.exit(0)
+        os.system(f"taskkill /PID {os.getpid()} /F")
 
 def remake(*args):
     global subtitle_list

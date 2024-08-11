@@ -39,6 +39,12 @@ readme="""
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
+if getattr(sys, 'frozen', False):
+    current_path = os.path.dirname(sys.executable)
+    exe=True
+elif __file__:
+    current_path = os.path.dirname(__file__)
+    exe=False
 
 dict_language = {
     "中文": "all_zh",
@@ -204,8 +210,8 @@ class Settings:
                 self.bv2_pydir=""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if os.path.exists("venv\python.exe") and "VITS2" in os.path.dirname(__file__).upper():
-                self.bv2_pydir=os.path.abspath("venv\python.exe")
+            if os.path.exists(os.path.join(current_path,"venv\\python.exe")) and "VITS2" in current_path.upper():
+                self.bv2_pydir=os.path.join(current_path,"venv\\python.exe")
                 logger.info("已检测到Bert-VITS2环境")
             else:
                 self.bv2_pydir=""
@@ -217,8 +223,8 @@ class Settings:
                 self.gsv_pydir=""
                 gr.Warning("错误：填写的路径不存在！")               
         else:
-            if os.path.exists("runtime\python.exe") and "GPT" in os.path.dirname(__file__).upper():
-                self.gsv_pydir=os.path.abspath("runtime\python.exe")
+            if os.path.exists(os.path.join(current_path,"runtime\\python.exe")) and "GPT" in current_path.upper():
+                self.gsv_pydir=os.path.join(current_path,"runtime\\python.exe")
                 logger.info("已检测到GPT-SoVITS环境")
             else:
                 self.gsv_pydir=""
@@ -238,8 +244,8 @@ class Settings:
         return self.__dict__        
     def save(self):
         dict= self.to_dict()
-        os.makedirs(os.path.join("SAVAdata"),exist_ok=True)
-        with open(os.path.join("SAVAdata","config.json"), 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.join(current_path,"SAVAdata"),exist_ok=True)
+        with open(os.path.join(current_path,"SAVAdata","config.json"), 'w', encoding='utf-8') as f:
             json.dump(dict, f, indent=2, ensure_ascii=False) 
     @classmethod
     def from_dict(cls, dict):
@@ -357,8 +363,8 @@ def file_show(file):
 
 def temp_ra(a:tuple):
     sr,wav=a
-    os.makedirs(os.path.join("SAVAdata","temp"),exist_ok=True)
-    sf.write(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"), wav, sr)
+    os.makedirs(os.path.join(current_path,"SAVAdata","temp"),exist_ok=True)
+    sf.write(os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav"), wav, sr)
 
 
 def generate(*args,proj,in_file,sr,fps,offset,max_workers):
@@ -375,15 +381,15 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         else:
             return None,"未知的格式，请确保扩展名正确！",*load_page()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        dirname=os.path.join("SAVAdata","temp",t)
+        dirname=os.path.join(current_path,"SAVAdata","temp",t)
         subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
         audio = subtitle_list.audio_join(sr=sr)
-        os.makedirs(os.path.join("SAVAdata","output"),exist_ok=True)
-        sf.write(os.path.join("SAVAdata","output",f"{t}.wav"), audio, sr)
+        os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
+        sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
         m, s = divmod(t2-t1, 60)
         use_time="%02d:%02d"%(m, s)
@@ -394,7 +400,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
-        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本",*load_page()                
         temp_ra(refer_audio)         
@@ -516,7 +522,7 @@ def switch_spk(choice):
         return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
         
 def cls_cache():
-    dir=os.path.join("SAVAdata","temp")
+    dir=os.path.join(current_path,"SAVAdata","temp")
     if os.path.exists(dir):
         shutil.rmtree(dir)
         logger.info("成功清除缓存！")
@@ -540,7 +546,7 @@ def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv
 
 def load_cfg():
     global config 
-    config_path=os.path.join("SAVAdata","config.json")
+    config_path=os.path.join(current_path,"SAVAdata","config.json")
     if os.path.exists(config_path):        
         try:
             config=Settings.from_dict(json.load(open(config_path, encoding="utf-8")))          
@@ -590,7 +596,7 @@ def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
         if ra is None:
             gr.Info("请上传参考音频")
             return "请上传参考音频"
-        dir=os.path.join("SAVAdata","presets",name)
+        dir=os.path.join(current_path,"SAVAdata","presets",name)
         os.makedirs(dir,exist_ok=True)
         data={"name":name,
               "description":description,
@@ -615,9 +621,9 @@ def load_preset(name,port):
     try:
         global current_sovits_model
         global current_gpt_model
-        if name=='None'or not os.path.exists(os.path.join("SAVAdata","presets",name)):
+        if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
-        data=json.load(open(os.path.join("SAVAdata","presets",name,"info.json"), encoding="utf-8"))
+        data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
         if data["sovits_path"] !="" and data["gpt_path"] != "":
             if data["sovits_path"]==current_sovits_model and data["gpt_path"]==current_gpt_model:
                switch=False
@@ -628,6 +634,8 @@ def load_preset(name,port):
                current_sovits_model=data["sovits_path"]
                current_gpt_model=data["gpt_path"]
                switch=True
+        if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
+            data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
         return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
     except Exception as e:
         return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
@@ -667,7 +675,7 @@ def refresh_presets_list():
     global presets_list
     presets_list=['None']
     try:
-        preset_dir=os.path.join("SAVAdata","presets")
+        preset_dir=os.path.join(current_path,"SAVAdata","presets")
         if os.path.isdir(preset_dir):
             presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
         else:
@@ -684,7 +692,10 @@ def restart():
     gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
     time.sleep(0.5)
     os.system("cls")
-    os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
+    if not exe:
+        os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
+    else:
+        os.execl(sys.executable,f'"{sys.executable}"')
 
 def remake(*args):
     global subtitle_list
@@ -702,7 +713,7 @@ def remake(*args):
         fp=save(args,proj="bv2",text=subtitle_list[int(idx)].text,dir=subtitle_list.dir, subid=subtitle_list[int(idx)].index)
     else:
         page,idx,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
-        refer_audio_path=os.path.realpath(os.path.join("SAVAdata","temp","tmp_reference_audio.wav"))    
+        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
             return fp,*show_page(page)                
@@ -869,7 +880,7 @@ if __name__ == "__main__":
                            gr.Markdown(value="请先在设置中应用项目路径")
                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
                            start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
-                with gr.Accordion(label="重新抽卡区域",open=False):
+                with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。",open=False):
                     with gr.Column():
                         edit_rows=[]
                         with gr.Row():
@@ -877,9 +888,7 @@ if __name__ == "__main__":
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=1)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True)
                             recompose_btn=gr.Button(value="重新拼接内容")
-                            gr.Markdown(
-                                value="Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。"
-                            )
+                        #gr.Markdown(value="Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。")
                         for x in range(config.num_edit_rows):
                             _=gr.Number(show_label=False,visible=False,value=-1)
                             with gr.Row():

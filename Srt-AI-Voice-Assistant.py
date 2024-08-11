@@ -19,11 +19,12 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
-240808更新：<br>
+240811更新：<br>
 [请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。
 1.增加错误提示
 2.自动检测项目路径
 3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。
+4.重大功能更新：支持重新抽卡合成
 
 240404：<br>
 ~~[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用~~
@@ -141,7 +142,7 @@ class Subtitles():
     def set_dir(self,dir:str):
         self.dir=dir 
         os.makedirs(dir,exist_ok=True)
-    def audio_join(self,sr) -> tuple[int,np.array]:
+    def audio_join(self,sr) :#-> tuple[int,np.array]
         assert self.dir is not None
         audiolist=[]
         delayed_list=[]
@@ -695,7 +696,8 @@ def restart():
     if not exe:
         os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
     else:
-        os.execl(sys.executable,f'"{sys.executable}"')
+        run_command(command=f"{sys.executable}",dir=current_path)
+        sys.exit(0)
 
 def remake(*args):
     global subtitle_list
@@ -806,7 +808,7 @@ if __name__ == "__main__":
 
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="""
-                    版本240808，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
+                    版本240811，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     """)
         with gr.Tabs():            

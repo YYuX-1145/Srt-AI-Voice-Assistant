@@ -821,6 +821,7 @@ if __name__ == "__main__":
         gr.Markdown(value="""
                     版本240811，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
+                    [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)
         with gr.Tabs():            
             with gr.TabItem("API合成"):
@@ -922,7 +923,7 @@ if __name__ == "__main__":
                         page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
                         recompose_btn.click(recompose,inputs=[sampling_rate1,sampling_rate2,page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
-            with gr.TabItem("扩展功能"):
+            with gr.TabItem("额外内容"):
                 available=False
                 if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
                     available=True
@@ -948,7 +949,7 @@ if __name__ == "__main__":
 `--hop_size` 默认:20 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）<br>
                                             """)
                 if not available:
-                    gr.Markdown("没有任何扩展，安装后重启生效")
+                    gr.Markdown("没有任何扩展，安装后重启生效<br>[获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():

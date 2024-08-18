@@ -107,9 +107,11 @@ def transcribe(audio_path):
         srt_content.append(f"{to_time(start)} --> {to_time(end)}"+"\n")
         srt_content.append(text+"\n")
         srt_content.append("\n")
-    
-    with open(os.path.join(args.output_dir,"output.srt"),"w",encoding="utf-8") as f:
+
+    savepath=os.path.join(args.output_dir,"output.srt")
+    with open(savepath,"w",encoding="utf-8") as f:
         f.writelines(srt_content)
+    os.system(f'explorer /select, {savepath}')
         
 def to_time(time_raw:float):
     hours, r = divmod(time_raw,3600)

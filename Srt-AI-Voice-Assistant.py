@@ -789,6 +789,15 @@ def show_page(page_start):
             ret+=btn        
     return ret
 
+def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,args):
+    if input is None:
+        gr.Warning("请上传音频文件！")
+        return None
+    pydir=pydir.strip('"')
+    out_dir=out_dir.strip('"')
+    run_command(command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{out_dir}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}',dir=current_path)
+    gr.Info("已打开新的处理窗口")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
@@ -911,6 +920,33 @@ if __name__ == "__main__":
                         page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
                         recompose_btn.click(recompose,inputs=[sampling_rate1,sampling_rate2,page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
+            with gr.TabItem("扩展功能"):
+                available=False
+                if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
+                    available=True
+                    with gr.TabItem("音频转字幕"):
+                        with gr.Row():
+                            with gr.Column():
+                                wav2srt_input=gr.File(label="上传音频文件",interactive=True)
+                                wav2srt_out_dir=gr.Textbox(value=current_path,label="保存路径，填文件夹名",interactive=True)
+                                wav2srt_pydir=gr.Textbox(value=config.gsv_pydir,label="Python解释器路径",interactive=True)
+                                wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label="选择asr模型，funasr只支持中文但更快更准，faster whisper支持多语言",interactive=True)
+                                wav2srt_min_length=gr.Slider(label="(ms)每段最小多长，如果第一段太短一直和后面段连起来直到超过这个值",minimum=0,maximum=90000,step=100,value=5000)
+                                wav2srt_min_interval=gr.Slider(label="(ms)最短切割间隔",minimum=0,maximum=5000,step=10,value=300)
+                                wav2srt_sil=gr.Slider(label="(ms)切完后静音最多留多长",minimum=0,maximum=2000,step=100,value=1000)
+                                wav2srt_args=gr.Textbox(value="",label="其他参数",interactive=True)
+                                wav2srt_run=gr.Button(value="开始",variant="primary",interactive=True)
+                                wav2srt_run.click(run_wav2srt,inputs=[wav2srt_input,wav2srt_out_dir,wav2srt_pydir,wav2srt_engine,wav2srt_min_length,wav2srt_min_interval,wav2srt_sil,wav2srt_args])
+                            with gr.Column():
+                                gr.Markdown("""
+本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
+# 其他参数：
+`--whisper_size` 默认:large-v3 使用faster whisper时指定模型<br>
+`--threshold` 默认:-40 音量小于这个值视作静音的备选切割点<br>
+`--hop_size` 默认:20 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）<br>
+                                            """)
+                if not available:
+                    gr.Markdown("没有任何扩展，安装后重启生效")
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():

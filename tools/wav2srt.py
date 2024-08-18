@@ -20,6 +20,7 @@ parser.add_argument("--hop_size",default=20,type=int)
 parser.add_argument("--max_sil_kept", default=1000,type=int)
 args = parser.parse_args()
 
+
 if args.engine=="whisper":
     model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
     if os.listdir(model_path)==[]:         
@@ -118,8 +119,9 @@ def to_time(time_raw:float):
 
 if __name__=="__main__":
     if args.input_dir is not None:
-        wav_path=args.input.strip('"')
+        wav_path=args.input_dir.strip('"')
     else:
         wav_path=input("enter input audio path: ").strip('"')
+    print(wav_path)
     transcribe(wav_path)
     

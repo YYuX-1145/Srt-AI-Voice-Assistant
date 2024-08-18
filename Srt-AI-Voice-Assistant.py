@@ -928,7 +928,7 @@ if __name__ == "__main__":
                         with gr.Row():
                             with gr.Column():
                                 wav2srt_input=gr.File(label="上传音频文件",interactive=True)
-                                wav2srt_out_dir=gr.Textbox(value=current_path,label="保存路径，填文件夹名",interactive=True)
+                                wav2srt_out_dir=gr.Textbox(value=os.path.join(current_path,"SAVAdata","output"),label="保存路径，填文件夹名",interactive=True)
                                 wav2srt_pydir=gr.Textbox(value=config.gsv_pydir,label="Python解释器路径",interactive=True)
                                 wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label="选择asr模型，funasr只支持中文但更快更准，faster whisper支持多语言",interactive=True)
                                 wav2srt_min_length=gr.Slider(label="(ms)每段最小多长，如果第一段太短一直和后面段连起来直到超过这个值",minimum=0,maximum=90000,step=100,value=5000)

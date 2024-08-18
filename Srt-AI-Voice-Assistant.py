@@ -800,7 +800,7 @@ def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,
     gr.Info("已打开新的处理窗口")
 
 if __name__ == "__main__":
-    os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","gradio","temp")
+    os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")

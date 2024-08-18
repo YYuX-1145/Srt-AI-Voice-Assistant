@@ -734,7 +734,7 @@ def recompose(sr1,sr2,page):
     global subtitle_list
     if len(subtitle_list)==0:
         gr.Info("请先点击生成！")
-        return None,"请先点击生成！"
+        return None,"请先点击生成！",*show_page(page)
     if subtitle_list.proj=="bv2":
         sr=sr1
     else:

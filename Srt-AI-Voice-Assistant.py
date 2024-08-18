@@ -40,6 +40,7 @@ readme="""
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
+
 if getattr(sys, 'frozen', False):
     current_path = os.path.dirname(sys.executable)
     exe=True
@@ -799,6 +800,7 @@ def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,
     gr.Info("已打开新的处理窗口")
 
 if __name__ == "__main__":
+    os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","gradio","temp")
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")

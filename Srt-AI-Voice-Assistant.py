@@ -711,18 +711,20 @@ def remake(*args):
         gr.Info("Not available !")
         return fp,*show_page(page)
     if subtitle_list.proj=="bv2":
-        page,idx,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
+        page,idx,s_txt,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         args=language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text
-        fp=save(args,proj="bv2",text=subtitle_list[int(idx)].text,dir=subtitle_list.dir, subid=subtitle_list[int(idx)].index)
+        subtitle_list[int(idx)].text=s_txt
+        fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir, subid=subtitle_list[int(idx)].index)
     else:
-        page,idx,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
-            return fp,*show_page(page)                
+            return fp,*show_page(page)
         temp_ra(refer_audio)
+        subtitle_list[int(idx)].text=s_txt
         args=dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
-        fp=save(args,proj="gsv",text=subtitle_list[int(idx)].text,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+        fp=save(args,proj="gsv",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")
@@ -777,7 +779,7 @@ def show_page(page_start):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time} -> {subtitle_list[i].end_time}",visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].text}",visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
         ret+=btn
     if pageend-page_start+1<config.num_edit_rows:
@@ -785,7 +787,7 @@ def show_page(page_start):
             ret.append(gr.update(value=-1,visible=False))
             ret.append(gr.update(value=-1,visible=True))
             ret.append(gr.update(value="NO INFO",visible=True))
-            ret.append(gr.update(value="NO INFO",visible=True))
+            ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
             ret.append(gr.update(value="NO INFO",visible=True))  
             ret+=btn        
     return ret
@@ -909,17 +911,18 @@ if __name__ == "__main__":
                                 edit_rows.append(_)  #real index                             
                                 edit_rows.append(gr.Number(scale=0,show_label=False,interactive=False,value=-1,min_width=80))#index(raw)
                                 edit_rows.append(gr.Textbox(scale=3,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
-                                edit_rows.append(gr.Textbox(scale=5,show_label=False,interactive=False,value="NO INFO",max_lines=1))#content
+                                s_txt=gr.Textbox(scale=5,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
+                                edit_rows.append(s_txt)
                                 edit_rows.append(gr.Textbox(value="NO INFO",label="状态",show_label=False,interactive=False,scale=1,max_lines=1))#is success or delayed?
                                 with gr.Row():
                                     __=gr.Button(value="▶️",scale=1,min_width=60)  
                                     __.click(play_audio,inputs=[_,],outputs=[audio_player])
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake,inputs=[page_slider,_,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
+                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])                                        
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])                                        
                         page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
                         recompose_btn.click(recompose,inputs=[sampling_rate1,sampling_rate2,page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])

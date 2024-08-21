@@ -392,6 +392,7 @@ def getms_speakers():
                     json.dump(info, f, indent=2, ensure_ascii=False)
             except Exception as e:
                 err=f'无法下载微软TTS说话人列表。报错内容: {e}'
+                gr.Warning(err)
                 logger.error(err)
                 ms_speaker_info={}
                 return None

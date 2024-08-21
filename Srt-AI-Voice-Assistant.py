@@ -14,6 +14,8 @@ import time
 import subprocess
 import concurrent.futures
 import sys
+from xml.etree import ElementTree
+
 readme="""
 # Srt-AI-Voice-Assistant
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
@@ -150,6 +152,9 @@ class Subtitles():
         failed_list=[]
         ok=False
         ptr=0
+        if sr is None:
+            f_path=os.path.join(self.dir,f"{self.subtitles[0].index}.wav")
+            wav,sr = librosa.load(f_path, sr=sr)
         for id,i in enumerate(self.subtitles):
             start_frame=int(i.start_time*sr)
             if ptr<start_frame:
@@ -163,7 +168,7 @@ class Subtitles():
             f_path=os.path.join(self.dir,f"{i.index}.wav")
             if os.path.exists(f_path):
                 ok=True
-                wav, _ = librosa.load(f_path, sr=sr)
+                wav,sr = librosa.load(f_path, sr=sr)
                 dur=wav.shape[-1]             #frames
                 ptr+=dur
                 audiolist.append(wav)
@@ -179,7 +184,7 @@ class Subtitles():
             logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
             gr.Warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
         audio_content=np.concatenate(audiolist)
-        return audio_content
+        return sr,audio_content
     def get_state(self,idx):       
         if self.subtitles[idx].is_delayed:
             return 'delayed'
@@ -199,11 +204,25 @@ class Subtitles():
 subtitle_list= Subtitles()  
 
 class Settings:
-    def __init__(self,server_port:int=5001,theme:str="default",clear_tmp:bool=False,num_edit_rows:int=7,bv2_pydir:str="",gsv_pydir:str="",bv2_dir:str="",gsv_dir:str="",bv2_args:str="",gsv_args:str=""):
+    def __init__(self,
+                 server_port:int=5001,
+                 theme:str="default",
+                 clear_tmp:bool=False,
+                 num_edit_rows:int=7,
+                 bv2_pydir:str="",
+                 gsv_pydir:str="",
+                 bv2_dir:str="",
+                 gsv_dir:str="",
+                 bv2_args:str="",
+                 gsv_args:str="",
+                 ms_region:str="eastasia",
+                 ms_key:str=""):
         self.server_port=int(server_port) 
         self.theme=theme
         self.clear_tmp=clear_tmp
         self.num_edit_rows=int(num_edit_rows)
+        self.ms_region=ms_region
+        self.ms_key=ms_key
         #detect python envs####
         if bv2_pydir!="" :
             if os.path.exists(bv2_pydir):
@@ -291,6 +310,9 @@ gradio_hf_hub_themes = [
 def positive_int(*a):
     r=[]
     for x in a:
+        if x is None:
+            r.append(None)
+            continue
         if x < 0:
             x=0
         r.append(int(x))
@@ -352,6 +374,123 @@ def gsv_api(port,**kwargs):
         err=f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}'
         logger.error(err)
         return None
+    
+
+def getms_speakers():
+    global ms_speaker_info
+    global config
+    if not os.path.exists(os.path.join("SAVAdata","ms_speaker_info.json")):
+        if not os.path.exists(os.path.join("SAVAdata","ms_speaker_info_raw.json")):
+            try:
+                assert config.ms_key!="","please fill in your key to get MSTTS speaker list."
+                headers = {'Ocp-Apim-Subscription-Key':config.ms_key}
+                url=f'https://{config.ms_region}.tts.speech.microsoft.com/cognitiveservices/voices/list'
+                data=requests.get(url=url,headers=headers)
+                data.raise_for_status()
+                info=json.loads(data.content)
+                with open(os.path.join("SAVAdata","ms_speaker_info_raw.json"), 'w', encoding='utf-8') as f:
+                    json.dump(info, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                err=f'无法下载微软TTS说话人列表。报错内容: {e}'
+                logger.error(err)
+                ms_speaker_info={}
+                return None
+        dataraw=json.load(open(os.path.join("SAVAdata","ms_speaker_info_raw.json"), encoding="utf-8"))#list
+        classified_info={}
+        for i in dataraw:
+            if "zh" in i["Locale"]:
+                if i["Locale"] not in classified_info.keys():
+                    classified_info[i["Locale"]]={}
+                classified_info[i["Locale"]][i["LocalName"]]=i
+        with open(os.path.join("SAVAdata","ms_speaker_info.json"), 'w', encoding='utf-8') as f:
+                json.dump(classified_info, f, indent=2, ensure_ascii=False)
+    ms_speaker_info=json.load(open(os.path.join("SAVAdata","ms_speaker_info.json"), encoding="utf-8"))
+    return None
+
+def msapi(language,speaker,style,role,rate,pitch,text):
+    global ms_access_token
+    global ms_speaker_info
+    headers = {
+    'X-Microsoft-OutputFormat': 'riff-48khz-16bit-mono-pcm',
+    'Content-Type': 'application/ssml+xml',
+    'Authorization': 'Bearer ' + ms_access_token,
+    'User-Agent': 'py_sava'
+    }
+    xml_body = ElementTree.Element('speak', version='1.0')
+    xml_body.set('xmlns', 'http://www.w3.org/2001/10/synthesis')
+    xml_body.set('xmlns:mstts', 'https://www.w3.org/2001/mstts')
+    xml_body.set('xml:lang', 'zh-CN')   
+    voice = ElementTree.SubElement(xml_body, 'voice')
+    voice.set('name', ms_speaker_info[language][speaker]["ShortName"]) # Short name
+    express = ElementTree.SubElement(voice, 'express-as')
+    express.set('style',style)
+    express.set('role',role)
+    prosody = ElementTree.SubElement(express, 'prosody')
+    prosody.set('rate',f"{int(100-rate*100)}%")
+    prosody.set('pitch',f"{int(100-pitch*100)}%")
+    prosody.text = text
+    body = ElementTree.tostring(xml_body)
+    try:
+        if ms_access_token is None:
+             getms_token()
+             assert ms_access_token is not None,"获取微软token出错"
+        response = requests.post(url=f'https://{config.ms_region}.tts.speech.microsoft.com/cognitiveservices/v1', headers=headers, data=body)
+        response.raise_for_status()
+        return response.content
+    except Exception as e:
+        err=f'微软TTS出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
+        logger.error(err)
+        return None
+
+def getms_token():
+    global ms_access_token
+    fetch_token_url = f"https://{config.ms_region}.api.cognitive.microsoft.com/sts/v1.0/issueToken"
+    headers = {
+            'Ocp-Apim-Subscription-Key':config.ms_key
+        }
+    try:
+        response = requests.post(fetch_token_url, headers=headers)
+        ms_access_token = str(response.text)
+    except Exception as e:
+        err=f'获取微软token出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
+        logger.error(err)
+        ms_access_token = None
+
+def ms_refresh():#language
+    global ms_speaker_info
+    getms_speakers()
+    if ms_speaker_info =={}:
+        return gr.update(value=None,choices=[],allow_custom_value=False)
+    choices=list(ms_speaker_info.keys())
+    return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
+
+def display_ms_spk(language):#speaker
+    if language in [None,""]:
+        return gr.update(value=None,choices=[],allow_custom_value=False)
+    choices=list(ms_speaker_info[language].keys())
+    return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
+
+def display_style_role(language,speaker):
+    if language in [None,""] or speaker in [None,""]:
+        return gr.update(value=None,choices=[],allow_custom_value=False),gr.update(value=None,choices=[],allow_custom_value=False)
+    try:
+        choices1=["Default"]+ms_speaker_info[language][speaker]["StyleList"]
+    except KeyError:
+        choices1=["Default"]        
+    try:
+        choices2=["Default"]+ms_speaker_info[language][speaker]["RolePlayList"]
+    except KeyError:       
+        choices2=["Default"]
+    return gr.update(value=choices1[0],choices=choices1,allow_custom_value=False),gr.update(value=choices2[0],choices=choices2,allow_custom_value=False),
+
+def generate_mstts(input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch):
+    args=ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
+    if ms_speaker in [None,"",[]]:
+        return None,"请选择说话人",*load_page() 
+    if  config.ms_key=="": 
+        gr.Warning("请配置密钥!")
+        return None,"请配置密钥",*load_page()                
+    return generate(*args,proj="mstts",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
 def file_show(file):
     if file is None:
@@ -387,9 +526,13 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
+        if proj=="mstts":
+            if ms_access_token is None:
+                getms_token()
+                assert ms_access_token is not None,"获取微软token出错"
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
-        audio = subtitle_list.audio_join(sr=sr)
+        sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
@@ -501,8 +644,12 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
                         text_split_method=text_split_method,
                         media_type="wav",
                         streaming_mode=False)
+    elif proj=="mstts":
+        language,speaker,style,role,rate,pitch=args
+        audio=msapi(language,speaker,style,role,rate,pitch,text)
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
+                #sr=int.from_bytes(audio[24:28],'little')
                 filepath=os.path.join(dir,f"{subid}.wav")
                 with open(filepath,'wb') as file:
                     file.write(audio)
@@ -533,10 +680,10 @@ def cls_cache():
         logger.info("目前没有缓存！")
         gr.Info("目前没有缓存！")
 
-def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args):
+def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global config
     current_edit_rows=config.num_edit_rows
-    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args)
+    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
     config.save()
     if config.num_edit_rows!=current_edit_rows:
         config.num_edit_rows=current_edit_rows
@@ -544,7 +691,7 @@ def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv
         gr.Info("更改字幕栏数需要重启生效")
     logger.info("成功保存设置！")
     gr.Info("成功保存设置！")
-    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args
+    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args,config.ms_region,config.ms_key
 
 def load_cfg():
     global config 
@@ -714,8 +861,8 @@ def remake(*args):
         page,idx,s_txt,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         args=language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text
         subtitle_list[int(idx)].text=s_txt
-        fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir, subid=subtitle_list[int(idx)].index)
-    else:
+        fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    elif subtitle_list.proj=="gsv":
         page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
@@ -725,6 +872,11 @@ def remake(*args):
         subtitle_list[int(idx)].text=s_txt
         args=dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
         fp=save(args,proj="gsv",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    elif subtitle_list.proj=="mstts":  
+        page,idx,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args
+        args=ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
+        subtitle_list[int(idx)].text=s_txt
+        fp=save(args,proj="mstts",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")
@@ -733,16 +885,12 @@ def remake(*args):
         gr.Warning("重新合成失败！")
     return fp,*show_page(page)
 
-def recompose(sr1,sr2,page):
+def recompose(page):
     global subtitle_list
     if len(subtitle_list)==0:
         gr.Info("请先点击生成！")
         return None,"请先点击生成！",*show_page(page)
-    if subtitle_list.proj=="bv2":
-        sr=sr1
-    else:
-        sr=sr2
-    audio=subtitle_list.audio_join(sr=sr)
+    sr,audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
     return (sr,audio),"OK",*show_page(page)
 
@@ -770,11 +918,15 @@ def show_page(page_start):
         pageend=length
     if subtitle_list.proj is not None:
         if subtitle_list.proj=="bv2":
-            btn=[gr.update(visible=True),gr.update(visible=False)]
+            btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
+        elif subtitle_list.proj=="gsv":
+            btn=[gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
+        elif subtitle_list.proj=="mstts":  
+            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
         else:
-            btn=[gr.update(visible=False),gr.update(visible=True)]  
+            raise
     else:
-        btn=[gr.update(visible=True),gr.update(visible=False)]     
+        btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]     
     for i in range(page_start-1,pageend):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
@@ -818,7 +970,8 @@ if __name__ == "__main__":
         server_port=config.server_port
     else:
         server_port=args.server_port
-
+    ms_access_token=None
+    getms_speakers()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="""
                     版本240811，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
@@ -832,7 +985,6 @@ if __name__ == "__main__":
                     with gr.TabItem("Bert-VITS2-HiyoriUI"):
                         with gr.Row():            
                             with gr.Column():
-                                proj1=gr.Radio(choices=['bv2'], value="bv2",interactive=False,visible=False)
                                 spkchoser=gr.Radio(label="选择说话人id或输入名称", choices=['输入id','输入名称'], value="输入id")
                                 with gr.Row():
                                     model_id=gr.Number(label="模型id",value=0,visible=True,interactive=True)
@@ -850,7 +1002,6 @@ if __name__ == "__main__":
                                     api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
                                 gen_btn1 = gr.Button("生成", variant="primary",visible=True)
                     with gr.TabItem("GPT-SoVITS"):
-                        proj2=gr.Radio(choices=['gsv'], value="gsv",interactive=False,visible=False)
                         language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
                         refer_audio=gr.Audio(label="参考音频")
                         with gr.Row():
@@ -883,7 +1034,29 @@ if __name__ == "__main__":
                                 refresh_presets_btn=gr.Button(value="刷新",variant="secondary")
                         with gr.Row():
                             gen_btn2=gr.Button(value="生成",variant="primary",visible=True)
-                                                   
+                    with gr.TabItem("微软TTS"):
+                        with gr.Column():
+                            ms_refresh_btn=gr.Button(value="刷新说话人列表",variant="secondary")
+                            if ms_speaker_info =={}:
+                                ms_languages=gr.Dropdown(label="选择语言",value=None,choices=[],allow_custom_value=False,interactive=True)
+                                ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=[],allow_custom_value=False,interactive=True)
+                            else:
+                                choices=list(ms_speaker_info.keys())
+                                ms_languages=gr.Dropdown(label="选择语言",value=choices[0],choices=choices,allow_custom_value=False,interactive=True)
+                                choices=list(ms_speaker_info[choices[0]].keys())
+                                ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=choices,allow_custom_value=False,interactive=True)
+                                del choices
+                            with gr.Row():
+                                ms_style=gr.Dropdown(label="说话风格",value=None,choices=[],allow_custom_value=False,interactive=True)
+                                ms_role=gr.Dropdown(label="角色扮演",value=None,choices=[],allow_custom_value=False,interactive=True)
+                            ms_speed = gr.Slider(minimum=0.2,maximum=2,step=0.01,label="语速",value=1,interactive=True)
+                            ms_pitch = gr.Slider(minimum=0.5,maximum=1.5,step=0.01,label="音调",value=1,interactive=True)
+                            gr.Markdown(value="""使用微软TTS需要联网，请先前往设置页填入服务区和密钥才可以使用。请注意每个月的免费额度。""")
+                            gr.Markdown(value="""[【关于获取密钥：打开链接后请仔细阅读 先决条件 】](https://learn.microsoft.com/zh-cn/azure/ai-services/speech-service/get-started-text-to-speech)""")                               
+                            gen_btn3=gr.Button(value="生成",variant="primary",visible=True)
+                            ms_refresh_btn.click(ms_refresh,outputs=[ms_languages])
+                            ms_languages.change(display_ms_spk,inputs=[ms_languages],outputs=[ms_speaker])
+                            ms_speaker.change(display_style_role,inputs=[ms_languages,ms_speaker],outputs=[ms_style,ms_role])
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
@@ -901,10 +1074,9 @@ if __name__ == "__main__":
                         edit_rows=[]
                         with gr.Row():
                             pageloadbtn=gr.Button(value="加载/刷新字幕内容")
-                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=1)
+                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True)
                             recompose_btn=gr.Button(value="重新拼接内容")
-                        #gr.Markdown(value="Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。")
                         for x in range(config.num_edit_rows):
                             _=gr.Number(show_label=False,visible=False,value=-1)
                             with gr.Row():
@@ -922,10 +1094,13 @@ if __name__ == "__main__":
                                     bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])                                        
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])
+                                    msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
+                                    edit_rows.append(msttsregenbtn)
+                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_player,*edit_rows])                                        
                         page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
-                        recompose_btn.click(recompose,inputs=[sampling_rate1,sampling_rate2,page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
+                        recompose_btn.click(recompose,inputs=[page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
             with gr.TabItem("额外内容"):
                 available=False
                 if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
@@ -971,22 +1146,26 @@ if __name__ == "__main__":
                             gr.Markdown(value="GSV")
                             gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
                             gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)
-                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=config.gsv_args)        
+                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=config.gsv_args)
+                        with gr.Group(): 
+                            gr.Markdown(value="微软TTS")
+                            ms_region=gr.Textbox(label="服务区域",interactive=True,value=config.ms_region)
+                            ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=config.ms_key)    
                         save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
                         restart_btn=gr.Button(value="重启UI",variant="stop")
                     with gr.Column():
                         gr.Markdown(value=readme)
 
-
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
+        gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
         restart_btn.click(restart,[],[])
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
@@ -997,4 +1176,3 @@ if __name__ == "__main__":
             server_port=server_port if server_port>5001 else None,
             inbrowser=True,
             )
-

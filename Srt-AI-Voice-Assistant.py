@@ -159,7 +159,7 @@ class Subtitles():
         if fl==[]:
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         if sr is None:
-            wav,sr = librosa.load(fl[0], sr=sr)
+            wav,sr = librosa.load(os.path.join(self.dir,fl[0]), sr=sr)
         del fl
         for id,i in enumerate(self.subtitles):
             start_frame=int(i.start_time*sr)

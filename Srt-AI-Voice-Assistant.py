@@ -154,11 +154,13 @@ class Subtitles():
         audiolist=[]
         delayed_list=[]
         failed_list=[]
-        ok=False
         ptr=0
+        fl= [i for i in os.listdir(self.dir) if i.endswith(".wav")]
+        if fl==[]:
+            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         if sr is None:
-            f_path=os.path.join(self.dir,f"{self.subtitles[0].index}.wav")
-            wav,sr = librosa.load(f_path, sr=sr)
+            wav,sr = librosa.load(fl[0], sr=sr)
+        del fl
         for id,i in enumerate(self.subtitles):
             start_frame=int(i.start_time*sr)
             if ptr<start_frame:
@@ -171,7 +173,6 @@ class Subtitles():
                 delayed_list.append(self.subtitles[id].index)                                   
             f_path=os.path.join(self.dir,f"{i.index}.wav")
             if os.path.exists(f_path):
-                ok=True
                 wav,sr = librosa.load(f_path, sr=sr)
                 dur=wav.shape[-1]             #frames
                 ptr+=dur
@@ -179,8 +180,6 @@ class Subtitles():
                 self.subtitles[id].is_success=True
             else:
                 failed_list.append(self.subtitles[id].index)
-        if not ok:
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         if delayed_list!=[]:
             logger.warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
             gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
@@ -341,8 +340,7 @@ def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,emotion,sp
                     "style_weight": style_weight,                    
                     "text": text
                 }
-                print(data_json)
-
+                #print(data_json)
                 response = requests.get(url=API_URL,params=data_json)
                 response.raise_for_status()  # 检查响应的状态码
                 return response.content
@@ -370,7 +368,7 @@ def gsv_api(port,**kwargs):
                         "speed": kwargs["speed_factor"]
                         } 
             API_URL = f'http://127.0.0.1:{port}/'
-        print(data_json)       
+        #print(data_json)       
         response = requests.post(url=API_URL,json=data_json)
         response.raise_for_status()  # 检查响应的状态码
         return response.content
@@ -804,7 +802,7 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
         "sovits_model_path": sovits_path.strip('"'),
         "gpt_model_path": gpt_path.strip('"'),
         }   
-        print(data_json)
+        #print(data_json)
         port=int(port)
         if gsv_fallback:
             API_URL=f'http://127.0.0.1:{port}/set_model/'

@@ -456,6 +456,7 @@ def getms_token():
         ms_access_token = str(response.text)
     except Exception as e:
         err=f'获取微软token出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
+        gr.Warning(err)
         logger.error(err)
         ms_access_token = None
 
@@ -489,6 +490,7 @@ def display_style_role(language,speaker):
 def generate_mstts(input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch):
     args=ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
     if ms_speaker in [None,"",[]]:
+        gr.Info("请选择说话人")
         return None,"请选择说话人",*load_page() 
     if  config.ms_key=="": 
         gr.Warning("请配置密钥!")
@@ -518,11 +520,12 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         if in_file is None:
             gr.Info("请上传字幕文件！")
             return None,"请上传字幕文件！",*load_page()
-        if in_file.name.endswith(".csv"):
-           subtitle_list=read_prcsv(in_file.name,fps,offset)
-        elif in_file.name.endswith(".srt"):
+        if in_file.name[-4:].lower()==".csv":
+            subtitle_list=read_prcsv(in_file.name,fps,offset)
+        elif in_file.name[-4:].lower()==".srt":
             subtitle_list=read_srt(in_file.name,offset)
         else:
+            gr.Warning("未知的格式，请确保扩展名正确！")
             return None,"未知的格式，请确保扩展名正确！",*load_page()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join(current_path,"SAVAdata","temp",t)
@@ -534,13 +537,14 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
                 getms_token()
                 assert ms_access_token is not None,"获取微软token出错"
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[[args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}] for i in subtitle_list]))
+            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
         sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
         m, s = divmod(t2-t1, 60)
         use_time="%02d:%02d"%(m, s)
+        file_list=[i for i in file_list if i is not None]
         if len(file_list)!=len(subtitle_list):
             return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}'
         return (sr,audio),f'完成！所用时间:{use_time}',*load_page()

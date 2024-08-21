@@ -937,7 +937,7 @@ def show_page(page_start):
     for i in range(page_start-1,pageend):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time} -> {subtitle_list[i].end_time}",visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time:.2f} -> {subtitle_list[i].end_time:.2f}",visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
         ret+=btn

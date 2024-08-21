@@ -21,11 +21,15 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
+240821更新：<br>
+1.增加对微软在线TTS支持，使用前请配置密钥  
+2.部分细节优化
+
 240811更新：<br>
-[请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。
-1.增加错误提示
-2.自动检测项目路径
-3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。
+[请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。  
+1.增加错误提示  
+2.自动检测项目路径  
+3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。  
 4.重大功能更新：支持重新抽卡合成
 
 240404：<br>
@@ -975,7 +979,7 @@ if __name__ == "__main__":
     getms_speakers()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="""
-                    版本240811，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支<br>
+                    版本240821，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支,微软在线TTS<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)

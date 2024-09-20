@@ -792,7 +792,7 @@ def load_preset(name,port):
         global current_sovits_model
         global current_gpt_model
         if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
-            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
         data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
         if "auxiliary_audios" not in list(data.keys()):
             data["auxiliary_audios"] = None

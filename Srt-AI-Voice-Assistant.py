@@ -551,12 +551,13 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
-def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
+def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本",*load_page()                
-        temp_ra(refer_audio)         
-        return generate(dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
+        temp_ra(refer_audio)      
+        aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
+        return generate(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
 def read_srt(filename,offset):
     with open(filename,"r",encoding="utf-8") as f:
@@ -629,12 +630,13 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
         else:
             audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
     elif proj=="gsv":
-        text_language,port,refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         port=positive_int(port)[0]
         audio = gsv_api(port,
                         text=text,
                         text_lang=text_language,###language->lang
                         ref_audio_path=refer_wav_path,#ref
+                        aux_ref_audio_paths=aux_refer_wav_path,
                         prompt_text=prompt_text,
                         prompt_lang=prompt_language,#
                         batch_size=batch_size,
@@ -744,7 +746,7 @@ def start_gsv():
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
 
-def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
+def save_preset(name,description,ra,ara,rt,rl,sovits_path,gpt_path):
     try:
         if name=="None" or name=="":
             gr.Info("请输入名称")
@@ -754,10 +756,22 @@ def save_preset(name,description,ra,rt,rl,sovits_path,gpt_path):
             return "请上传参考音频"
         dir=os.path.join(current_path,"SAVAdata","presets",name)
         os.makedirs(dir,exist_ok=True)
+        aux_ref_audio_path=[i.name for i in ara] if ara is not None else []
+        idx=1
+        aux_list=[]
+        for i in aux_ref_audio_path:
+            try:
+                shutil.copy(i,os.path.join(dir,f"aux_{idx}.wav"))                
+                aux_list.append(f"aux_{idx}.wav")
+                idx+=1
+            except Exception as ex:
+                print(ex)
+                continue
         data={"name":name,
               "description":description,
               "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
               "reference_audio_text":rt,
+              "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
               "reference_audio_lang":rl,
               "sovits_path":sovits_path.strip('"'),
               "gpt_path":gpt_path.strip('"')
@@ -780,6 +794,8 @@ def load_preset(name,port):
         if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
         data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
+        if "auxiliary_audios" not in list(data.keys()):
+            data["auxiliary_audios"] = None
         if data["sovits_path"] !="" and data["gpt_path"] != "":
             if data["sovits_path"]==current_sovits_model and data["gpt_path"]==current_gpt_model:
                switch=False
@@ -792,9 +808,14 @@ def load_preset(name,port):
                switch=True
         if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
             data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
-        return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
+        if data["auxiliary_audios"] is not None:                   
+            aux_audio=[os.path.join(current_path,"SAVAdata","presets",name,i) for i in data["auxiliary_audios"] if os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,i))]
+            if len(aux_audio)!=len(data["auxiliary_audios"]):
+               gr.Warning("辅助参考音频存在丢失！")
+            data["auxiliary_audios"]=aux_audio
+        return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
     except Exception as e:
-        return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
+        return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
 
 def switch_gsvmodel(sovits_path,gpt_path,port):
     if sovits_path=="" or gpt_path=="":
@@ -805,7 +826,10 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
         data_json={
         "sovits_model_path": sovits_path.strip('"'),
         "gpt_model_path": gpt_path.strip('"'),
-        }   
+        } 
+        for x in data_json.values(): 
+            if not os.path.exists(x):
+                gr.Warning("模型路径可能无效，会导致切换错误！")
         #print(data_json)
         port=int(port)
         if gsv_fallback:
@@ -870,14 +894,15 @@ def remake(*args):
         subtitle_list[int(idx)].text=s_txt
         fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="gsv":
-        page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
             return fp,*show_page(page)
         temp_ra(refer_audio)
+        aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []
         subtitle_list[int(idx)].text=s_txt
-        args=dict_language[language],port,refer_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
+        args=dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
         fp=save(args,proj="gsv",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="mstts":  
         page,idx,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args
@@ -1010,7 +1035,9 @@ if __name__ == "__main__":
                                 gen_btn1 = gr.Button("生成", variant="primary",visible=True)
                     with gr.TabItem("GPT-SoVITS"):
                         language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
-                        refer_audio=gr.Audio(label="参考音频")
+                        with gr.Row():
+                            refer_audio=gr.Audio(label="主参考音频")
+                            aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple")
                         with gr.Row():
                             refer_text=gr.Textbox(label="参考音频文本")
                             refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
@@ -1101,7 +1128,7 @@ if __name__ == "__main__":
                                     bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
                                     msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_player,*edit_rows])                                        
@@ -1166,7 +1193,7 @@ if __name__ == "__main__":
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
@@ -1175,8 +1202,8 @@ if __name__ == "__main__":
         save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
         restart_btn.click(restart,[],[])
 
-        save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
-        choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,refer_text,refer_lang,gen_textbox_output_text])
+        save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,aux_ref_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])
+        choose_presets.change(load_preset,inputs=[choose_presets,api_port2],outputs=[sovits_path,gpt_path,desc_presets,refer_audio,aux_ref_audio,refer_text,refer_lang,gen_textbox_output_text])
         refresh_presets_btn.click(refresh_presets_list,outputs=[choose_presets])
     app.queue().launch(
             share=args.share,

@@ -376,7 +376,9 @@ def gsv_api(port,**kwargs):
         err=f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}'
         logger.error(err)
         return None
-    
+
+def custom_api(text):
+    raise "需要加载自定义API函数！"
 
 def getms_speakers():
     global ms_speaker_info
@@ -444,6 +446,7 @@ def msapi(language,speaker,style,role,rate,pitch,text):
         err=f'微软TTS出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
         logger.error(err)
         return None
+    
 
 def getms_token():
     global ms_access_token
@@ -497,6 +500,12 @@ def generate_mstts(input_file,fps,offset,workers,ms_language,ms_speaker,ms_style
         return None,"请配置密钥",*load_page()                
     return generate(*args,proj="mstts",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
+def generate_custom(input_file,fps,offset,workers,custom_api):
+    if custom_api in [None,'None','']:
+        gr.Info("请选择API配置文件！")
+        return None,"请选择API配置文件！",*load_page() 
+    return generate((custom_api),proj="custom",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
+
 def file_show(file):
     if file is None:
         return ""
@@ -536,6 +545,13 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
             if ms_access_token is None:
                 getms_token()
                 assert ms_access_token is not None,"获取微软token出错"
+        if proj=="custom":
+            global custom_api
+            custom_api_path=args[0]
+            logger.info(f"Exec: custom_api_path")
+            with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
+                code=f.read()
+            exec(code,globals())
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
         sr,audio = subtitle_list.audio_join(sr=sr)
@@ -656,6 +672,10 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     elif proj=="mstts":
         language,speaker,style,role,rate,pitch=args
         audio=msapi(language,speaker,style,role,rate,pitch,text)
+    elif proj=="custom":
+        audio=custom_api(text)
+    else:
+        raise
     if audio is not None:
             if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
                 #sr=int.from_bytes(audio[24:28],'little')
@@ -868,6 +888,23 @@ def refresh_presets_list():
     time.sleep(0.1)
     return gr.update(value="None",choices=presets_list)
 
+def refresh_custom_api_list():
+    global custom_api_list
+    custom_api_list=[]
+    try:
+        preset_dir=os.path.join(current_path,"SAVAdata","presets")
+        if os.path.isdir(preset_dir):
+            custom_api_list+=[i for i in os.listdir(preset_dir) if i.endswith(".py")]
+        else:
+            logger.info("当前没有自定义API预设")
+    except Exception as e:
+        custom_api_list=[]
+        err=f"刷新预设失败：{e}"
+        logger.error(err)
+        gr.Warning(err)
+    time.sleep(0.1)
+    return gr.update(value="None",choices=custom_api_list)
+
 def restart():
     gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
     time.sleep(0.5)
@@ -909,6 +946,17 @@ def remake(*args):
         args=ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
         subtitle_list[int(idx)].text=s_txt
         fp=save(args,proj="mstts",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    elif subtitle_list.proj=="custom":
+        global custom_api
+        page,idx,s_txt,custom_api_path=args
+        if custom_api_path in [None,"",'None']:
+            gr.Warning("你必须指定API预设")
+            return fp,*show_page(page)        
+        logger.info(f"Exec: custom_api_path")
+        with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
+            code=f.read()
+        exec(code,globals())
+        fp=save(args,proj="custom",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")
@@ -950,15 +998,15 @@ def show_page(page_start):
         pageend=length
     if subtitle_list.proj is not None:
         if subtitle_list.proj=="bv2":
-            btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
+            btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]
         elif subtitle_list.proj=="gsv":
-            btn=[gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
+            btn=[gr.update(visible=False),gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
         elif subtitle_list.proj=="mstts":  
-            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
+            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
         else:
-            raise
+            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
     else:
-        btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]     
+        btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]     
     for i in range(page_start-1,pageend):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
@@ -993,6 +1041,7 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     gsv_fallback=False
     refresh_presets_list()
+    refresh_custom_api_list()
     current_sovits_model=None
     current_gpt_model=None   
     load_cfg()
@@ -1091,6 +1140,41 @@ if __name__ == "__main__":
                             ms_refresh_btn.click(ms_refresh,outputs=[ms_languages])
                             ms_languages.change(display_ms_spk,inputs=[ms_languages],outputs=[ms_speaker])
                             ms_speaker.change(display_style_role,inputs=[ms_languages,ms_speaker],outputs=[ms_style,ms_role])
+                    with gr.TabItem("自定义API"):
+                        with gr.Column():
+                            gr.Markdown(value="""## 安全警告：此功能会执行外部代码！  
+                                        ### 运行前请务必检查代码内容，运行不受信任的代码可能会导致电脑受到攻击！  
+                                        ### 作者不对此产生的后果负任何责任！！！""")
+                            gr.Markdown(value="""
+### 将装有python函数的代码文件放在`SAVAdata/presets`下即可被调用  
+```
+def custom_api(text):#return: audio content
+    from gradio_client import Client
+    client = Client("http://127.0.0.1:7860/")
+    result = client.predict(
+		text,	# str  in '输入文本内容' Textbox component
+		"神里绫华",	# str (Option from: [('神里绫华', '神里绫华')]) in 'Speaker' Dropdown component
+		0.1,	# int | float (numeric value between 0 and 1) in 'SDP Ratio' Slider component
+		0.5,	# int | float (numeric value between 0.1 and 2) in 'Noise' Slider component
+		0.5,	# int | float (numeric value between 0.1 and 2) in 'Noise_W' Slider component
+		1,	# int | float (numeric value between 0.1 and 2) in 'Length' Slider component
+		"auto",	# str (Option from: [('ZH', 'ZH'), ('JP', 'JP'), ('EN', 'EN'), ('mix', 'mix'), ('auto', 'auto')]) in 'Language' Dropdown component
+		"",	# str (filepath on your computer (or URL) of file) in 'Audio prompt' Audio component
+		"",	# str  in 'Text prompt' Textbox component
+		"",	# str  in 'Prompt Mode' Radio component
+		"",	# str  in '辅助文本' Textbox component
+		0,	# int | float (numeric value between 0 and 1) in 'Weight' Slider component
+		fn_index=0
+    )
+    with open(result[1],'rb') as file:
+        data=file.read()
+    return data
+```""")
+                            gr.Markdown(value='以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！')                                
+                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0])
+                            refresh_custom_btn=gr.Button(value="刷新")
+                            gen_btn4=gr.Button(value="生成",variant="primary",visible=True)
+                            refresh_custom_btn.click(refresh_custom_api_list,outputs=[choose_custom_api])
 
                     with gr.Column():                  
                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
@@ -1126,12 +1210,15 @@ if __name__ == "__main__":
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
                                     bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
-                                    gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60)
+                                    gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=True)
                                     edit_rows.append(gsvregenbtn)  
                                     gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_player,*edit_rows])                                        
+                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_player,*edit_rows])  
+                                    customregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
+                                    edit_rows.append(customregenbtn)      
+                                    customregenbtn.click(remake,inputs=[page_slider,_,s_txt,choose_custom_api],outputs=[audio_player,*edit_rows])                         
                         page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
                         recompose_btn.click(recompose,inputs=[page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
@@ -1195,6 +1282,7 @@ if __name__ == "__main__":
         gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
+        gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

@@ -21,6 +21,9 @@ readme="""
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
 当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
+240922更新：<br>
+1.增加自定义API功能，但务必注意安全问题！  
+
 240821更新：<br>
 1.增加对微软在线TTS支持，使用前请配置密钥  
 2.部分细节优化
@@ -1055,7 +1058,7 @@ if __name__ == "__main__":
     getms_speakers()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         gr.Markdown(value="""
-                    版本240821，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支,微软在线TTS<br>
+                    版本240922，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支,微软在线TTS<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)

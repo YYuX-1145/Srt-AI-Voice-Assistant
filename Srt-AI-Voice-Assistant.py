@@ -851,8 +851,10 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
         "gpt_model_path": gpt_path.strip('"'),
         } 
         for x in data_json.values(): 
-            if not os.path.exists(x):
+            if not os.path.isfile(x):
                 gr.Warning("模型路径可能无效，会导致切换错误！")
+            if os.path.isdir(x):
+                raise "你错误地填写了文件夹路径！！！"
         #print(data_json)
         port=int(port)
         if gsv_fallback:

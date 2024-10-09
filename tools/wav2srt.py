@@ -93,10 +93,14 @@ def transcribe(audio_path):
     for chunk, start, end in slicer.slice(audio):  # start和end是帧数
         start=start/sr
         end=end/sr
-        if args.engine=="whisper":
-            text=whisper_transcribe(chunk,sr)
-        else:
-            text=funasr_transcribe(chunk,sr)
+        try:
+            if args.engine=="whisper":
+                text=whisper_transcribe(chunk,sr)
+            else:
+                text=funasr_transcribe(chunk,sr)
+        except Exception as e:
+            print(e)
+            continue
         srt.append((start,end,text))
     srt_content=[]
     idx=0

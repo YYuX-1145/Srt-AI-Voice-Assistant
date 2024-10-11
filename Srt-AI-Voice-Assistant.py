@@ -207,7 +207,8 @@ class Subtitles():
         return self.subtitles[index]
     def __len__(self):
         return len(self.subtitles)
-subtitle_list= Subtitles()  
+    
+#subtitle_list= Subtitles()  
 
 class Settings:
     def __init__(self,
@@ -497,16 +498,16 @@ def generate_mstts(input_file,fps,offset,workers,ms_language,ms_speaker,ms_style
     args=ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
     if ms_speaker in [None,"",[]]:
         gr.Info("请选择说话人")
-        return None,"请选择说话人",*load_page() 
+        return None,"请选择说话人",*load_page(Subtitles()) 
     if  config.ms_key=="": 
         gr.Warning("请配置密钥!")
-        return None,"请配置密钥",*load_page()                
+        return None,"请配置密钥",*load_page(Subtitles())                
     return generate(*args,proj="mstts",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
 def generate_custom(input_file,fps,offset,workers,custom_api):
     if custom_api in [None,'None','']:
         gr.Info("请选择API配置文件！")
-        return None,"请选择API配置文件！",*load_page() 
+        return None,"请选择API配置文件！",*load_page(Subtitles()) 
     return generate((custom_api),proj="custom",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
 def file_show(file):
@@ -526,19 +527,19 @@ def temp_ra(a:tuple):
 
 
 def generate(*args,proj,in_file,sr,fps,offset,max_workers):
-        global subtitle_list
+        #global subtitle_list
         t1 = time.time()
         sr,fps=positive_int(sr,fps)
         if in_file is None:
             gr.Info("请上传字幕文件！")
-            return None,"请上传字幕文件！",*load_page()
+            return None,"请上传字幕文件！",*load_page(Subtitles()),Subtitles()
         if in_file.name[-4:].lower()==".csv":
             subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name[-4:].lower()==".srt":
             subtitle_list=read_srt(in_file.name,offset)
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
-            return None,"未知的格式，请确保扩展名正确！",*load_page()
+            return None,"未知的格式，请确保扩展名正确！",*load_page(Subtitles()),Subtitles()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join(current_path,"SAVAdata","temp",t)
         subtitle_list.sort()
@@ -565,15 +566,15 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         use_time="%02d:%02d"%(m, s)
         file_list=[i for i in file_list if i is not None]
         if len(file_list)!=len(subtitle_list):
-            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}'
-        return (sr,audio),f'完成！所用时间:{use_time}',*load_page()
+            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',subtitle_list
+        return (sr,audio),f'完成！所用时间:{use_time}',*load_page(subtitle_list),subtitle_list
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
         if refer_audio is None or refer_text == "":
-            return None,"你必须指定参考音频和文本",*load_page()                
+            return None,"你必须指定参考音频和文本",*load_page(Subtitles())                
         temp_ra(refer_audio)      
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
         return generate(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
@@ -921,42 +922,42 @@ def restart():
         os.system(f"taskkill /PID {os.getpid()} /F")
 
 def remake(*args):
-    global subtitle_list
     fp=None
+    subtitle_list=args[-1]
     page=args[0]
     if subtitle_list.proj is None:
         gr.Info("请先点击生成！")
-        return fp,*show_page(page)
+        return fp,*show_page(page,subtitle_list)
     if int(args[1])==-1:
         gr.Info("Not available !")
-        return fp,*show_page(page)
+        return fp,*show_page(page,subtitle_list)
     if subtitle_list.proj=="bv2":
-        page,idx,s_txt,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
+        page,idx,s_txt,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,_=args
         args=language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text
         subtitle_list[int(idx)].text=s_txt
         fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="gsv":
-        page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,_=args
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
-            return fp,*show_page(page)
+            return fp,*show_page(page,subtitle_list)
         temp_ra(refer_audio)
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []
         subtitle_list[int(idx)].text=s_txt
         args=dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
         fp=save(args,proj="gsv",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="mstts":  
-        page,idx,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args
+        page,idx,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch,_=args
         args=ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
         subtitle_list[int(idx)].text=s_txt
         fp=save(args,proj="mstts",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="custom":
         global custom_api
-        page,idx,s_txt,custom_api_path=args
+        page,idx,s_txt,custom_api_path,_=args
         if custom_api_path in [None,"",'None']:
             gr.Warning("你必须指定API预设")
-            return fp,*show_page(page)        
+            return fp,*show_page(page,subtitle_list)        
         logger.info(f"Exec: custom_api_path")
         with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
             code=f.read()
@@ -968,34 +969,30 @@ def remake(*args):
     else:
         subtitle_list[int(idx)].is_success=False
         gr.Warning("重新合成失败！")
-    return fp,*show_page(page)
+    return fp,*show_page(page,subtitle_list),subtitle_list
 
-def recompose(page):
-    global subtitle_list
+def recompose(page,subtitle_list):
     if len(subtitle_list)==0:
         gr.Info("请先点击生成！")
-        return None,"请先点击生成！",*show_page(page)
+        return None,"请先点击生成！",*show_page(page,subtitle_list)
     sr,audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
-    return (sr,audio),"OK",*show_page(page)
+    return (sr,audio),"OK",*show_page(page,subtitle_list),subtitle_list
 
-def play_audio(idx):
-    global subtitle_list
+def play_audio(idx,subtitle_list):
     i=int(idx)
     if i==-1 or not subtitle_list[i].is_success:
         gr.Info("Not available !")
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
-def load_page():
-    global subtitle_list
+def load_page(subtitle_list=Subtitles()):
     length=len(subtitle_list)
     if length==0:
         gr.Info("请先点击“生成”！")
-    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1)
+    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1,subtitle_list)
 
-def show_page(page_start):
-    global subtitle_list
+def show_page(page_start,subtitle_list):
     ret=[]
     length=len(subtitle_list)
     pageend=page_start+config.num_edit_rows
@@ -1064,6 +1061,7 @@ if __name__ == "__main__":
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)
+        STATE=gr.State(value=Subtitles())
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -1211,22 +1209,22 @@ def custom_api(text):#return: audio content
                                 edit_rows.append(gr.Textbox(value="NO INFO",label="状态",show_label=False,interactive=False,scale=1,max_lines=1))#is success or delayed?
                                 with gr.Row():
                                     __=gr.Button(value="▶️",scale=1,min_width=60)  
-                                    __.click(play_audio,inputs=[_,],outputs=[audio_player])
+                                    __.click(play_audio,inputs=[_,STATE],outputs=[audio_player])
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_player,*edit_rows])
+                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=True)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_player,*edit_rows])
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_player,*edit_rows])  
+                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch,STATE],outputs=[audio_player,*edit_rows,STATE])  
                                     customregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(customregenbtn)      
-                                    customregenbtn.click(remake,inputs=[page_slider,_,s_txt,choose_custom_api],outputs=[audio_player,*edit_rows])                         
-                        page_slider.change(show_page,inputs=[page_slider],outputs=edit_rows)       
-                        pageloadbtn.click(load_page,inputs=[],outputs=[page_slider,*edit_rows])
-                        recompose_btn.click(recompose,inputs=[page_slider],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
+                                    customregenbtn.click(remake,inputs=[page_slider,_,s_txt,choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
+                        page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
+                        pageloadbtn.click(load_page,inputs=[STATE],outputs=[page_slider,*edit_rows])
+                        recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
             with gr.TabItem("额外内容"):
                 available=False
                 if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
@@ -1284,10 +1282,10 @@ def custom_api(text):#return: audio content
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
-        gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
-        gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

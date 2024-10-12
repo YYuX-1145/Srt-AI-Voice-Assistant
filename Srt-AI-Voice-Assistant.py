@@ -1000,7 +1000,7 @@ def show_page(page_start):
     length=len(subtitle_list)
     pageend=page_start+config.num_edit_rows
     if pageend>length:
-        pageend=length
+        pageend=length+1
     if subtitle_list.proj is not None:
         if subtitle_list.proj=="bv2":
             btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]

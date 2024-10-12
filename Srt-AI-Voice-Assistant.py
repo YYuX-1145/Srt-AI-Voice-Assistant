@@ -1176,7 +1176,7 @@ def custom_api(text):#return: audio content
     return data
 ```""")
                             gr.Markdown(value='以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！')                                
-                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0])
+                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0] if custom_api_list!=[] else None)
                             refresh_custom_btn=gr.Button(value="刷新")
                             gen_btn4=gr.Button(value="生成",variant="primary",visible=True)
                             refresh_custom_btn.click(refresh_custom_api_list,outputs=[choose_custom_api])

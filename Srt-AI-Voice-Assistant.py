@@ -558,10 +558,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
             exec(code,globals())
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
-        try:
-            sr,audio = subtitle_list.audio_join(sr=sr)
-        except:
-            return None,"error",*load_page(subtitle_list),subtitle_list
+        sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()

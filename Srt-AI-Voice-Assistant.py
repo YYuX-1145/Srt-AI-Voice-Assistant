@@ -558,7 +558,10 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
             exec(code,globals())
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
-        sr,audio = subtitle_list.audio_join(sr=sr)
+        try:
+            sr,audio = subtitle_list.audio_join(sr=sr)
+        except:
+            return None,"error",*load_page(subtitle_list),subtitle_list
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
@@ -566,7 +569,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         use_time="%02d:%02d"%(m, s)
         file_list=[i for i in file_list if i is not None]
         if len(file_list)!=len(subtitle_list):
-            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',subtitle_list
+            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',*load_page(subtitle_list),subtitle_list
         return (sr,audio),f'完成！所用时间:{use_time}',*load_page(subtitle_list),subtitle_list
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
@@ -574,7 +577,7 @@ def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speak
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
         refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
         if refer_audio is None or refer_text == "":
-            return None,"你必须指定参考音频和文本",*load_page(Subtitles())                
+            return None,"你必须指定参考音频和文本",*load_page(Subtitles()),Subtitles()
         temp_ra(refer_audio)      
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
         return generate(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
@@ -974,7 +977,7 @@ def remake(*args):
 def recompose(page,subtitle_list):
     if len(subtitle_list)==0:
         gr.Info("请先点击生成！")
-        return None,"请先点击生成！",*show_page(page,subtitle_list)
+        return None,"请先点击生成！",*show_page(page,subtitle_list),subtitle_list
     sr,audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
     return (sr,audio),"OK",*show_page(page,subtitle_list),subtitle_list
@@ -986,7 +989,7 @@ def play_audio(idx,subtitle_list):
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
-def load_page(subtitle_list=Subtitles()):
+def load_page(subtitle_list):
     length=len(subtitle_list)
     if length==0:
         gr.Info("请先点击“生成”！")
@@ -1009,21 +1012,20 @@ def show_page(page_start,subtitle_list):
             btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
     else:
         btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]     
-    for i in range(page_start-1,pageend):
+    for i in range(page_start-1,pageend-1):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time:.2f} -> {subtitle_list[i].end_time:.2f}",visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
         ret+=btn
-    if pageend-page_start+1<config.num_edit_rows:
-        for i in range(config.num_edit_rows-pageend+page_start-1):
-            ret.append(gr.update(value=-1,visible=False))
-            ret.append(gr.update(value=-1,visible=True))
-            ret.append(gr.update(value="NO INFO",visible=True))
-            ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
-            ret.append(gr.update(value="NO INFO",visible=True))  
-            ret+=btn        
+    for i in range(config.num_edit_rows-pageend+page_start):
+        ret.append(gr.update(value=-1,visible=False))
+        ret.append(gr.update(value=-1,visible=True))
+        ret.append(gr.update(value="NO INFO",visible=True))
+        ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
+        ret.append(gr.update(value="NO INFO",visible=True))  
+        ret+=btn        
     return ret
 
 def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,args):
@@ -1056,12 +1058,13 @@ if __name__ == "__main__":
     ms_access_token=None
     getms_speakers()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
+        STATE=gr.State(value=Subtitles())
         gr.Markdown(value="""
                     版本240922，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支,微软在线TTS<br>
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)
-        STATE=gr.State(value=Subtitles())
+        
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -1174,7 +1177,7 @@ def custom_api(text):#return: audio content
     return data
 ```""")
                             gr.Markdown(value='以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！')                                
-                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0])
+                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0] if custom_api_list!=[] else None)
                             refresh_custom_btn=gr.Button(value="刷新")
                             gen_btn4=gr.Button(value="生成",variant="primary",visible=True)
                             refresh_custom_btn.click(refresh_custom_api_list,outputs=[choose_custom_api])

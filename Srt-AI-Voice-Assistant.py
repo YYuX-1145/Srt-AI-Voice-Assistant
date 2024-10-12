@@ -1012,21 +1012,20 @@ def show_page(page_start):
             btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
     else:
         btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]     
-    for i in range(page_start-1,pageend):
+    for i in range(page_start-1,pageend-1):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time:.2f} -> {subtitle_list[i].end_time:.2f}",visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
         ret+=btn
-    if pageend-page_start+1<config.num_edit_rows:
-        for i in range(config.num_edit_rows-pageend+page_start-1):
-            ret.append(gr.update(value=-1,visible=False))
-            ret.append(gr.update(value=-1,visible=True))
-            ret.append(gr.update(value="NO INFO",visible=True))
-            ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
-            ret.append(gr.update(value="NO INFO",visible=True))  
-            ret+=btn        
+    for i in range(config.num_edit_rows-pageend+page_start):
+        ret.append(gr.update(value=-1,visible=False))
+        ret.append(gr.update(value=-1,visible=True))
+        ret.append(gr.update(value="NO INFO",visible=True))
+        ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
+        ret.append(gr.update(value="NO INFO",visible=True))  
+        ret+=btn        
     return ret
 
 def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,args):

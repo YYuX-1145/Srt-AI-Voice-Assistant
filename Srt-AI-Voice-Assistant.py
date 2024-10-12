@@ -498,16 +498,16 @@ def generate_mstts(input_file,fps,offset,workers,ms_language,ms_speaker,ms_style
     args=ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch
     if ms_speaker in [None,"",[]]:
         gr.Info("请选择说话人")
-        return None,"请选择说话人",*load_page(Subtitles()) 
+        return None,"请选择说话人",*load_page(Subtitles()),Subtitles()
     if  config.ms_key=="": 
         gr.Warning("请配置密钥!")
-        return None,"请配置密钥",*load_page(Subtitles())                
+        return None,"请配置密钥",*load_page(Subtitles()),Subtitles()              
     return generate(*args,proj="mstts",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
 def generate_custom(input_file,fps,offset,workers,custom_api):
     if custom_api in [None,'None','']:
         gr.Info("请选择API配置文件！")
-        return None,"请选择API配置文件！",*load_page(Subtitles()) 
+        return None,"请选择API配置文件！",*load_page(Subtitles()),Subtitles() 
     return generate((custom_api),proj="custom",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
 def file_show(file):

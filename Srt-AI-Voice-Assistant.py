@@ -14,6 +14,7 @@ import time
 import subprocess
 import concurrent.futures
 import sys
+import hashlib
 from xml.etree import ElementTree
 
 readme="""
@@ -522,8 +523,12 @@ def file_show(file):
 
 def temp_ra(a:tuple):
     sr,wav=a
+    name=hashlib.md5(wav.tobytes()).hexdigest()+".wav"
     os.makedirs(os.path.join(current_path,"SAVAdata","temp"),exist_ok=True)
-    sf.write(os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav"), wav, sr)
+    dir=os.path.join(current_path,"SAVAdata","temp",name)
+    if not os.path.exists(dir):    
+        sf.write(dir, wav, sr)
+    return dir
 
 
 def generate(*args,proj,in_file,sr,fps,offset,max_workers):
@@ -571,11 +576,10 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
-def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method):
-        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")    
+def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method): 
         if refer_audio is None or refer_text == "":
             return None,"你必须指定参考音频和文本",*load_page(Subtitles()),Subtitles()
-        temp_ra(refer_audio)      
+        refer_audio_path=temp_ra(refer_audio)      
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
         return generate(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
 
@@ -938,11 +942,10 @@ def remake(*args):
         fp=save(args,proj="bv2",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     elif subtitle_list.proj=="gsv":
         page,idx,s_txt,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,_=args
-        refer_audio_path=os.path.join(current_path,"SAVAdata","temp","tmp_reference_audio.wav")  
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
             return fp,*show_page(page,subtitle_list)
-        temp_ra(refer_audio)
+        refer_audio_path=temp_ra(refer_audio)
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []
         subtitle_list[int(idx)].text=s_txt
         args=dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method]
@@ -1174,7 +1177,7 @@ def custom_api(text):#return: audio content
     return data
 ```""")
                             gr.Markdown(value='以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！')                                
-                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0] if custom_api_list!=[] else None)
+                            choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0] if custom_api_list!=[] else '',allow_custom_value=True)
                             refresh_custom_btn=gr.Button(value="刷新")
                             gen_btn4=gr.Button(value="生成",variant="primary",visible=True)
                             refresh_custom_btn.click(refresh_custom_api_list,outputs=[choose_custom_api])

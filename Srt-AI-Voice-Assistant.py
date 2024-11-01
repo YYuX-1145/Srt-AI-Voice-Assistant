@@ -578,6 +578,7 @@ def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speak
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method): 
         if refer_audio is None or refer_text == "":
+            gr.Warning("你必须指定参考音频和文本")
             return None,"你必须指定参考音频和文本",*load_page(Subtitles()),Subtitles()
         refer_audio_path=temp_ra(refer_audio)      
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
@@ -930,7 +931,7 @@ def remake(*args):
     subtitle_list=args[-1]
     page=args[0]
     if subtitle_list.proj is None:
-        gr.Info("请先点击生成！")
+        gr.Info("上次生成未成功，请先完成生成流程！")
         return fp,*show_page(page,subtitle_list)
     if int(args[1])==-1:
         gr.Info("Not available !")

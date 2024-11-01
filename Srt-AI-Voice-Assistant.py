@@ -1088,6 +1088,7 @@ if __name__ == "__main__":
                                     sampling_rate1=gr.Number(label="采样率",value=44100,visible=True,interactive=True)                                
                                     api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
                                 gen_btn1 = gr.Button("生成", variant="primary",visible=True)
+                    BV2_ARGS=[model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text]
                     with gr.TabItem("GPT-SoVITS"):
                         language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
                         with gr.Row():
@@ -1123,6 +1124,7 @@ if __name__ == "__main__":
                                 refresh_presets_btn=gr.Button(value="刷新",variant="secondary")
                         with gr.Row():
                             gen_btn2=gr.Button(value="生成",variant="primary",visible=True)
+                    GSV_ARGS=[refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut]
                     with gr.TabItem("微软TTS"):
                         with gr.Column():
                             ms_refresh_btn=gr.Button(value="刷新说话人列表",variant="secondary")
@@ -1146,6 +1148,7 @@ if __name__ == "__main__":
                             ms_refresh_btn.click(ms_refresh,outputs=[ms_languages])
                             ms_languages.change(display_ms_spk,inputs=[ms_languages],outputs=[ms_speaker])
                             ms_speaker.change(display_style_role,inputs=[ms_languages,ms_speaker],outputs=[ms_style,ms_role])
+                    MSTTS_ARGS=[ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch]
                     with gr.TabItem("自定义API"):
                         with gr.Column():
                             gr.Markdown(value="""## 安全警告：此功能会执行外部代码！  
@@ -1215,13 +1218,13 @@ def custom_api(text):#return: audio content
                                     __.click(play_audio,inputs=[_,STATE],outputs=[audio_player])
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate1,fps,offset,language1,api_port1,workers,*BV2_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=True)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,sampling_rate2,fps,offset,language2,api_port2,workers,*GSV_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch,STATE],outputs=[audio_player,*edit_rows,STATE])  
+                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,*MSTTS_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])  
                                     customregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(customregenbtn)      
                                     customregenbtn.click(remake,inputs=[page_slider,_,s_txt,choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
@@ -1285,9 +1288,9 @@ def custom_api(text):#return: audio content
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])
-        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,model_id,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
-        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,how_to_cut],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
-        gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn1.click(generate_bv2,inputs=[input_file,sampling_rate1,fps,offset,language1,api_port1,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn2.click(generate_gsv,inputs=[input_file,sampling_rate2,fps,offset,language2,api_port2,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])

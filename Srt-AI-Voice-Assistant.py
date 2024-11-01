@@ -977,8 +977,8 @@ def remake(*args):
 
 def recompose(page,subtitle_list):
     if len(subtitle_list)==0:
-        gr.Info("请先点击生成！")
-        return None,"请先点击生成！",*show_page(page,subtitle_list),subtitle_list
+        gr.Info("上次生成未成功，请先完成生成流程！")
+        return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list),subtitle_list
     sr,audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
     return (sr,audio),"OK",*show_page(page,subtitle_list),subtitle_list
@@ -993,7 +993,7 @@ def play_audio(idx,subtitle_list):
 def load_page(subtitle_list):
     length=len(subtitle_list)
     if length==0:
-        gr.Info("请先点击“生成”！")
+        gr.Info("上次生成未成功，请先完成生成流程！")
     return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1,subtitle_list)
 
 def show_page(page_start,subtitle_list):

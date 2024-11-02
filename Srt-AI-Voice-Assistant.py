@@ -592,7 +592,7 @@ def read_srt(filename,offset):
     filelength=len(file)
     for i in range(0,filelength):
         if " --> " in file[i]:
-            is_st=True
+            is_st=True if len(file[i-1])>1 else False
             for char in file[i-1].strip().replace("\ufeff",""):
                 if char not in ['0','1','2','3','4','5','6','7','8','9']:
                     is_st=False
@@ -608,7 +608,7 @@ def read_srt(filename,offset):
             text+=file[x]
         st=Subtitle(id,st,et,text,ntype="srt")
         st.add_offset(offset=offset)
-        subtitle_list.append(st)
+        subtitle_list.append(st)    
     st,et=file[indexlist[-1]].split(" --> ")
     id=file[indexlist[-1]-1]
     text=""

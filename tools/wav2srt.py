@@ -23,7 +23,8 @@ args = parser.parse_args()
 
 if args.engine=="whisper":
     model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
-    if not os.path.exists(model_path) or os.listdir(model_path)==[]:         
+    os.makedirs(model_path,exist_ok=True)
+    if os.listdir(model_path)==[]:         
         print("downloading...")
         os.makedirs(model_path,exist_ok=True)
         faster_whisper.download_model(size_or_id=args.whisper_size,output_dir=model_path)    

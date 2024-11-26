@@ -820,6 +820,7 @@ def load_preset(name,port):
     try:
         global current_sovits_model
         global current_gpt_model
+        switch=True
         if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
         data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
@@ -834,7 +835,6 @@ def load_preset(name,port):
                    gr.Warning("模型切换失败")
                current_sovits_model=data["sovits_path"]
                current_gpt_model=data["gpt_path"]
-               switch=True
         if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
             data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
         if data["auxiliary_audios"] is not None:                   

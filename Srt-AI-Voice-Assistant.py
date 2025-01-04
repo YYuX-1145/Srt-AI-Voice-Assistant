@@ -1043,6 +1043,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
+    parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
     args, unknown = parser.parse_known_args()
     gsv_fallback=False
     refresh_presets_list()
@@ -1307,4 +1308,5 @@ def custom_api(text):#return: audio content
             share=args.share,
             server_port=server_port if server_port>5001 else None,
             inbrowser=True,
+            server_name='0.0.0.0' if args.local else '127.0.0.1'
             )

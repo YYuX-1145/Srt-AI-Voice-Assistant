@@ -1,6 +1,5 @@
 import numpy as np
 import soundfile as sf
-from librosa import load
 import soxr
 
 def to_mono(y):

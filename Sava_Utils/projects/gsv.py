@@ -26,7 +26,7 @@ class GSV(Projet):
                 "speed": kwargs["speed_factor"],
                 }
                 API_URL = f"http://127.0.0.1:{port}/"
-            print(data_json)
+            #print(data_json)
             response = requests.post(url=API_URL, json=data_json)
             response.raise_for_status()  # 检查响应的状态码
             return response.content

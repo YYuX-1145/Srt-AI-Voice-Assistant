@@ -1,6 +1,6 @@
 import os
 import sys
-
+# import inspect
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
@@ -15,53 +15,20 @@ import shutil
 
 import gradio as gr
 import argparse
-import csv
+
 import json
 import soundfile as sf
 import datetime
 import time
 import concurrent.futures
 
-import hashlib
-
-
 import Sava_Utils
+from Sava_Utils.man.manual import Man
 from Sava_Utils.utils import *
 from Sava_Utils.logger import logger
+from Sava_Utils.settings import Settings
+from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
-readme="""
-# Srt-AI-Voice-Assistant
-`Srt-AI-Voice-Assistant`是一个便捷的，通过API调用Bert-VITS2-HiyoriUI和GPT-SoVITS为上传的.srt字幕文件生成音频的工具。
-当前的代码不够完善，如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
-
-240922更新：<br>
-1.增加自定义API功能，但务必注意安全问题！  
-
-240821更新：<br>
-1.增加对微软在线TTS支持，使用前请配置密钥  
-2.部分细节优化
-
-240811更新：<br>
-[请注意]：请务必安装依赖，否则会导致无法使用！对于GPT-SoVITS-v2-240807，由于fi分支还没有更新，可以在程序内启动功能受限的api（v1）。  
-1.增加错误提示  
-2.自动检测项目路径  
-3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。  
-4.重大功能更新：支持重新抽卡合成
-
-240404：<br>
-~~[请注意]：fast-inference分支的API已经更新(https://github.com/RVC-Boss/GPT-SoVITS/pull/923) 不更新会导致无法使用~~
-
-
-240316功能更新：  
-1.支持启动API服务，请在设置中填写并保存  
-2.支持GSV模型切换（*重要！你可能需要拉取代码更新api.py）  
-3.支持保存GSV提示音频和模型预设  
-
-240311修复更新：  
-1.offset可以为负值  
-2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
-
-"""
 import Sava_Utils.projects
 import Sava_Utils.projects.bv2
 import Sava_Utils.projects.gsv
@@ -177,26 +144,6 @@ def generate_custom(input_file,fps,offset,workers,custom_api):
         return None,"请选择API配置文件！",*load_page(Subtitles()),Subtitles() 
     return generate((custom_api),proj="custom",in_file=input_file,sr=None,fps=fps,offset=offset,max_workers=workers)
 
-def file_show(file):
-    if file is None:
-        return ""
-    try:
-      with open(file.name, "r", encoding="utf-8") as f:
-         text = f.read()
-      return text
-    except Exception as error:
-        return error
-
-def temp_ra(a:tuple):
-    sr,wav=a
-    name=hashlib.md5(wav.tobytes()).hexdigest()+".wav"
-    os.makedirs(os.path.join(current_path,"SAVAdata","temp"),exist_ok=True)
-    dir=os.path.join(current_path,"SAVAdata","temp",name)
-    if not os.path.exists(dir):    
-        sf.write(dir, wav, sr)
-    return dir
-
-
 def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         #global subtitle_list
         t1 = time.time()
@@ -239,6 +186,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
 
 def generate_bv2(in_file,sr,fps,offset,language,port,max_workers,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text):
         return generate(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text,in_file=in_file,sr=sr,fps=fps,offset=offset,proj="bv2",max_workers=max_workers)    
+
 def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method): 
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
@@ -246,63 +194,6 @@ def generate_gsv(in_file,sr,fps,offset,language,port,max_workers,refer_audio,aux
         refer_audio_path=temp_ra(refer_audio)      
         aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []   
         return generate(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],in_file=in_file,sr=sr,fps=fps,offset=offset,proj="gsv",max_workers=max_workers)
-
-def read_srt(filename,offset):
-    with open(filename,"r",encoding="utf-8") as f:
-        file=f.readlines()
-    subtitle_list=Subtitles()
-    indexlist=[]
-    filelength=len(file)
-    for i in range(0,filelength):
-        if " --> " in file[i]:
-            is_st=True if len(file[i-1])>1 else False
-            for char in file[i-1].strip().replace("\ufeff",""):
-                if char not in ['0','1','2','3','4','5','6','7','8','9']:
-                    is_st=False
-                    break
-            if is_st:
-                indexlist.append(i) #get line id
-    listlength=len(indexlist)
-    for i in range(0,listlength-1):
-        st,et=file[indexlist[i]].split(" --> ")
-        id=int(file[indexlist[i]-1].strip().replace("\ufeff",""))
-        text=""
-        for x in range(indexlist[i]+1,indexlist[i+1]-2):
-            text+=file[x]
-        st=Subtitle(id,st,et,text,ntype="srt")
-        st.add_offset(offset=offset)
-        subtitle_list.append(st)    
-    st,et=file[indexlist[-1]].split(" --> ")
-    id=file[indexlist[-1]-1]
-    text=""
-    for x in range(indexlist[-1]+1,filelength):
-        text+=file[x]
-    st=Subtitle(id,st,et,text,ntype="srt")
-    st.add_offset(offset=offset)
-    subtitle_list.append(st)
-    return subtitle_list
-
-
-def read_prcsv(filename,fps,offset):
-    try:           
-        with open(filename,"r",encoding="utf-8",newline='') as csvfile:
-            reader = list(csv.reader(csvfile))
-            lenth=len(reader)
-            subtitle_list=Subtitles()
-            stid=1  
-            for index in range(1,lenth):
-                if reader[index]==[]:
-                    continue
-                st=Subtitle(stid,reader[index][0],reader[index][1],reader[index][2],ntype="prcsv",fps=fps)
-                st.add_offset(offset=offset)
-                subtitle_list.append(st)
-                stid+=1
-            return subtitle_list
-        #            
-    except Exception as e:
-         err=f"读取字幕文件出错：{str(e)}"
-         logger.error(err)
-         gr.Warning(err)
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     if proj=="bv2":
@@ -385,16 +276,15 @@ def start_hiyoriui():
 
 def start_gsv():
     global config
-    global gsv_fallback
     if config.gsv_pydir=="":
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"
     if os.path.exists(os.path.join(config.gsv_dir,"api_v2.py")):
         apath="api_v2.py"
-        gsv_fallback=False
+        GSV.gsv_fallback=False
     else:
         apath="api.py"
-        gsv_fallback=True
+        GSV.gsv_fallback=True
         assert os.path.exists(os.path.join(config.gsv_dir,"api.py")),"api文件丢失？？？"
         gr.Warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
         logger.warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
@@ -492,7 +382,7 @@ def switch_gsvmodel(sovits_path,gpt_path,port):
                 raise gr.Error("你错误地填写了文件夹路径！！！")
         #print(data_json)
         port=int(port)
-        if gsv_fallback:
+        if GSV.gsv_fallback:
             API_URL=f'http://127.0.0.1:{port}/set_model/'
             response = requests.post(url=API_URL,json=data_json)
             response.raise_for_status()
@@ -658,23 +548,15 @@ def show_page(page_start,subtitle_list):
         ret+=btn        
     return ret
 
-def run_wav2srt(input,out_dir,pydir,engine,min_length,min_interval,max_sil_kept,args):
-    if input is None:
-        gr.Warning("请上传音频文件！")
-        return None
-    pydir=pydir.strip('"')
-    out_dir=out_dir.strip('"')
-    run_command(command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{out_dir}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}',dir=current_path)
-    gr.Info("已打开新的处理窗口")
-
 if __name__ == "__main__":
+    Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
     args, unknown = parser.parse_known_args()
-    gsv_fallback=False
+    GSV.gsv_fallback=False
     refresh_presets_list()
     refresh_custom_api_list()
     current_sovits_model=None
@@ -690,12 +572,7 @@ if __name__ == "__main__":
     ms_refresh()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         STATE=gr.State(value=Subtitles())
-        gr.Markdown(value="""
-                    版本240922，支持HiyoriUI，GPT-SoVITS-v2和fast_inference_分支,微软在线TTS<br>
-                    仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
-                    [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
-                    """)
-
+        gr.Markdown(value=Man.getInfo("title"))
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -782,35 +659,8 @@ if __name__ == "__main__":
                     MSTTS_ARGS=[ms_languages,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch]
                     with gr.TabItem("自定义API"):
                         with gr.Column():
-                            gr.Markdown(value="""## 安全警告：此功能会执行外部代码！  
-                                        ### 运行前请务必检查代码内容，运行不受信任的代码可能会导致电脑受到攻击！  
-                                        ### 作者不对此产生的后果负任何责任！！！""")
-                            gr.Markdown(value="""
-### 将装有python函数的代码文件放在`SAVAdata/presets`下即可被调用  
-```
-def custom_api(text):#return: audio content
-    from gradio_client import Client
-    client = Client("http://127.0.0.1:7860/")
-    result = client.predict(
-		text,	# str  in '输入文本内容' Textbox component
-		"神里绫华",	# str (Option from: [('神里绫华', '神里绫华')]) in 'Speaker' Dropdown component
-		0.1,	# int | float (numeric value between 0 and 1) in 'SDP Ratio' Slider component
-		0.5,	# int | float (numeric value between 0.1 and 2) in 'Noise' Slider component
-		0.5,	# int | float (numeric value between 0.1 and 2) in 'Noise_W' Slider component
-		1,	# int | float (numeric value between 0.1 and 2) in 'Length' Slider component
-		"auto",	# str (Option from: [('ZH', 'ZH'), ('JP', 'JP'), ('EN', 'EN'), ('mix', 'mix'), ('auto', 'auto')]) in 'Language' Dropdown component
-		"",	# str (filepath on your computer (or URL) of file) in 'Audio prompt' Audio component
-		"",	# str  in 'Text prompt' Textbox component
-		"",	# str  in 'Prompt Mode' Radio component
-		"",	# str  in '辅助文本' Textbox component
-		0,	# int | float (numeric value between 0 and 1) in 'Weight' Slider component
-		fn_index=0
-    )
-    with open(result[1],'rb') as file:
-        data=file.read()
-    return data
-```""")
-                            gr.Markdown(value='以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！')                                
+                            gr.Markdown(value=Man.getInfo("custom_warn"))
+                            gr.Markdown(value=Man.getInfo("help_custom"))                            
                             choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=custom_api_list,value=custom_api_list[0] if custom_api_list!=[] else '',allow_custom_value=True)
                             refresh_custom_btn=gr.Button(value="刷新")
                             gen_btn4=gr.Button(value="生成",variant="primary",visible=True)
@@ -864,29 +714,9 @@ def custom_api(text):#return: audio content
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
             with gr.TabItem("额外内容"):
                 available=False
-                if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
-                    available=True
-                    with gr.TabItem("音频转字幕"):
-                        with gr.Row():
-                            with gr.Column():
-                                wav2srt_input=gr.File(label="上传音频文件",interactive=True)
-                                wav2srt_out_dir=gr.Textbox(value=os.path.join(current_path,"SAVAdata","output"),label="保存路径，填文件夹名",interactive=True)
-                                wav2srt_pydir=gr.Textbox(value=config.gsv_pydir,label="Python解释器路径",interactive=True)
-                                wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label="选择asr模型，funasr只支持中文但更快更准，faster whisper支持多语言",interactive=True)
-                                wav2srt_min_length=gr.Slider(label="(ms)每段最小多长，如果第一段太短一直和后面段连起来直到超过这个值",minimum=0,maximum=90000,step=100,value=5000)
-                                wav2srt_min_interval=gr.Slider(label="(ms)最短切割间隔",minimum=0,maximum=5000,step=10,value=300)
-                                wav2srt_sil=gr.Slider(label="(ms)切完后静音最多留多长",minimum=0,maximum=2000,step=100,value=1000)
-                                wav2srt_args=gr.Textbox(value="",label="其他参数",interactive=True)
-                                wav2srt_run=gr.Button(value="开始",variant="primary",interactive=True)
-                                wav2srt_run.click(run_wav2srt,inputs=[wav2srt_input,wav2srt_out_dir,wav2srt_pydir,wav2srt_engine,wav2srt_min_length,wav2srt_min_interval,wav2srt_sil,wav2srt_args])
-                            with gr.Column():
-                                gr.Markdown("""
-本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
-# 其他参数：
-`--whisper_size` 默认:large-v3 使用faster whisper时指定模型<br>
-`--threshold` 默认:-40 音量小于这个值视作静音的备选切割点<br>
-`--hop_size` 默认:20 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）<br>
-                                            """)
+                from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
+                WAV2SRT=WAV2SRT(config=config)
+                available=WAV2SRT.UI()
                 if not available:
                     gr.Markdown("没有任何扩展，安装后重启生效<br>[获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem("设置"):
@@ -915,7 +745,11 @@ def custom_api(text):#return: audio content
                         save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
                         restart_btn=gr.Button(value="重启UI",variant="stop")
                     with gr.Column():
-                        gr.Markdown(value=readme)
+                        with gr.TabItem("简介和常见错误"):
+                            gr.Markdown(value=Man.getInfo("readme"))
+                            gr.Markdown(value=Man.getInfo("issues"))
+                        with gr.TabItem("帮助"):
+                            gr.Markdown(value=Man.getInfo("help"))
 
         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
         spkchoser.change(switch_spk,inputs=[spkchoser],outputs=[spkid,speaker_name])

@@ -2,7 +2,7 @@ from .base import Projet
 import requests
 import gradio as gr
 from ..utils import positive_int
-from ..logger import logger
+from .. import logger
 
 class BV2(Projet):
     def __init__(self):

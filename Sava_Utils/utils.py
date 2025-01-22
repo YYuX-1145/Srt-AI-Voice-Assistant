@@ -6,7 +6,8 @@ import hashlib
 import gradio as gr
 import soundfile as sf
 import csv
-from .subtitle import Base_subtitle, Subtitle, Subtitles
+import re
+from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
 
 current_path=os.environ.get("current_path")
 
@@ -110,3 +111,15 @@ def read_prcsv(filename, fps, offset):
         logger.error(err)
         gr.Warning(err)
 
+
+def read_txt(filename):
+    with open(filename, "r", encoding="utf-8") as f:
+        text=f.read()
+    sentences = re.split(r'(?<=[.!?。！？])|\n', text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    subtitle_list = Subtitles()
+    idx=1
+    for s in sentences:
+        subtitle_list.append(Subtitle(idx,to_time(3 * idx), to_time(3 * idx + 3), s, ntype="srt"))
+        idx+=1
+    return subtitle_list

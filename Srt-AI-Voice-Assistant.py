@@ -155,6 +155,8 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
             subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name[-4:].lower()==".srt":
             subtitle_list=read_srt(in_file.name,offset)
+        elif in_file.name[-4:].lower()==".txt":
+            subtitle_list=read_txt(in_file.name)
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
             return None,"未知的格式，请确保扩展名正确！",*load_page(Subtitles()),Subtitles()
@@ -670,7 +672,7 @@ if __name__ == "__main__":
                         fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
                         workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
                         offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
-                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.38                 
+                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt','.txt'],file_count='single') # works well in gradio==3.38                 
                         gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
                         with gr.Accordion("启动服务"):

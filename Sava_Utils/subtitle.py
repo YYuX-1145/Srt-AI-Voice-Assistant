@@ -122,7 +122,7 @@ class Subtitles:
             gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
         if failed_list != []:
             logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
-            gr.Warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
+            gr.Warning(f"序号合集为 {failed_list} 的字幕合成失败！")
         audio_content = np.concatenate(audiolist)
         return sr, audio_content
 

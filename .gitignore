@@ -1,5 +1,6 @@
 *.bat
 __pycache__
 SAVAdata
-.dist
-.build
+dist
+build
+*.spec

@@ -63,4 +63,6 @@ def load_audio(filepath, sr):
     y = to_mono(y)
     if sr !=sr_native and sr is not None:
         y = resample(y, orig_sr=sr_native, target_sr=sr,)
-    return y,sr
+        return y,sr
+    else:
+        return y,sr_native

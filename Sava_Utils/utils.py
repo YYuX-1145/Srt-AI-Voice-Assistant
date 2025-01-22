@@ -120,6 +120,6 @@ def read_txt(filename):
     subtitle_list = Subtitles()
     idx=1
     for s in sentences:
-        subtitle_list.append(Subtitle(idx,to_time(3 * idx), to_time(3 * idx + 3), s, ntype="srt"))
+        subtitle_list.append(Subtitle(idx,to_time(3 * idx - 3), to_time(3 * idx), s, ntype="srt"))
         idx+=1
     return subtitle_list

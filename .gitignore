@@ -4,3 +4,4 @@ SAVAdata
 dist
 build
 *.spec
+*.exe

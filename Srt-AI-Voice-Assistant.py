@@ -1,21 +1,33 @@
-import requests
 import os
+import sys
+
+
+if getattr(sys, "frozen", False):
+    current_path = os.path.dirname(sys.executable)
+    exe = True
+elif __file__:
+    current_path = os.path.dirname(__file__)
+    exe = False
+os.environ["current_path"] = current_path
+
+import requests
 import shutil
-import librosa
-import numpy as np
+
 import gradio as gr
 import argparse
 import csv
 import json
-import logging
 import soundfile as sf
 import datetime
 import time
-import subprocess
 import concurrent.futures
-import sys
+
 import hashlib
-from xml.etree import ElementTree
+
+
+import Sava_Utils
+from Sava_Utils.utils import *
+from Sava_Utils.logger import logger
 
 readme="""
 # Srt-AI-Voice-Assistant
@@ -50,13 +62,15 @@ readme="""
 2.部分函数改为传不定参（可能有疏忽产生bug，要即时反馈，也可使用0308旧版），为接下来的新功能做准备  
 
 """
+import Sava_Utils.projects
+import Sava_Utils.projects.bv2
+import Sava_Utils.projects.gsv
+import Sava_Utils.projects.mstts
 
-if getattr(sys, 'frozen', False):
-    current_path = os.path.dirname(sys.executable)
-    exe=True
-elif __file__:
-    current_path = os.path.dirname(__file__)
-    exe=False
+BV2 = Sava_Utils.projects.bv2.BV2()
+GSV = Sava_Utils.projects.gsv.GSV()
+MSTTS = Sava_Utils.projects.mstts.MSTTS()
+Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS}
 
 dict_language = {
     "中文": "all_zh",
@@ -79,206 +93,7 @@ cut_method = {
     "按英文句号.切": "cut4",
     "按标点符号切": "cut5",
 }
-log_colors = {
-    'DEBUG': 'white',
-    'INFO': 'green',
-    'WARNING': 'yellow',
-    'ERROR': 'red',
-    'CRITICAL': 'bold_red',}
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-try:
-    import colorlog    
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(
-    fmt='%(log_color)s[%(levelname)s][%(asctime)s]:%(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d_%H:%M:%S',
-    log_colors=log_colors
-))
-    logger.addHandler(handler)    
-except ImportError:
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.INFO)
-    formatter=logging.Formatter('[%(levelname)s][%(asctime)s]:%(funcName)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
-class Base_subtitle:
-    def __init__(self,index:int, start_time, end_time, text:str,ntype:str,fps=30):
-        self.index = int(index)
-        self.start_time_raw = start_time
-        self.end_time_raw = end_time
-        self.text = text.strip()
-    #def normalize(self,ntype:str,fps=30):
-        if ntype=="prcsv":
-            h,m,s,fs=(start_time.replace(';',':')).split(":")#seconds
-            self.start_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-            h,m,s,fs=(end_time.replace(';',':')).split(":")
-            self.end_time=int(h)*3600+int(m)*60+int(s)+round(int(fs)/fps,2)
-        elif ntype=="srt":
-            h,m,s=start_time.split(":")
-            s=s.replace(",",".")
-            self.start_time=int(h)*3600+int(m)*60+round(float(s),2)
-            h,m,s=end_time.split(":")
-            s=s.replace(",",".")
-            self.end_time=int(h)*3600+int(m)*60+round(float(s),2)
-        else:
-            raise ValueError
-    def __str__(self) -> str:
-        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}'
-    
-class Subtitle(Base_subtitle):
-    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
-        super().__init__(index, start_time, end_time, text, ntype, fps)
-        self.is_success=False
-        self.is_delayed=False
-    def add_offset(self,offset=0):
-        self.start_time+=offset
-        if self.start_time<0:
-            self.start_time=0
-        self.end_time+=offset
-        if self.end_time<0:
-            self.end_time=0    
-    def __str__(self) -> str:
-        return f'id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}'
-    
-class Subtitles():
-    def __init__(self,proj:str=None,dir:str=None) -> None:
-        self.subtitles=[]
-        self.proj=proj
-        self.dir=dir
-    def set_proj(self,proj:str):
-        self.proj=proj
-    def set_dir(self,dir:str):
-        self.dir=dir 
-        os.makedirs(dir,exist_ok=True)
-    def audio_join(self,sr) :#-> tuple[int,np.array]
-        assert self.dir is not None
-        audiolist=[]
-        delayed_list=[]
-        failed_list=[]
-        ptr=0
-        fl= [i for i in os.listdir(self.dir) if i.endswith(".wav")]
-        if fl==[]:
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
-        if sr is None:
-            wav,sr = librosa.load(os.path.join(self.dir,fl[0]), sr=sr)
-        del fl
-        for id,i in enumerate(self.subtitles):
-            start_frame=int(i.start_time*sr)
-            if ptr<start_frame:
-                silence_len=start_frame-ptr
-                audiolist.append(np.zeros(silence_len))
-                ptr+=silence_len
-                self.subtitles[id].is_delayed=False
-            elif ptr>start_frame:
-                self.subtitles[id].is_delayed=True
-                delayed_list.append(self.subtitles[id].index)                                   
-            f_path=os.path.join(self.dir,f"{i.index}.wav")
-            if os.path.exists(f_path):
-                wav,sr = librosa.load(f_path, sr=sr)
-                dur=wav.shape[-1]             #frames
-                ptr+=dur
-                audiolist.append(wav)
-                self.subtitles[id].is_success=True
-            else:
-                failed_list.append(self.subtitles[id].index)
-        if delayed_list!=[]:
-            logger.warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
-            gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
-        if failed_list!=[]:
-            logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
-            gr.Warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
-        audio_content=np.concatenate(audiolist)
-        return sr,audio_content
-    def get_state(self,idx):       
-        if self.subtitles[idx].is_delayed:
-            return 'delayed'
-        if self.subtitles[idx].is_success:
-            return 'ok' 
-        return "failed"
-    def append(self, subtitle:Subtitle):
-        self.subtitles.append(subtitle)
-    def sort(self):
-        self.subtitles.sort(key=lambda x: x.index)
-    def __iter__(self):
-        return iter(self.subtitles)
-    def __getitem__(self, index):
-        return self.subtitles[index]
-    def __len__(self):
-        return len(self.subtitles)
-    
-#subtitle_list= Subtitles()  
-
-class Settings:
-    def __init__(self,
-                 server_port:int=5001,
-                 theme:str="default",
-                 clear_tmp:bool=False,
-                 num_edit_rows:int=7,
-                 bv2_pydir:str="",
-                 gsv_pydir:str="",
-                 bv2_dir:str="",
-                 gsv_dir:str="",
-                 bv2_args:str="",
-                 gsv_args:str="",
-                 ms_region:str="eastasia",
-                 ms_key:str=""):
-        self.server_port=int(server_port) 
-        self.theme=theme
-        self.clear_tmp=clear_tmp
-        self.num_edit_rows=int(num_edit_rows)
-        self.ms_region=ms_region
-        self.ms_key=ms_key
-        #detect python envs####
-        if bv2_pydir!="" :
-            if os.path.exists(bv2_pydir):
-                self.bv2_pydir=os.path.abspath(bv2_pydir) 
-            else:
-                self.bv2_pydir=""
-                gr.Warning("错误：填写的路径不存在！")
-        else:
-            if os.path.exists(os.path.join(current_path,"venv\\python.exe")) and "VITS2" in current_path.upper():
-                self.bv2_pydir=os.path.join(current_path,"venv\\python.exe")
-                logger.info("已检测到Bert-VITS2环境")
-            else:
-                self.bv2_pydir=""
-
-        if gsv_pydir!="": 
-            if os.path.exists(gsv_pydir):
-                self.gsv_pydir=os.path.abspath(gsv_pydir) 
-            else:
-                self.gsv_pydir=""
-                gr.Warning("错误：填写的路径不存在！")               
-        else:
-            if os.path.exists(os.path.join(current_path,"runtime\\python.exe")) and "GPT" in current_path.upper():
-                self.gsv_pydir=os.path.join(current_path,"runtime\\python.exe")
-                logger.info("已检测到GPT-SoVITS环境")
-            else:
-                self.gsv_pydir=""
-        ###################
-        self.bv2_dir=bv2_dir
-        self.gsv_dir=gsv_dir
-        self.bv2_args=bv2_args
-        self.gsv_args=gsv_args
-        if self.bv2_pydir!="":
-            if bv2_dir=="":
-                self.bv2_dir=os.path.dirname(os.path.dirname(self.bv2_pydir))     
-        if self.gsv_pydir!="":              
-            if gsv_dir=="":   
-                self.gsv_dir=os.path.dirname(os.path.dirname(self.gsv_pydir))
-
-    def to_dict(self):
-        return self.__dict__        
-    def save(self):
-        dict= self.to_dict()
-        os.makedirs(os.path.join(current_path,"SAVAdata"),exist_ok=True)
-        with open(os.path.join(current_path,"SAVAdata","config.json"), 'w', encoding='utf-8') as f:
-            json.dump(dict, f, indent=2, ensure_ascii=False) 
-    @classmethod
-    def from_dict(cls, dict):
-        return cls(**dict)
 
 # https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
 gradio_hf_hub_themes = [
@@ -315,182 +130,33 @@ gradio_hf_hub_themes = [
     "NoCrypt/miku"
 ]
 
-def positive_int(*a):
-    r=[]
-    for x in a:
-        if x is None:
-            r.append(None)
-            continue
-        if x < 0:
-            x=0
-        r.append(int(x))
-    return r
-
-def bert_vits2_api(text,mid,spk_name,sid,lang,length,noise,noisew,sdp,emotion,split,style_text,style_weight,port):
-    try:
-                API_URL = f'http://127.0.0.1:{port}/voice'
-                data_json = {                    
-                    "model_id": mid,
-                    "speaker_name": spk_name,
-                    "speaker_id": sid,
-                    "language": lang,
-                    "length": length,
-                    "noise": noise,
-                    "noisew": noisew,
-                    "sdp_ratio": sdp,
-                    "emotion":emotion,
-                    "auto_translate": False,
-                    "auto_split": split,
-                    "style_text": style_text,
-                    "style_weight": style_weight,                    
-                    "text": text
-                }
-                #print(data_json)
-                response = requests.get(url=API_URL,params=data_json)
-                response.raise_for_status()  # 检查响应的状态码
-                return response.content
-    except Exception as e:
-            err=f'bert-vits2推理发生错误，请检查HiyoriUI是否正确运行。报错内容: {e}'
-            logger.error(err)
-            return None
-
-
-def gsv_api(port,**kwargs):
-    global gsv_fallback
-    try:
-        data_json=kwargs      
-        API_URL = f'http://127.0.0.1:{port}/tts'
-        if gsv_fallback:
-            data_json={
-                        "refer_wav_path": kwargs["ref_audio_path"],
-                        "prompt_text": kwargs["prompt_text"],
-                        "prompt_language": kwargs["prompt_lang"],
-                        "text": kwargs["text"],
-                        "text_language": kwargs["text_lang"],
-                        "top_k": kwargs["top_k"],
-                        "top_p":kwargs["top_p"],
-                        "temperature":kwargs["temperature"],
-                        "speed": kwargs["speed_factor"]
-                        } 
-            API_URL = f'http://127.0.0.1:{port}/'
-        #print(data_json)       
-        response = requests.post(url=API_URL,json=data_json)
-        response.raise_for_status()  # 检查响应的状态码
-        return response.content
-    except Exception as e:
-        err=f'GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}'
-        logger.error(err)
-        return None
 
 def custom_api(text):
     raise "需要加载自定义API函数！"
 
-def getms_speakers():
-    global ms_speaker_info
-    global config
-    if not os.path.exists(os.path.join("SAVAdata","ms_speaker_info.json")):
-        if not os.path.exists(os.path.join("SAVAdata","ms_speaker_info_raw.json")):
-            try:
-                assert config.ms_key!="","please fill in your key to get MSTTS speaker list."
-                headers = {'Ocp-Apim-Subscription-Key':config.ms_key}
-                url=f'https://{config.ms_region}.tts.speech.microsoft.com/cognitiveservices/voices/list'
-                data=requests.get(url=url,headers=headers)
-                data.raise_for_status()
-                info=json.loads(data.content)
-                with open(os.path.join("SAVAdata","ms_speaker_info_raw.json"), 'w', encoding='utf-8') as f:
-                    json.dump(info, f, indent=2, ensure_ascii=False)
-            except Exception as e:
-                err=f'无法下载微软TTS说话人列表。报错内容: {e}'
-                gr.Warning(err)
-                logger.error(err)
-                ms_speaker_info={}
-                return None
-        dataraw=json.load(open(os.path.join("SAVAdata","ms_speaker_info_raw.json"), encoding="utf-8"))#list
-        classified_info={}
-        for i in dataraw:
-            if "zh" in i["Locale"]:
-                if i["Locale"] not in classified_info.keys():
-                    classified_info[i["Locale"]]={}
-                classified_info[i["Locale"]][i["LocalName"]]=i
-        with open(os.path.join("SAVAdata","ms_speaker_info.json"), 'w', encoding='utf-8') as f:
-                json.dump(classified_info, f, indent=2, ensure_ascii=False)
-    ms_speaker_info=json.load(open(os.path.join("SAVAdata","ms_speaker_info.json"), encoding="utf-8"))
-    return None
-
-def msapi(language,speaker,style,role,rate,pitch,text):
-    global ms_access_token
-    global ms_speaker_info
-    headers = {
-    'X-Microsoft-OutputFormat': 'riff-48khz-16bit-mono-pcm',
-    'Content-Type': 'application/ssml+xml',
-    'Authorization': 'Bearer ' + ms_access_token,
-    'User-Agent': 'py_sava'
-    }
-    xml_body = ElementTree.Element('speak', version='1.0')
-    xml_body.set('xmlns', 'http://www.w3.org/2001/10/synthesis')
-    xml_body.set('xmlns:mstts', 'https://www.w3.org/2001/mstts')
-    xml_body.set('xml:lang', 'zh-CN')   
-    voice = ElementTree.SubElement(xml_body, 'voice')
-    voice.set('name', ms_speaker_info[language][speaker]["ShortName"]) # Short name
-    express = ElementTree.SubElement(voice, 'express-as')
-    express.set('style',style)
-    express.set('role',role)
-    prosody = ElementTree.SubElement(express, 'prosody')
-    prosody.set('rate',f"{int(100-rate*100)}%")
-    prosody.set('pitch',f"{int(100-pitch*100)}%")
-    prosody.text = text
-    body = ElementTree.tostring(xml_body)
-    try:
-        if ms_access_token is None:
-             getms_token()
-             assert ms_access_token is not None,"获取微软token出错"
-        response = requests.post(url=f'https://{config.ms_region}.tts.speech.microsoft.com/cognitiveservices/v1', headers=headers, data=body)
-        response.raise_for_status()
-        return response.content
-    except Exception as e:
-        err=f'微软TTS出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
-        logger.error(err)
-        return None
-    
-
-def getms_token():
-    global ms_access_token
-    fetch_token_url = f"https://{config.ms_region}.api.cognitive.microsoft.com/sts/v1.0/issueToken"
-    headers = {
-            'Ocp-Apim-Subscription-Key':config.ms_key
-        }
-    try:
-        response = requests.post(fetch_token_url, headers=headers)
-        ms_access_token = str(response.text)
-    except Exception as e:
-        err=f'获取微软token出错，检查密钥、服务器状态和网络连接。报错内容: {e}'
-        gr.Warning(err)
-        logger.error(err)
-        ms_access_token = None
-
 def ms_refresh():#language
-    global ms_speaker_info
-    getms_speakers()
-    if ms_speaker_info =={}:
+    MSTTS.update_cfg(config=config)
+    MSTTS.getms_speakers()
+    if MSTTS.ms_speaker_info == {}:
         return gr.update(value=None,choices=[],allow_custom_value=False)
-    choices=list(ms_speaker_info.keys())
+    choices = list(MSTTS.ms_speaker_info.keys())
     return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
 
 def display_ms_spk(language):#speaker
     if language in [None,""]:
         return gr.update(value=None,choices=[],allow_custom_value=False)
-    choices=list(ms_speaker_info[language].keys())
+    choices = list(MSTTS.ms_speaker_info[language].keys())
     return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
 
 def display_style_role(language,speaker):
     if language in [None,""] or speaker in [None,""]:
         return gr.update(value=None,choices=[],allow_custom_value=False),gr.update(value=None,choices=[],allow_custom_value=False)
     try:
-        choices1=["Default"]+ms_speaker_info[language][speaker]["StyleList"]
+        choices1 = ["Default"] + MSTTS.ms_speaker_info[language][speaker]["StyleList"]
     except KeyError:
         choices1=["Default"]        
     try:
-        choices2=["Default"]+ms_speaker_info[language][speaker]["RolePlayList"]
+        choices2=["Default"] + MSTTS.ms_speaker_info[language][speaker]["RolePlayList"]
     except KeyError:       
         choices2=["Default"]
     return gr.update(value=choices1[0],choices=choices1,allow_custom_value=False),gr.update(value=choices2[0],choices=choices2,allow_custom_value=False),
@@ -550,10 +216,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
-        if proj=="mstts":
-            if ms_access_token is None:
-                getms_token()
-                assert ms_access_token is not None,"获取微软token出错"
+        Projet_dict[proj].before_gen_action(config=config)
         if proj=="custom":
             global custom_api
             custom_api_path=args[0]
@@ -619,11 +282,6 @@ def read_srt(filename,offset):
     subtitle_list.append(st)
     return subtitle_list
 
-def run_command(command,dir):
-    command=f'start cmd /k "{command}"'
-    subprocess.Popen(command,cwd=dir,shell=True)
-    logger.info(f'执行命令:'+command)
-    time.sleep(0.1)
 
 def read_prcsv(filename,fps,offset):
     try:           
@@ -648,58 +306,29 @@ def read_prcsv(filename,fps,offset):
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     if proj=="bv2":
-        language,port,mid,sid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emotion_text=args
-        sid,port,mid=positive_int(sid,port,mid)
-        if speaker_name is not None and speaker_name!="":
-            audio = bert_vits2_api(text=text,mid=mid,spk_name=speaker_name,sid=None,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
-        else:
-            audio = bert_vits2_api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
+        audio = Projet_dict[proj].save_action(*args,text=text)
     elif proj=="gsv":
-        text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
-        port=positive_int(port)[0]
-        audio = gsv_api(port,
-                        text=text,
-                        text_lang=text_language,###language->lang
-                        ref_audio_path=refer_wav_path,#ref
-                        aux_ref_audio_paths=aux_refer_wav_path,
-                        prompt_text=prompt_text,
-                        prompt_lang=prompt_language,#
-                        batch_size=batch_size,
-                        batch_threshold=batch_threshold,
-                        fragment_interval=fragment_interval,
-                        speed_factor=speed_factor,
-                        top_k=top_k,
-                        top_p=top_p,
-                        seed = -1,
-                        parallel_infer = True,
-                        temperature=temperature,
-                        repetition_penalty=repetition_penalty,
-                        split_bucket=split_bucket,
-                        text_split_method=text_split_method,
-                        media_type="wav",
-                        streaming_mode=False)
+        audio = Projet_dict[proj].save_action(*args,text=text)
     elif proj=="mstts":
-        language,speaker,style,role,rate,pitch=args
-        audio=msapi(language,speaker,style,role,rate,pitch,text)
+        audio = Projet_dict[proj].save_action(*args, text=text)
     elif proj=="custom":
         audio=custom_api(text)
     else:
         raise
     if audio is not None:
-            if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
-                #sr=int.from_bytes(audio[24:28],'little')
-                filepath=os.path.join(dir,f"{subid}.wav")
-                with open(filepath,'wb') as file:
-                    file.write(audio)
-                    return filepath            
-            else:
-                data=json.loads(audio)
-                logger.error(f"出错字幕id：{subid},接收报错数据为：{str(data)}")
-                return None
+        if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
+            # sr=int.from_bytes(audio[24:28],'little')
+            filepath=os.path.join(dir,f"{subid}.wav")
+            with open(filepath,'wb') as file:
+                file.write(audio)
+                return filepath            
+        else:
+            data=json.loads(audio)
+            logger.error(f"出错字幕id：{subid},接收报错数据为：{str(data)}")
+            return None
     else:
         logger.error(f"出错字幕id：{subid}")
         return None
-    
 
 
 def switch_spk(choice):
@@ -707,7 +336,7 @@ def switch_spk(choice):
         return gr.update(label="说话人ID",value=0,visible=True,interactive=True),gr.update(label="说话人名称",visible=False,value="",interactive=True)
     else:
         return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
-        
+
 def cls_cache():
     dir=os.path.join(current_path,"SAVAdata","temp")
     if os.path.exists(dir):
@@ -1058,7 +687,7 @@ if __name__ == "__main__":
     else:
         server_port=args.server_port
     ms_access_token=None
-    getms_speakers()
+    ms_refresh()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value="""
@@ -1066,7 +695,7 @@ if __name__ == "__main__":
                     仓库地址 [前往此处获取更新](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant)
                     [获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)
                     """)
-        
+
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
@@ -1130,13 +759,13 @@ if __name__ == "__main__":
                     with gr.TabItem("微软TTS"):
                         with gr.Column():
                             ms_refresh_btn=gr.Button(value="刷新说话人列表",variant="secondary")
-                            if ms_speaker_info =={}:
+                            if MSTTS.ms_speaker_info == {}:
                                 ms_languages=gr.Dropdown(label="选择语言",value=None,choices=[],allow_custom_value=False,interactive=True)
                                 ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=[],allow_custom_value=False,interactive=True)
                             else:
-                                choices=list(ms_speaker_info.keys())
+                                choices = list(MSTTS.ms_speaker_info.keys())
                                 ms_languages=gr.Dropdown(label="选择语言",value=choices[0],choices=choices,allow_custom_value=False,interactive=True)
-                                choices=list(ms_speaker_info[choices[0]].keys())
+                                choices = list(MSTTS.ms_speaker_info[choices[0]].keys())
                                 ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=choices,allow_custom_value=False,interactive=True)
                                 del choices
                             with gr.Row():
@@ -1188,16 +817,16 @@ def custom_api(text):#return: audio content
                             refresh_custom_btn.click(refresh_custom_api_list,outputs=[choose_custom_api])
 
                     with gr.Column():                  
-                       fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                       workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
-                       offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
-                       input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.38                 
-                       gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
-                       audio_output = gr.Audio(label="Output Audio")
-                       with gr.Accordion("启动服务"):
-                           gr.Markdown(value="请先在设置中应用项目路径")
-                           start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                           start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
+                        workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
+                        offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
+                        input_file = gr.File(label="上传文件",file_types=['.csv','.srt'],file_count='single') # works well in gradio==3.38                 
+                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
+                        audio_output = gr.Audio(label="Output Audio")
+                        with gr.Accordion("启动服务"):
+                            gr.Markdown(value="请先在设置中应用项目路径")
+                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
+                            start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
                 with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。",open=False):
                     with gr.Column():
                         edit_rows=[]

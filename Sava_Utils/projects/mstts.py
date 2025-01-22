@@ -3,7 +3,7 @@ import os
 import json
 import requests
 import gradio as gr
-from ..logger import logger
+from .. import logger
 from xml.etree import ElementTree
 
 current_path = os.environ.get("current_path")

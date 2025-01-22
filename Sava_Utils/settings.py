@@ -1,7 +1,7 @@
 import os
 import gradio as gr
 import json
-from .logger import logger
+from . import logger
 
 current_path = os.environ.get("current_path")
 
@@ -11,6 +11,7 @@ class Settings:
         server_port: int = 5001,
         theme: str = "default",
         clear_tmp: bool = False,
+        min_interval:float=0.5,
         num_edit_rows: int = 7,
         bv2_pydir: str = "",
         gsv_pydir: str = "",
@@ -24,6 +25,7 @@ class Settings:
         self.server_port = int(server_port)
         self.theme = theme
         self.clear_tmp = clear_tmp
+        self.min_interval = min_interval
         self.num_edit_rows = int(num_edit_rows)
         self.ms_region = ms_region
         self.ms_key = ms_key
@@ -85,3 +87,18 @@ class Settings:
     @classmethod
     def from_dict(cls, dict):
         return cls(**dict)
+
+
+def load_cfg():
+    config_path = os.path.join(current_path, "SAVAdata", "config.json")
+    if os.path.exists(config_path):
+        try:
+            config = Settings.from_dict(json.load(open(config_path, encoding="utf-8")))
+            logger.info("成功加载自定义设置")
+        except Exception as e:
+            config = Settings()
+            logger.warning(f"用户设置加载失败，恢复默认设置！{e}")
+    else:
+        config = Settings()
+        logger.info("当前没有自定义设置")
+    return config

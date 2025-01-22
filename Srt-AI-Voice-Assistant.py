@@ -25,7 +25,7 @@ import concurrent.futures
 import Sava_Utils
 from Sava_Utils.man.manual import Man
 from Sava_Utils.utils import *
-from Sava_Utils.logger import logger
+from Sava_Utils import logger
 from Sava_Utils.settings import Settings
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
@@ -238,10 +238,10 @@ def cls_cache():
         logger.info("目前没有缓存！")
         gr.Info("目前没有缓存！")
 
-def save_settngs(server_port,clear_tmp,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
+def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global config
     current_edit_rows=config.num_edit_rows
-    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
+    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
     config.save()
     if config.num_edit_rows!=current_edit_rows:
         config.num_edit_rows=current_edit_rows
@@ -685,6 +685,7 @@ if __name__ == "__main__":
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True)
                             recompose_btn=gr.Button(value="重新拼接内容")
+                            export_btn = gr.Button(value="导出字幕")
                         for x in range(config.num_edit_rows):
                             _=gr.Number(show_label=False,visible=False,value=-1)
                             with gr.Row():
@@ -712,6 +713,7 @@ if __name__ == "__main__":
                         page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
                         pageloadbtn.click(load_page,inputs=[STATE],outputs=[page_slider,*edit_rows])
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
+                        export_btn.click(lambda x:x.export(),inputs=[STATE])
             with gr.TabItem("额外内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
@@ -725,6 +727,7 @@ if __name__ == "__main__":
                         gr.Markdown("点击应用后，这些设置才会生效。")
                         server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
                         clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
+                        min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=config.min_interval,step=0.1)
                         num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
                         theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                         cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
@@ -761,7 +764,7 @@ if __name__ == "__main__":
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
         switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[sovits_path,gpt_path,api_port2],outputs=[gen_textbox_output_text])
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,min_interval,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
         restart_btn.click(restart,[],[])
 
         save_presets_btn.click(save_preset,inputs=[choose_presets,desc_presets,refer_audio,aux_ref_audio,refer_text,refer_lang,sovits_path,gpt_path],outputs=[gen_textbox_output_text])

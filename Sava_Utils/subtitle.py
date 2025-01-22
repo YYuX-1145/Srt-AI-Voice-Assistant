@@ -1,11 +1,18 @@
 import os
 import gradio as gr
 import numpy as np
-import soundfile as sf
-from .logger import logger
-
+import datetime
+from . import logger
+from . import config
+from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
 
+
+def to_time(time_raw: float):
+    hours, r = divmod(time_raw, 3600)
+    minutes, r = divmod(r, 60)
+    seconds, milliseconds = divmod(r, 1)
+    return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d},{int(milliseconds*1000):03d}"
 
 class Base_subtitle:
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
@@ -42,6 +49,8 @@ class Subtitle(Base_subtitle):
         super().__init__(index, start_time, end_time, text, ntype, fps)
         self.is_success = False
         self.is_delayed = False
+        self.real_st=0
+        self.real_et=0 #frames
 
     def add_offset(self, offset=0):
         self.start_time += offset
@@ -60,6 +69,7 @@ class Subtitles:
         self.subtitles = []
         self.proj = proj
         self.dir = dir
+        self.sr=0
 
     def set_proj(self, proj: str):
         self.proj = proj
@@ -73,16 +83,18 @@ class Subtitles:
         audiolist = []
         delayed_list = []
         failed_list = []
-        ptr = 0
         fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
         if fl == []:
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         if sr is None:
-            wav, sr = sf.read(os.path.join(self.dir, fl[0]))
-        del fl
+            wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
+        self.sr=sr
+        interval = int(config.min_interval*sr)
+        del fl        
+        ptr = 0
         for id, i in enumerate(self.subtitles):
             start_frame = int(i.start_time * sr)
-            if ptr < start_frame:
+            if ptr  <= start_frame:
                 silence_len = start_frame - ptr
                 audiolist.append(np.zeros(silence_len))
                 ptr += silence_len
@@ -92,10 +104,14 @@ class Subtitles:
                 delayed_list.append(self.subtitles[id].index)
             f_path = os.path.join(self.dir, f"{i.index}.wav")
             if os.path.exists(f_path):
-                wav, sr = sf.read(f_path)
+                wav, sr = load_audio(f_path,sr=sr)
                 dur = wav.shape[-1]  # frames
+                self.subtitles[id].real_st=ptr
                 ptr += dur
                 audiolist.append(wav)
+                self.subtitles[id].real_et = ptr
+                ptr+=interval
+                audiolist.append(np.zeros(interval))
                 self.subtitles[id].is_success = True
             else:
                 failed_list.append(self.subtitles[id].index)
@@ -131,3 +147,23 @@ class Subtitles:
 
     def __len__(self):
         return len(self.subtitles)
+
+    def export(self):
+        if len(self.subtitles)==0:
+            gr.Info("当前没有字幕")
+            return None
+        idx=0
+        srt_content = []
+        for i in self.subtitles:
+            idx+=1
+            start=i.real_st/self.sr
+            end=i.real_et/self.sr
+            srt_content.append(str(idx)+"\n")
+            srt_content.append(f"{to_time(start)} --> {to_time(end)}"+"\n")
+            srt_content.append(i.text + "\n")
+            srt_content.append("\n")
+        t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        file_path=os.path.join(current_path,"SAVAdata","output",f"{t}.srt")
+        with open(file_path,"w",encoding="utf-8") as f:
+            f.writelines(srt_content)
+        os.system(f'explorer /select, {file_path}')

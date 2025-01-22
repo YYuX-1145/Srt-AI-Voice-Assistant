@@ -1,7 +1,7 @@
 import os
 import time
 import subprocess
-from .logger import logger
+from . import logger
 import hashlib
 import gradio as gr
 import soundfile as sf
@@ -109,3 +109,4 @@ def read_prcsv(filename, fps, offset):
         err = f"读取字幕文件出错：{str(e)}"
         logger.error(err)
         gr.Warning(err)
+

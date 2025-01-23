@@ -120,6 +120,9 @@ class MSTTS(Projet):
             gr.Markdown(value="""使用微软TTS需要联网，请先前往设置页填入服务区和密钥才可以使用。请注意每个月的免费额度。""")
             gr.Markdown(value="""[【关于获取密钥：打开链接后请仔细阅读 先决条件 】](https://learn.microsoft.com/zh-cn/azure/ai-services/speech-service/get-started-text-to-speech)""")                               
             self.gen_btn3=gr.Button(value="生成",variant="primary",visible=True)
+            self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
+            self.ms_languages.change(self.display_ms_spk,inputs=[self.ms_languages],outputs=[self.ms_speaker])
+            self.ms_speaker.change(self.display_style_role,inputs=[self.ms_languages,self.ms_speaker],outputs=[self.ms_style,self.ms_role])  
             MSTTS_ARGS=[self.ms_languages,self.ms_speaker,self.ms_style,self.ms_role,self.ms_speed,self.ms_pitch]  
         return MSTTS_ARGS  
 
@@ -139,9 +142,35 @@ class MSTTS(Projet):
         if ms_speaker in [None,"",[]]:
             gr.Info("请选择说话人")
             raise Exception("请选择说话人")
-        if self.ms_key=="": 
+        if self.cfg_ms_key=="": 
             gr.Warning("请配置密钥!")
             raise Exception("请配置密钥")
         pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
         kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
         return pargs,kwargs
+
+    def ms_refresh(self):  # language
+        self.getms_speakers()
+        if self.ms_speaker_info == {}:
+            return gr.update(value=None, choices=[], allow_custom_value=False)
+        choices = list(self.ms_speaker_info.keys())
+        return gr.update(value=choices[0], choices=choices, allow_custom_value=False)
+
+    def display_ms_spk(self,language):  # speaker
+        if language in [None, ""]:
+            return gr.update(value=None, choices=[], allow_custom_value=False)
+        choices = list(self.ms_speaker_info[language].keys())
+        return gr.update(value=choices[0], choices=choices, allow_custom_value=False)
+
+    def display_style_role(self,language, speaker):
+        if language in [None, ""] or speaker in [None, ""]:
+            return gr.update(value=None, choices=[], allow_custom_value=False), gr.update(value=None, choices=[], allow_custom_value=False )
+        try:
+            choices1 = ["Default"] + self.ms_speaker_info[language][speaker]["StyleList"]
+        except KeyError:
+            choices1 = ["Default"]
+        try:
+            choices2 = ["Default"] + self.ms_speaker_info[language][speaker]["RolePlayList"]
+        except KeyError:
+            choices2 = ["Default"]
+        return (gr.update(value=choices1[0], choices=choices1, allow_custom_value=False),gr.update(value=choices2[0], choices=choices2, allow_custom_value=False))

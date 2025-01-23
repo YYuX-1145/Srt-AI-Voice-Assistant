@@ -10,7 +10,6 @@ elif __file__:
     exe = False
 os.environ["current_path"] = current_path
 
-import requests
 import shutil
 
 import gradio as gr
@@ -81,32 +80,7 @@ gradio_hf_hub_themes = [
 def custom_api(text):
     raise "需要加载自定义API函数！"
 
-def ms_refresh():#language
-    MSTTS.update_cfg(config=config)
-    MSTTS.getms_speakers()
-    if MSTTS.ms_speaker_info == {}:
-        return gr.update(value=None,choices=[],allow_custom_value=False)
-    choices = list(MSTTS.ms_speaker_info.keys())
-    return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
 
-def display_ms_spk(language):#speaker
-    if language in [None,""]:
-        return gr.update(value=None,choices=[],allow_custom_value=False)
-    choices = list(MSTTS.ms_speaker_info[language].keys())
-    return gr.update(value=choices[0],choices=choices,allow_custom_value=False)
-
-def display_style_role(language,speaker):
-    if language in [None,""] or speaker in [None,""]:
-        return gr.update(value=None,choices=[],allow_custom_value=False),gr.update(value=None,choices=[],allow_custom_value=False)
-    try:
-        choices1 = ["Default"] + MSTTS.ms_speaker_info[language][speaker]["StyleList"]
-    except KeyError:
-        choices1=["Default"]        
-    try:
-        choices2=["Default"] + MSTTS.ms_speaker_info[language][speaker]["RolePlayList"]
-    except KeyError:       
-        choices2=["Default"]
-    return gr.update(value=choices1[0],choices=choices1,allow_custom_value=False),gr.update(value=choices2[0],choices=choices2,allow_custom_value=False),
 
 def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         #global subtitle_list
@@ -300,88 +274,6 @@ def save_preset(name,description,ra,ara,rt,rl,sovits_path,gpt_path):
         gr.Warning(f"出错：{e}")
         return f"出错：{e}"
 
-def load_preset(name,port):
-    try:
-        global current_sovits_model
-        global current_gpt_model
-        switch=True
-        if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
-            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
-        data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
-        if "auxiliary_audios" not in list(data.keys()):
-            data["auxiliary_audios"] = None
-        if data["sovits_path"] !="" and data["gpt_path"] != "":
-            if data["sovits_path"]==current_sovits_model and data["gpt_path"]==current_gpt_model:
-               switch=False
-               time.sleep(0.1)
-            else:
-               if switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)!='模型切换成功':
-                   gr.Warning("模型切换失败")
-               current_sovits_model=data["sovits_path"]
-               current_gpt_model=data["gpt_path"]
-        if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
-            data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
-        if data["auxiliary_audios"] is not None:                   
-            aux_audio=[os.path.join(current_path,"SAVAdata","presets",name,i) for i in data["auxiliary_audios"] if os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,i))]
-            if len(aux_audio)!=len(data["auxiliary_audios"]):
-               gr.Warning("辅助参考音频存在丢失！")
-            data["auxiliary_audios"]=aux_audio
-        return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
-    except Exception as e:
-        return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
-
-def switch_gsvmodel(sovits_path,gpt_path,port):
-    if sovits_path=="" or gpt_path=="":
-        gr.Info("请指定模型路径！")
-        return "请指定模型路径！"
-    try:
-        
-        data_json={
-        "sovits_model_path": sovits_path.strip('"'),
-        "gpt_model_path": gpt_path.strip('"'),
-        } 
-        for x in data_json.values(): 
-            if not os.path.isfile(x):
-                gr.Warning("模型路径可能无效，会导致切换错误！")
-            if os.path.isdir(x):
-                raise gr.Error("你错误地填写了文件夹路径！！！")
-        #print(data_json)
-        port=int(port)
-        if GSV.gsv_fallback:
-            API_URL=f'http://127.0.0.1:{port}/set_model/'
-            response = requests.post(url=API_URL,json=data_json)
-            response.raise_for_status()
-        else:
-            API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
-            response = requests.get(url=API_URL)
-            response.raise_for_status()
-            API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
-            response = requests.get(url=API_URL)
-            response.raise_for_status()
-        logger.info(f"模型已切换：{data_json}")
-        return '模型切换成功'
-    except Exception as e:
-        err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
-        gr.Warning(err)
-        logger.error(err)
-        return err
-
-def refresh_presets_list():
-    GSV.presets_list=['None']
-    try:
-        preset_dir=os.path.join(current_path,"SAVAdata","presets")
-        if os.path.isdir(preset_dir):
-            GSV.presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
-        else:
-            logger.info("当前没有预设")
-    except Exception as e:
-        GSV.presets_list = ["None"]
-        err=f"刷新预设失败：{e}"
-        logger.error(err)
-        gr.Warning(err)
-    time.sleep(0.1)
-    return gr.update(value="None", choices=GSV.presets_list)
-
 def restart():
     gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
     time.sleep(0.5)
@@ -408,7 +300,7 @@ def remake(*args):
     try:
         args,kwargs=Projet_dict[subtitle_list.proj].arg_filter(*args)
     except Exception as e:
-        print(e)
+        #print(e)
         return fp,*show_page(page,subtitle_list)        
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=subtitle_list.proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
@@ -482,19 +374,17 @@ if __name__ == "__main__":
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
     parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
     args, unknown = parser.parse_known_args()
-    refresh_presets_list()
+    GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
-    current_sovits_model=None
-    current_gpt_model=None   
     load_cfg()
     if config.clear_tmp:
-        cls_cache()                 
+        cls_cache()
     if args.server_port is None:
         server_port=config.server_port
     else:
         server_port=args.server_port
-    ms_access_token=None
-    ms_refresh()
+    MSTTS.update_cfg(config=config)
+    MSTTS.ms_refresh()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
@@ -508,10 +398,7 @@ if __name__ == "__main__":
                     with gr.TabItem("GPT-SoVITS"):
                         GSV_ARGS=GSV.getUI()      
                     with gr.TabItem("微软TTS"):
-                        MSTTS_ARGS=MSTTS.getUI()
-                        MSTTS.ms_refresh_btn.click(ms_refresh, outputs=[MSTTS.ms_languages])
-                        MSTTS.ms_languages.change(display_ms_spk,inputs=[MSTTS.ms_languages],outputs=[MSTTS.ms_speaker])
-                        MSTTS.ms_speaker.change(display_style_role,inputs=[MSTTS.ms_languages,MSTTS.ms_speaker],outputs=[MSTTS.ms_style,MSTTS.ms_role])    
+                        MSTTS_ARGS=MSTTS.getUI()  
                     with gr.TabItem("自定义API"):
                         CUSTOM.getUI()
                     with gr.Column():                  
@@ -533,7 +420,7 @@ if __name__ == "__main__":
                         with gr.Row():
                             pageloadbtn=gr.Button(value="加载/刷新字幕内容")
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows)
-                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True)
+                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=2)
                             recompose_btn=gr.Button(value="重新拼接内容")
                             export_btn = gr.Button(value="导出字幕")
                         for x in range(config.num_edit_rows):
@@ -607,9 +494,8 @@ if __name__ == "__main__":
         BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(generate_gsv,inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         GSV.save_presets_btn.click(save_preset,inputs=[GSV.choose_presets,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,GSV.sovits_path,GSV.gpt_path],outputs=[gen_textbox_output_text])
-        GSV.choose_presets.change(load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
-        GSV.refresh_presets_btn.click(refresh_presets_list, outputs=[GSV.choose_presets])
-        GSV.switch_gsvmodel_btn.click(switch_gsvmodel,inputs=[GSV.sovits_path,GSV.gpt_path,GSV.api_port2],outputs=[gen_textbox_output_text])  
+        GSV.switch_gsvmodel_btn.click(GSV.switch_gsvmodel,inputs=[GSV.sovits_path,GSV.gpt_path,GSV.api_port2],outputs=[gen_textbox_output_text]) 
+        GSV.choose_presets.change(GSV.load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
         MSTTS.gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         CUSTOM.gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])

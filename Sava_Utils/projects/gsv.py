@@ -6,6 +6,8 @@ from .. import logger
 import os
 import hashlib
 import soundfile as sf
+import time
+import json
 
 current_path=os.environ.get("current_path")
 
@@ -44,6 +46,8 @@ class GSV(Projet):
     def __init__(self):
         self.gsv_fallback=False
         self.presets_list=['None']
+        self.current_sovits_model=""
+        self.current_gpt_model=""
         super().__init__("gsv")
 
     def api(self,port,**kwargs):
@@ -133,7 +137,8 @@ class GSV(Projet):
                 self.save_presets_btn = gr.Button(value="保存预设", variant="primary")
                 self.refresh_presets_btn = gr.Button(value="刷新", variant="secondary")
         with gr.Row():
-            self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)
+            self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)        
+        self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])         
         GSV_ARGS = [
             self.sampling_rate2,
             self.language2,
@@ -154,7 +159,7 @@ class GSV(Projet):
             self.how_to_cut,
         ]
         return GSV_ARGS
-    
+
     def arg_filter(self,*args):
         in_file,fps,offset,max_workers,sr,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         if refer_audio is None or refer_text == "":
@@ -165,3 +170,82 @@ class GSV(Projet):
         pargs=(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])
         kwargs={'in_file':in_file,'sr':sr,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
         return pargs,kwargs
+
+    def load_preset(self,name,port):
+        try:
+            switch=True
+            if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
+                return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+            data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
+            if "auxiliary_audios" not in list(data.keys()):
+                data["auxiliary_audios"] = None
+            if data["sovits_path"] !="" and data["gpt_path"] != "":
+                if data["sovits_path"]==self.current_sovits_model and data["gpt_path"]==self.current_gpt_model:
+                    switch=False
+                    time.sleep(0.1)
+                else:
+                    if self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)!='模型切换成功':
+                        gr.Warning("模型切换失败")
+                self.current_sovits_model=data["sovits_path"]
+                self.current_gpt_model=data["gpt_path"]
+            if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
+                data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
+            if data["auxiliary_audios"] is not None:                   
+                aux_audio=[os.path.join(current_path,"SAVAdata","presets",name,i) for i in data["auxiliary_audios"] if os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,i))]
+                if len(aux_audio)!=len(data["auxiliary_audios"]):
+                    gr.Warning("辅助参考音频存在丢失！")
+                data["auxiliary_audios"]=aux_audio
+            return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
+        except Exception as e:
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
+
+    def switch_gsvmodel(self,sovits_path,gpt_path,port):
+        if sovits_path=="" or gpt_path=="":
+            gr.Info("请指定模型路径！")
+            return "请指定模型路径！"
+        try:        
+            data_json={
+            "sovits_model_path": sovits_path.strip('"'),
+            "gpt_model_path": gpt_path.strip('"'),
+            } 
+            for x in data_json.values(): 
+                if not os.path.isfile(x):
+                    gr.Warning("模型路径可能无效，会导致切换错误！")
+                if os.path.isdir(x):
+                    raise gr.Error("你错误地填写了文件夹路径！！！")
+            # print(data_json)
+            port=int(port)
+            if self.gsv_fallback:
+                API_URL=f'http://127.0.0.1:{port}/set_model/'
+                response = requests.post(url=API_URL,json=data_json)
+                response.raise_for_status()
+            else:
+                API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
+                response = requests.get(url=API_URL)
+                response.raise_for_status()
+                API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
+                response = requests.get(url=API_URL)
+                response.raise_for_status()
+            logger.info(f"模型已切换：{data_json}")
+            return '模型切换成功'
+        except Exception as e:
+            err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
+            gr.Warning(err)
+            logger.error(err)
+            return err
+
+    def refresh_presets_list(self):
+        self.presets_list=['None']
+        try:
+            preset_dir=os.path.join(current_path,"SAVAdata","presets")
+            if os.path.isdir(preset_dir):
+                self.presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
+            else:
+                logger.info("当前没有预设")
+        except Exception as e:
+            self.presets_list = ["None"]
+            err=f"刷新预设失败：{e}"
+            logger.error(err)
+            gr.Warning(err)
+        time.sleep(0.1)
+        return gr.update(value="None", choices=self.presets_list)

@@ -14,8 +14,8 @@ class Custom(Projet):
         super().__init__("bv2")
         self.custom_api_list = []
 
-    def api(self):
-        custom_api()
+    def api(self,text):
+        return custom_api(text)
 
     def UI(self):
         with gr.Column():
@@ -28,17 +28,19 @@ class Custom(Projet):
             self.refresh_custom_btn.click(self.refresh_custom_api_list,outputs=[self.choose_custom_api])
         return []
     
-    def before_gen_action(self,custom_api_path):
-            logger.info(f"Exec: custom_api_path")
+    def before_gen_action(self,*args,**kwargs):
+            print(args)
+            custom_api_path=args[0]
+            logger.info(f"Exec: custom_api_path {custom_api_path}")
             with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
                 code=f.read()
             exec(code,globals())
     
-    def save_action(self, *args, **kwargs):
-        return self.api()
+    def save_action(self, *args, text):
+        return self.api(text)
     
     def refresh_custom_api_list(self):
-        self.custom_api_list=[]
+        self.custom_api_list=['None']
         try:
             preset_dir=os.path.join(current_path,"SAVAdata","presets")
             if os.path.isdir(preset_dir):
@@ -46,7 +48,7 @@ class Custom(Projet):
             else:
                 logger.info("当前没有自定义API预设")
         except Exception as e:
-            self.custom_api_list = []
+            self.custom_api_list = ['None']
             err=f"刷新预设失败：{e}"
             logger.error(err)
             gr.Warning(err)
@@ -58,5 +60,5 @@ class Custom(Projet):
         if custom_api in [None,'None','']:
             gr.Info("请选择API配置文件！")
             raise Exception("请选择API配置文件！")
-        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':workers}
+        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
         return (custom_api), kwargs

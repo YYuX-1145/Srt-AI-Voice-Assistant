@@ -403,25 +403,15 @@ def remake(*args):
     if int(args[1])==-1:
         gr.Info("Not available !")
         return fp,*show_page(page,subtitle_list)
-    page,idx,s_txt=args[:4]
-    args=args[4:]
+    page,idx,s_txt=args[:3]
+    args=[None,*args]#fill data
     try:
         args,kwargs=Projet_dict[subtitle_list.proj].arg_filter(*args)
-    except:
+    except Exception as e:
+        print(e)
         return fp,*show_page(page,subtitle_list)        
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=subtitle_list.proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
-    # elif subtitle_list.proj=="custom":
-    #     global custom_api
-    #     page,idx,s_txt,custom_api_path=args
-    #     if custom_api_path in [None,"",'None']:
-    #         gr.Warning("你必须指定API预设")
-    #         return fp,*show_page(page,subtitle_list)        
-    #     logger.info(f"Exec: custom_api_path")
-    #     with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
-    #         code=f.read()
-    #     exec(code,globals())
-    #     fp=save(args,proj="custom",text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")

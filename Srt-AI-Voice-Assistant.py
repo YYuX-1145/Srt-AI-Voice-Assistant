@@ -108,7 +108,7 @@ def display_style_role(language,speaker):
         choices2=["Default"]
     return gr.update(value=choices1[0],choices=choices1,allow_custom_value=False),gr.update(value=choices2[0],choices=choices2,allow_custom_value=False),
 
-def generate(*args,proj,in_file,sr,fps,offset,max_workers):
+def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         #global subtitle_list
         t1 = time.time()
         sr,fps=positive_int(sr,fps)
@@ -129,7 +129,7 @@ def generate(*args,proj,in_file,sr,fps,offset,max_workers):
         subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
-        Projet_dict[proj].before_gen_action(config=config)
+        Projet_dict[proj].before_gen_action(*args,config=config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
         sr,audio = subtitle_list.audio_join(sr=sr)
@@ -166,7 +166,7 @@ def generate_custom(*args):
         args,kwargs=CUSTOM.arg_filter(*args)
     except Exception as e:
         return None,str(e),*load_page(Subtitles()),Subtitles()
-    return generate(*args,**kwargs)
+    return generate(args,**kwargs)
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     audio = Projet_dict[proj].save_action(*args,text=text)

@@ -135,11 +135,13 @@ class MSTTS(Projet):
             assert self.ms_access_token is not None,"获取微软token出错"
 
     def arg_filter(self,*args):
-        input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args
-        pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
+        input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args        
         if ms_speaker in [None,"",[]]:
             gr.Info("请选择说话人")
             raise Exception("请选择说话人")
         if self.ms_key=="": 
             gr.Warning("请配置密钥!")
             raise Exception("请配置密钥")
+        pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
+        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
+        return pargs,kwargs

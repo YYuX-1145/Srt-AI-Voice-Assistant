@@ -100,6 +100,29 @@ class MSTTS(Projet):
             logger.error(err)
             return None
 
+    def UI(self):
+        with gr.Column():
+            self.ms_refresh_btn=gr.Button(value="刷新说话人列表",variant="secondary")
+            if self.ms_speaker_info == {}:
+                self.ms_languages=gr.Dropdown(label="选择语言",value=None,choices=[],allow_custom_value=False,interactive=True)
+                self.ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=[],allow_custom_value=False,interactive=True)
+            else:
+                choices = list(self.ms_speaker_info.keys())
+                self.ms_languages=gr.Dropdown(label="选择语言",value=choices[0],choices=choices,allow_custom_value=False,interactive=True)
+                choices = list(self.ms_speaker_info[choices[0]].keys())
+                self.ms_speaker=gr.Dropdown(label="选择说话人",value=None,choices=choices,allow_custom_value=False,interactive=True)
+                del choices
+            with gr.Row():
+                self.ms_style=gr.Dropdown(label="说话风格",value=None,choices=[],allow_custom_value=False,interactive=True)
+                self.ms_role=gr.Dropdown(label="角色扮演",value=None,choices=[],allow_custom_value=False,interactive=True)
+            self.ms_speed = gr.Slider(minimum=0.2,maximum=2,step=0.01,label="语速",value=1,interactive=True)
+            self.ms_pitch = gr.Slider(minimum=0.5,maximum=1.5,step=0.01,label="音调",value=1,interactive=True)
+            gr.Markdown(value="""使用微软TTS需要联网，请先前往设置页填入服务区和密钥才可以使用。请注意每个月的免费额度。""")
+            gr.Markdown(value="""[【关于获取密钥：打开链接后请仔细阅读 先决条件 】](https://learn.microsoft.com/zh-cn/azure/ai-services/speech-service/get-started-text-to-speech)""")                               
+            self.gen_btn3=gr.Button(value="生成",variant="primary",visible=True)
+            MSTTS_ARGS=[self.ms_languages,self.ms_speaker,self.ms_style,self.ms_role,self.ms_speed,self.ms_pitch]  
+        return MSTTS_ARGS  
+
     def save_action(self, *args, text: str = None):
         language, speaker, style, role, rate, pitch = args
         audio = self.api(language, speaker, style, role, rate, pitch, text)
@@ -110,3 +133,13 @@ class MSTTS(Projet):
         if self.ms_access_token is None:
             self.getms_token()
             assert self.ms_access_token is not None,"获取微软token出错"
+
+    def arg_filter(self,*args):
+        input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args
+        pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
+        if ms_speaker in [None,"",[]]:
+            gr.Info("请选择说话人")
+            raise Exception("请选择说话人")
+        if self.ms_key=="": 
+            gr.Warning("请配置密钥!")
+            raise Exception("请配置密钥")

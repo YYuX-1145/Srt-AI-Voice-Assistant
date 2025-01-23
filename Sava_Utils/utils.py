@@ -2,9 +2,7 @@ import os
 import time
 import subprocess
 from . import logger
-import hashlib
 import gradio as gr
-import soundfile as sf
 import csv
 import re
 from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
@@ -37,15 +35,6 @@ def file_show(file):
         return text
     except Exception as error:
         return error
-
-def temp_ra(a: tuple):
-    sr, wav = a
-    name = hashlib.md5(wav.tobytes()).hexdigest() + ".wav"
-    os.makedirs(os.path.join(current_path, "SAVAdata", "temp"), exist_ok=True)
-    dir = os.path.join(current_path, "SAVAdata", "temp", name)
-    if not os.path.exists(dir):
-        sf.write(dir, wav, sr)
-    return dir
 
 def read_srt(filename, offset):
     with open(filename, "r", encoding="utf-8") as f:

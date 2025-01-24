@@ -102,6 +102,7 @@ def read_prcsv(filename, fps, offset):
 
 
 def read_txt(filename):
+    REF_DUR=2
     with open(filename, "r", encoding="utf-8") as f:
         text=f.read()
     sentences = re.split(r'(?<=[.!?。！？])|\n', text)
@@ -109,6 +110,6 @@ def read_txt(filename):
     subtitle_list = Subtitles()
     idx=1
     for s in sentences:
-        subtitle_list.append(Subtitle(idx,to_time(3 * idx - 3), to_time(3 * idx), s, ntype="srt"))
+        subtitle_list.append(Subtitle(idx,to_time(REF_DUR * idx - REF_DUR), to_time(REF_DUR * idx), s, ntype="srt"))
         idx+=1
     return subtitle_list

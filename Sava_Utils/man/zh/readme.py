@@ -1,6 +1,6 @@
 readme = """
 # Srt-AI-Voice-Assistant
-`Srt-AI-Voice-Assistant`是一个便捷的，通过API本地调用Bert-VITS2-HiyoriUI和GPT-SoVITS或者在线的微软TTS为上传的.srt字幕文件生成音频的工具。
+`Srt-AI-Voice-Assistant`是一个便捷的，通过API本地调用Bert-VITS2-HiyoriUI和GPT-SoVITS或者在线的微软TTS为上传的.srt字幕文件或者.txt纯文本文件生成音频的工具,亦可以根据合成完毕的音频导出符合音频起止时间的字幕。
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
 ## 重大的更新历史

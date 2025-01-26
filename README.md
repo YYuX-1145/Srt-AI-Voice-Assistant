@@ -2,8 +2,11 @@
 `Srt-AI-Voice-Assistant`是一个便捷的，通过API本地调用Bert-VITS2-HiyoriUI和GPT-SoVITS或者在线的微软TTS为上传的.srt字幕文件或者.txt纯文本生成音频的工具,亦可以根据合成完毕的音频导出符合音频起止时间的字幕。
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
-## 重大的更新历史
+## Todo List
+- [ ] Multi-language support.
+- [ ] More comprehensive documentation and user guide.
 
+## 重大的更新历史
 ### 250123更新：<br>
 1.支持在合成完毕后导出符合实际情况的srt字幕文件，同时也支持通过读取txt纯文本文件来进行合成，在这种情况下会按每句来切分段落。
 

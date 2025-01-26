@@ -7,6 +7,7 @@ assignees: ''
 
 ---
 
+## 请您认真看完教程和内置说明再提问，不要给自己和别人带来不必要的麻烦，谢谢！
 **Describe the bug**
 A clear and concise description of what the bug is. | 请描述遇到的问题。
 

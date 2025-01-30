@@ -62,7 +62,7 @@ def read_srt(filename, offset):
         st.add_offset(offset=offset)
         subtitle_list.append(st)
     st, et = file[indexlist[-1]].split(" --> ")
-    id = file[indexlist[-1] - 1]
+    id = int(file[indexlist[-1] - 1].strip().replace("\ufeff", ""))
     text = ""
     for x in range(indexlist[-1] + 1, filelength):
         text += file[x]

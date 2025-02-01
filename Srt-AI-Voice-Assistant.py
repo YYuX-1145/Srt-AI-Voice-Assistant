@@ -39,6 +39,7 @@ GSV = Sava_Utils.projects.gsv.GSV()
 MSTTS = Sava_Utils.projects.mstts.MSTTS()
 CUSTOM = Sava_Utils.projects.custom.Custom()
 Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
+componments=[BV2,GSV,MSTTS,CUSTOM]
 
 
 # https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
@@ -175,10 +176,12 @@ def cls_cache():
 
 def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global config
+    global componments
     current_edit_rows=config.num_edit_rows
     config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
     config.save()
-    MSTTS.update_cfg(config=config)
+    for i in componments:
+        i.update_cfg(config=config)
     if config.num_edit_rows!=current_edit_rows:
         config.num_edit_rows=current_edit_rows
         logger.info("更改字幕栏数需要重启生效")
@@ -464,6 +467,7 @@ if __name__ == "__main__":
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
                 WAV2SRT=WAV2SRT(config=config)
+                componments.append(WAV2SRT)
                 available=WAV2SRT.UI()
                 if not available:
                     gr.Markdown("没有任何扩展，安装后重启生效<br>[获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")

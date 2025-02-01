@@ -76,11 +76,8 @@ gradio_hf_hub_themes = [
     "NoCrypt/miku"
 ]
 
-
 def custom_api(text):
     raise "需要加载自定义API函数！"
-
-
 
 def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         #global subtitle_list
@@ -281,7 +278,19 @@ def restart():
     if not exe:
         os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
     else:
-        run_command(command=f"{sys.executable}",dir=current_path)
+        try:
+            a = os.environ["_PYI_APPLICATION_HOME_DIR"]
+            b = os.environ["_PYI_ARCHIVE_FILE"]
+            c = os.environ["_PYI_PARENT_PROCESS_LEVEL"]
+            os.unsetenv("_PYI_APPLICATION_HOME_DIR")
+            os.unsetenv("_PYI_ARCHIVE_FILE")
+            os.unsetenv("_PYI_PARENT_PROCESS_LEVEL")
+            run_command(command=f"{sys.executable}", dir=current_path)        
+            os.environ["_PYI_APPLICATION_HOME_DIR"]=a
+            os.environ["_PYI_ARCHIVE_FILE"] = b
+            os.environ["_PYI_PARENT_PROCESS_LEVEL"] = c
+        except Exception as e:
+            gr.Warning(f"出现错误{str(e)}，请手动重启！")
         os.system(f"taskkill /PID {os.getpid()} /F")
 
 def remake(*args):
@@ -461,13 +470,15 @@ if __name__ == "__main__":
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown("点击应用后，这些设置才会生效。")
-                        server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
-                        clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
-                        min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=config.min_interval,step=0.1)
-                        num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
-                        theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
-                        cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
+                        gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
+                        with gr.Group():
+                            gr.Markdown(value="通用设置")
+                            server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
+                            clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
+                            min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=config.min_interval,step=0.1)
+                            num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
+                            theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
+                            cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
                         with gr.Group():
                             gr.Markdown(value="BV2")
                             bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)

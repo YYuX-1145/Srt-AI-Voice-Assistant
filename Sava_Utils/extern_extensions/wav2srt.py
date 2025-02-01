@@ -7,6 +7,8 @@ current_path = os.environ.get("current_path")
 class WAV2SRT():
     def __init__(self,config):
           self.config=config
+    def update_cfg(self,config):
+          self.config=config
     def UI(self):
         available=False
         if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
@@ -38,6 +40,9 @@ class WAV2SRT():
             gr.Warning("请上传音频文件！")
             return None
         pydir=pydir.strip('"')
+        if pydir in [None,""]:
+            gr.Warning("请指定解释器！")
+            return None          
         out_dir=out_dir.strip('"')
         run_command(command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{out_dir}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}',dir=current_path)
         gr.Info("已打开新的处理窗口")

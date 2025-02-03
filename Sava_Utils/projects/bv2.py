@@ -45,7 +45,7 @@ class BV2(Projet):
                 }
             # print(data_json)
             response = requests.get(url=API_URL,params=data_json)
-            response.raise_for_status()  # 检查响应的状态码
+            response.raise_for_status()
             return response.content
         except Exception as e:
             err=f'bert-vits2推理发生错误，请检查HiyoriUI是否正确运行。报错内容: {e}'

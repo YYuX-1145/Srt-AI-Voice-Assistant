@@ -69,10 +69,14 @@ class GSV(Projet):
                 API_URL = f"http://127.0.0.1:{port}/"
             # print(data_json)
             response = requests.post(url=API_URL, json=data_json)
-            response.raise_for_status()  # 检查响应的状态码
+            response.raise_for_status()
             return response.content
         except Exception as e:
-            err = f"GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}"
+            err = f"GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}  "
+            try:
+                err+=f"返回信息：{response.json()}"
+            except:
+                pass
             logger.error(err)
             return None
 

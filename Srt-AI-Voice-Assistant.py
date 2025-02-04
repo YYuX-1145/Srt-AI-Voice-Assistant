@@ -98,7 +98,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
             return None,"未知的格式，请确保扩展名正确！",*load_page(Subtitles()),Subtitles()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join(current_path,"SAVAdata","temp",t)
-        subtitle_list.sort()
+        #subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
         Projet_dict[proj].before_gen_action(*args,config=config)

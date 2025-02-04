@@ -42,30 +42,24 @@ def read_srt(filename, offset):
     subtitle_list = Subtitles()
     indexlist = []
     filelength = len(file)
+    pattern=re.compile(r"\d+")
     for i in range(0, filelength):
         if " --> " in file[i]:
-            is_st = True if len(file[i - 1]) > 1 else False
-            for char in file[i - 1].strip().replace("\ufeff", ""):
-                if char not in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
-                    is_st = False
-                    break
-            if is_st:
+            if pattern.fullmatch(file[i - 1].strip().replace("\ufeff", "")):
                 indexlist.append(i)  # get line id
     listlength = len(indexlist)
+    id=1
     for i in range(0, listlength - 1):
         st, et = file[indexlist[i]].split(" --> ")
-        id = int(file[indexlist[i] - 1].strip().replace("\ufeff", ""))
-        text = ""
-        for x in range(indexlist[i] + 1, indexlist[i + 1] - 2):
-            text += file[x]
+        # id = int(file[indexlist[i] - 1].strip().replace("\ufeff", ""))
+        text = "".join(file[x] for x in range(indexlist[i] + 1, indexlist[i + 1] - 2))
         st = Subtitle(id, st, et, text, ntype="srt")
         st.add_offset(offset=offset)
         subtitle_list.append(st)
+        id+=1
     st, et = file[indexlist[-1]].split(" --> ")
-    id = int(file[indexlist[-1] - 1].strip().replace("\ufeff", ""))
-    text = ""
-    for x in range(indexlist[-1] + 1, filelength):
-        text += file[x]
+    # id = int(file[indexlist[-1] - 1].strip().replace("\ufeff", ""))
+    text = "".join(file[x] for x in range(indexlist[-1] + 1, filelength))
     st = Subtitle(id, st, et, text, ntype="srt")
     st.add_offset(offset=offset)
     subtitle_list.append(st)

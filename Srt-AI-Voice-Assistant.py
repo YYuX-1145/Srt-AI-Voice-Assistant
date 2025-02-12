@@ -19,6 +19,7 @@ import json
 import soundfile as sf
 import datetime
 import time
+import pickle
 import concurrent.futures
 
 import Sava_Utils
@@ -86,7 +87,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         sr,fps=positive_int(sr,fps)
         if in_file is None:
             gr.Info("请上传字幕文件！")
-            return None,"请上传字幕文件！",*load_page(Subtitles()),Subtitles()
+            return None,"请上传字幕文件！",getworklist(),*load_page(Subtitles()),Subtitles()
         if in_file.name[-4:].lower()==".csv":
             subtitle_list=read_prcsv(in_file.name,fps,offset)
         elif in_file.name[-4:].lower()==".srt":
@@ -95,9 +96,11 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
             subtitle_list=read_txt(in_file.name)
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
-            return None,"未知的格式，请确保扩展名正确！",*load_page(Subtitles()),Subtitles()
+            return None,"未知的格式，请确保扩展名正确！",getworklist(),*load_page(Subtitles()),Subtitles()
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        dirname=os.path.join(current_path,"SAVAdata","temp",t)
+        dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
+        while os.path.exists(dirname):
+            dirname+="(new)"
         #subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
@@ -112,8 +115,8 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         use_time="%02d:%02d"%(m, s)
         file_list=[i for i in file_list if i is not None]
         if len(file_list)!=len(subtitle_list):
-            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',*load_page(subtitle_list),subtitle_list
-        return (sr,audio),f'完成！所用时间:{use_time}',*load_page(subtitle_list),subtitle_list
+            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
+        return (sr,audio),f'完成！所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
 
 def generate_bv2(*args):
         args,kwargs=BV2.arg_filter(*args)
@@ -168,11 +171,11 @@ def cls_cache():
     dir=os.path.join(current_path,"SAVAdata","temp")
     if os.path.exists(dir):
         shutil.rmtree(dir)
-        logger.info("成功清除缓存！")
-        gr.Info("成功清除缓存！")
+        logger.info("成功清除临时文件！")
+        gr.Info("成功清除临时文件！")
     else:
-        logger.info("目前没有缓存！")
-        gr.Info("目前没有缓存！")
+        logger.info("目前没有临时文件！")
+        gr.Info("目前没有临时文件！")
 
 def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global config
@@ -378,6 +381,24 @@ def show_page(page_start,subtitle_list):
         ret+=btn        
     return ret
 
+def getworklist():
+    try:
+        c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))
+        return gr.update(choices=c,value=c[0])
+    except:
+        return gr.update(choices=[""])
+
+def load_work(dirname):
+    try:
+        if dirname in ["",None]:
+            raise Exception("路径不得为空！")
+        with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
+            subtitles = pickle.load(f)
+        return subtitles,*load_page(subtitles)
+    except Exception as e:
+        gr.Warning(f"出错：{str(e)}")
+        return None,*load_page(Subtitles())
+
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
@@ -426,15 +447,17 @@ if __name__ == "__main__":
                             start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
                         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
 
-                with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除缓存。",open=False):
+                with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除临时文件。",open=False):
                     with gr.Column():
                         edit_rows=[]
                         with gr.Row():
-                            pageloadbtn=gr.Button(value="加载/刷新字幕内容")
-                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows)
-                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=2)
-                            recompose_btn=gr.Button(value="重新拼接内容")
-                            export_btn = gr.Button(value="导出字幕")
+                            worklist=gr.Dropdown(choices=[""],value="",label="合成历史", scale=1)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
+                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
+                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows,scale=3)
+                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=3)
+                            recompose_btn = gr.Button(value="重新拼接内容", scale=3)
+                            export_btn = gr.Button(value="导出字幕", scale=3)
                         for x in range(config.num_edit_rows):
                             _=gr.Number(show_label=False,visible=False,value=-1)
                             with gr.Row():
@@ -460,9 +483,12 @@ if __name__ == "__main__":
                                     edit_rows.append(customregenbtn)      
                                     customregenbtn.click(remake,inputs=[page_slider,_,s_txt,CUSTOM.choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
                         page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
-                        pageloadbtn.click(load_page,inputs=[STATE],outputs=[page_slider,*edit_rows])
+                        workloadbtn.click(load_work,inputs=[worklist],outputs=[STATE,page_slider,*edit_rows])
+                        workrefbtn.click(getworklist,inputs=[],outputs=[worklist])
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
                         export_btn.click(lambda x:x.export(),inputs=[STATE])
+            with gr.TabItem("多角色配音"):
+                pass
             with gr.TabItem("额外内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
@@ -478,11 +504,11 @@ if __name__ == "__main__":
                         with gr.Group():
                             gr.Markdown(value="通用设置")
                             server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
-                            clear_cache=gr.Checkbox(label="每次启动时清除缓存",value=config.clear_tmp,interactive=True)
+                            clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=config.clear_tmp,interactive=True)
                             min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=config.min_interval,step=0.1)
                             num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
                             theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
-                            cls_cache_btn=gr.Button(value="立即清除缓存",variant="primary")
+                            cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
                         with gr.Group():
                             gr.Markdown(value="BV2")
                             bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)
@@ -506,13 +532,13 @@ if __name__ == "__main__":
                         with gr.TabItem("帮助"):
                             gr.Markdown(value=Man.getInfo("help"))       
 
-        BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
-        GSV.gen_btn2.click(generate_gsv,inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
+        GSV.gen_btn2.click(generate_gsv,inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.save_presets_btn.click(save_preset,inputs=[GSV.choose_presets,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,GSV.sovits_path,GSV.gpt_path],outputs=[gen_textbox_output_text])
         GSV.switch_gsvmodel_btn.click(GSV.switch_gsvmodel,inputs=[GSV.sovits_path,GSV.gpt_path,GSV.api_port2],outputs=[gen_textbox_output_text]) 
         GSV.choose_presets.change(GSV.load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
-        MSTTS.gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
-        CUSTOM.gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,page_slider,*edit_rows,STATE])
+        MSTTS.gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
+        CUSTOM.gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

@@ -2,6 +2,8 @@ import os
 import gradio as gr
 import numpy as np
 import datetime
+import pickle
+import shutil
 from . import logger
 from . import config
 from .librosa_load import load_audio
@@ -85,6 +87,7 @@ class Subtitles:
         failed_list = []
         fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
         if fl == []:
+            shutil.rmtree(self.dir)
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         if sr is None:
             wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
@@ -124,6 +127,8 @@ class Subtitles:
             logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
             gr.Warning(f"序号合集为 {failed_list} 的字幕合成失败！")
         audio_content = np.concatenate(audiolist)
+        with open(os.path.join(self.dir,"st.pkl"), 'wb') as f:
+            pickle.dump(self, f)
         return sr, audio_content
 
     def get_state(self, idx):

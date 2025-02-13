@@ -22,7 +22,6 @@ import time
 import concurrent.futures
 
 import Sava_Utils
-from Sava_Utils import config
 from Sava_Utils.man.manual import Man
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
@@ -105,7 +104,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         #subtitle_list.sort()
         subtitle_list.set_dir(dirname)
         subtitle_list.set_proj(proj)
-        Projet_dict[proj].before_gen_action(*args,config=config)
+        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
         file_list=[i for i in file_list if i is not None]    
@@ -222,56 +221,58 @@ def cls_cache():
 
 def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global componments
-    current_edit_rows=config.num_edit_rows
-    config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
-    config.save()
+    current_edit_rows=Sava_Utils.config.num_edit_rows
+    Sava_Utils.config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
+    Sava_Utils.config.save()
     for i in componments:
-        i.update_cfg(config=config)
-    if config.num_edit_rows!=current_edit_rows:
-        config.num_edit_rows=current_edit_rows
+        i.update_cfg(config=Sava_Utils.config)
+    if Sava_Utils.config.num_edit_rows != current_edit_rows:
+        Sava_Utils.config.num_edit_rows = current_edit_rows
         logger.info("更改字幕栏数需要重启生效")
         gr.Info("更改字幕栏数需要重启生效")
     logger.info("成功保存设置！")
     gr.Info("成功保存设置！")
-    return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args,config.ms_region,config.ms_key
-
-def load_cfg():
-    config_path=os.path.join(current_path,"SAVAdata","config.json")
-    if os.path.exists(config_path):        
-        try:
-            config=Settings.from_dict(json.load(open(config_path, encoding="utf-8")))          
-        except Exception as e:
-            config=Settings()
-            logger.warning(f"用户设置加载失败，恢复默认设置！{e}")
-    else:
-        config=Settings()
-        logger.info("当前没有自定义设置")
+    return (
+        Sava_Utils.config.server_port,
+        Sava_Utils.config.clear_tmp,
+        Sava_Utils.config.theme,
+        Sava_Utils.config.bv2_pydir,
+        Sava_Utils.config.bv2_dir,
+        Sava_Utils.config.gsv_pydir,
+        Sava_Utils.config.gsv_dir,
+        Sava_Utils.config.bv2_args,
+        Sava_Utils.config.gsv_args,
+        Sava_Utils.config.ms_region,
+        Sava_Utils.config.ms_key,
+    )
 
 def start_hiyoriui():
-    if config.bv2_pydir=="":
+    if Sava_Utils.config.bv2_pydir == "":
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"    
-    command=f'"{config.bv2_pydir}" "{os.path.join(config.bv2_dir,"hiyoriUI.py")}" {config.bv2_args}'
-    run_command(command=command,dir=config.bv2_dir)
+    command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
+    run_command(command=command, dir=Sava_Utils.config.bv2_dir)
     time.sleep(0.1)
     return "HiyoriUI已启动，请确保其配置文件无误"
 
 def start_gsv():
-    if config.gsv_pydir=="":
+    if Sava_Utils.config.gsv_pydir == "":
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"
-    if os.path.exists(os.path.join(config.gsv_dir,"api_v2.py")):
+    if os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, "api_v2.py")):
         apath="api_v2.py"
         GSV.gsv_fallback=False
     else:
         apath="api.py"
         GSV.gsv_fallback=True
-        assert os.path.exists(os.path.join(config.gsv_dir,"api.py")),"api文件丢失？？？"
+        assert os.path.exists(
+            os.path.join(Sava_Utils.config.gsv_dir, "api.py")
+        ), "api文件丢失？？？"
         gr.Warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
         logger.warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
 
-    command=f'"{config.gsv_pydir}" "{os.path.join(config.gsv_dir,apath)}" {config.gsv_args}'
-    run_command(command=command,dir=config.gsv_dir)
+    command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
+    run_command(command=command, dir=Sava_Utils.config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
 
@@ -342,22 +343,32 @@ def remake(*args):
     fp=None
     subtitle_list=args[-1]
     args=args[:-1]
-    page=args[0]
-    if subtitle_list.proj is None:
-        gr.Info("上次生成未成功，请先完成生成流程！")
-        return fp,*show_page(page,subtitle_list)
+    page=args[0]    
     if int(args[1])==-1:
         gr.Info("Not available !")
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
-    args=[None,*args]#fill data
-    try:
-        args,kwargs=Projet_dict[subtitle_list.proj].arg_filter(*args)
-    except Exception as e:
-        #print(e)
-        return fp,*show_page(page,subtitle_list)        
+    if subtitle_list[int(idx)].speaker is not None:
+        with open(os.path.join(current_path, "SAVAdata", "speakers",subtitle_list[int(idx)].speaker), 'rb') as f:
+            info = pickle.load(f)
+            args=info["raw_data"]
+            proj=info["project"]
+        if proj=='gsv':
+            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
+        args, kwargs = Projet_dict[proj].arg_filter(*args)
+    else:
+        if subtitle_list.proj is None:
+            gr.Info("使用多角色合成时，必须指定说话人！")
+            return fp,*show_page(page,subtitle_list)
+        args=[None,*args]#fill data
+        try:
+            proj=subtitle_list.proj
+            args,kwargs=Projet_dict[proj].arg_filter(*args)
+        except Exception as e:
+            # print(e)
+            return fp,*show_page(page,subtitle_list)        
     subtitle_list[int(idx)].text=s_txt
-    fp=save(args,proj=subtitle_list.proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")
@@ -406,15 +417,15 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
-    if config.clear_tmp:
+    if Sava_Utils.config.clear_tmp:
         cls_cache()
     if args.server_port is None:
-        server_port=config.server_port
+        server_port = Sava_Utils.config.server_port
     else:
         server_port=args.server_port
-    MSTTS.update_cfg(config=config)
+    MSTTS.update_cfg(config=Sava_Utils.config)
     MSTTS.ms_refresh()
-    with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=config.theme) as app:
+    with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=Sava_Utils.config.theme) as app:
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
         with gr.Tabs():            
@@ -455,11 +466,11 @@ if __name__ == "__main__":
                             worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=1)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
                             workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
-                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows,scale=3)
+                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=3)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=3)
                             recompose_btn = gr.Button(value="重新拼接内容", scale=3)
                             export_btn = gr.Button(value="导出字幕", scale=3)
-                        for x in range(config.num_edit_rows):
+                        for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index=gr.Number(show_label=False,visible=False,value=-1,interactive=False)#real index                         
                             with gr.Row():
                                 edit_check=gr.Checkbox(value=False,interactive=True,min_width=40,label="",scale=0)
@@ -494,11 +505,11 @@ if __name__ == "__main__":
                         export_btn.click(lambda x:x.export(),inputs=[STATE])
                         with gr.Row():
                             all_selection_btn = gr.Button(value="全选",interactive=True)
-                            all_selection_btn.click(lambda :[True for i in range(config.num_edit_rows)],inputs=[],outputs=edit_check_list)
+                            all_selection_btn.click(lambda :[True for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                             reverse_selection_btn = gr.Button(value="反选",interactive=True)
                             reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
                             clear_selection_btn=gr.Button(value="清除选择",interactive=True)
-                            clear_selection_btn.click(lambda :[False for i in range(config.num_edit_rows)],inputs=[],outputs=edit_check_list)
+                            clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                         with gr.Accordion(label="多角色配音"):
                             with gr.Row():
                                 speaker_list=gr.Dropdown(label="",value="test",choices=["test"],allow_custom_value=True)
@@ -517,7 +528,7 @@ if __name__ == "__main__":
             with gr.TabItem("额外内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
-                WAV2SRT=WAV2SRT(config=config)
+                WAV2SRT = WAV2SRT(config=Sava_Utils.config)
                 componments.append(WAV2SRT)
                 available=WAV2SRT.UI()
                 if not available:
@@ -528,26 +539,26 @@ if __name__ == "__main__":
                         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
                         with gr.Group():
                             gr.Markdown(value="通用设置")
-                            server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=config.server_port,minimum=5001)
-                            clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=config.clear_tmp,interactive=True)
-                            min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=config.min_interval,step=0.1)
-                            num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=config.num_edit_rows)                        
-                            theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
+                            server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001)
+                            clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
+                            min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+                            num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
+                            theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
                             cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
                         with gr.Group():
                             gr.Markdown(value="BV2")
-                            bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=config.bv2_pydir)
-                            bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=config.bv2_dir)
-                            bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=config.bv2_args)
+                            bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=Sava_Utils.config.bv2_pydir)
+                            bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.bv2_dir)
+                            bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=Sava_Utils.config.bv2_args)
                         with gr.Group():
                             gr.Markdown(value="GSV")
-                            gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=config.gsv_pydir)
-                            gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=config.gsv_dir)
-                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=config.gsv_args)
+                            gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=Sava_Utils.config.gsv_pydir)
+                            gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.gsv_dir)
+                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=Sava_Utils.config.gsv_args)
                         with gr.Group(): 
                             gr.Markdown(value="微软TTS")
-                            ms_region=gr.Textbox(label="服务区域",interactive=True,value=config.ms_region)
-                            ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=config.ms_key)    
+                            ms_region=gr.Textbox(label="服务区域",interactive=True,value=Sava_Utils.config.ms_region)
+                            ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key)    
                         save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
                         restart_btn=gr.Button(value="重启UI",variant="stop")
                     with gr.Column():

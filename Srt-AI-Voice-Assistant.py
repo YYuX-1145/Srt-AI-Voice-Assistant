@@ -100,6 +100,9 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
         while os.path.exists(dirname):
+            if Sava_Utils.config.overwrite_workspace:
+                shutil.rmtree(dirname)
+                break
             dirname+="(new)"
         #subtitle_list.sort()
         subtitle_list.set_dir(dirname)
@@ -219,10 +222,10 @@ def cls_cache():
         logger.info("目前没有临时文件！")
         gr.Info("目前没有临时文件！")
 
-def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
+def save_settngs(server_port,overwrite_workspace,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
     global componments
     current_edit_rows=Sava_Utils.config.num_edit_rows
-    Sava_Utils.config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
+    Sava_Utils.config=Settings(server_port=server_port,theme=theme,overwrite_workspace=overwrite_workspace,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
     Sava_Utils.config.save()
     for i in componments:
         i.update_cfg(config=Sava_Utils.config)
@@ -234,6 +237,7 @@ def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydi
     gr.Info("成功保存设置！")
     return (
         Sava_Utils.config.server_port,
+        Sava_Utils.config.overwrite_workspace,
         Sava_Utils.config.clear_tmp,
         Sava_Utils.config.theme,
         Sava_Utils.config.bv2_pydir,
@@ -540,6 +544,7 @@ if __name__ == "__main__":
                         with gr.Group():
                             gr.Markdown(value="通用设置")
                             server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001)
+                            overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
                             clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
                             min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
                             num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
@@ -579,7 +584,7 @@ if __name__ == "__main__":
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
 
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,clear_cache,min_interval,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
+        save_settings_btn.click(save_settngs,inputs=[server_port_set,overwrite_workspace,clear_cache,min_interval,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,overwrite_workspace,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
         restart_btn.click(restart,[],[])
 
     app.queue().launch(

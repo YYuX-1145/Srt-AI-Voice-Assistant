@@ -5,6 +5,8 @@ from . import logger
 import gradio as gr
 import csv
 import re
+import shutil
+import Sava_Utils
 from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
 from .edit_panel import *
 
@@ -125,6 +127,9 @@ def create_multi_speaker(in_file, fps, offset):
         return getworklist(),*load_page(Subtitles()),Subtitles()
     dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
     while os.path.exists(dirname):
+        if Sava_Utils.config.overwrite_workspace:
+            shutil.rmtree(dirname)
+            break
         dirname+="(new)"
     subtitle_list.set_dir(dirname)
     return getworklist(),*load_page(subtitle_list), subtitle_list

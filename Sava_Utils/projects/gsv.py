@@ -201,8 +201,6 @@ class GSV(Projet):
                 else:
                     if self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)!='模型切换成功':
                         gr.Warning("模型切换失败")
-                self.current_sovits_model=data["sovits_path"]
-                self.current_gpt_model=data["gpt_path"]
             if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
                 data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
             if data["auxiliary_audios"] is not None:                   
@@ -241,6 +239,8 @@ class GSV(Projet):
                 API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
                 response = requests.get(url=API_URL)
                 response.raise_for_status()
+            self.current_sovits_model = sovits_path
+            self.current_gpt_model = gpt_path
             logger.info(f"模型已切换：{data_json}")
             return '模型切换成功'
         except Exception as e:

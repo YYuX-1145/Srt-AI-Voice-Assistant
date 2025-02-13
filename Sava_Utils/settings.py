@@ -10,6 +10,7 @@ class Settings:
         self,
         server_port: int = 5001,
         theme: str = "default",
+        overwrite_workspace:bool = False,
         clear_tmp: bool = False,
         min_interval:float=0.5,
         num_edit_rows: int = 7,
@@ -24,7 +25,8 @@ class Settings:
     ):
         self.server_port = int(server_port)
         self.theme = theme
-        self.clear_tmp = clear_tmp
+        self.overwrite_workspace = overwrite_workspace
+        self.clear_tmp = clear_tmp        
         self.min_interval = min_interval
         self.num_edit_rows = int(num_edit_rows)
         self.ms_region = ms_region

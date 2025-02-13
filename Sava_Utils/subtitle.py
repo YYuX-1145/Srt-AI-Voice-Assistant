@@ -4,8 +4,8 @@ import numpy as np
 import datetime
 import pickle
 import shutil
+import Sava_Utils
 from . import logger
-from . import config
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
 
@@ -97,7 +97,7 @@ class Subtitles:
         if sr is None:
             wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
         self.sr=sr
-        interval = int(config.min_interval*sr)
+        interval = int(Sava_Utils.config.min_interval*sr)
         del fl        
         ptr = 0
         for id, i in enumerate(self.subtitles):

@@ -2,7 +2,7 @@ import gradio as gr
 import os
 import pickle
 from .subtitle import Subtitles
-from . import config
+import Sava_Utils
 
 current_path = os.environ.get("current_path")
 
@@ -15,7 +15,7 @@ def load_page(subtitle_list):
 def show_page(page_start,subtitle_list):
     ret=[]
     length=len(subtitle_list)
-    pageend=page_start+config.num_edit_rows
+    pageend = page_start + Sava_Utils.config.num_edit_rows
     if pageend>length:
         pageend=length+1
     if subtitle_list.proj is not None:
@@ -37,7 +37,7 @@ def show_page(page_start,subtitle_list):
         ret.append(gr.update(value=f"{subtitle_list[i].speaker}",interactive=False,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),interactive=False,visible=True))
         ret+=btn
-    for i in range(config.num_edit_rows-pageend+page_start):
+    for i in range(Sava_Utils.config.num_edit_rows - pageend + page_start):
         ret.append(gr.update(value=-1,visible=False))
         ret.append(gr.update(value=-1,interactive=False,visible=True))
         ret.append(gr.update(value="NO INFO",visible=True))
@@ -75,15 +75,15 @@ def load_work(dirname):
         return Subtitles(), *load_page(Subtitles())
 
 def apply_spk(speaker,page,subtitles,*args):
-    checklist=args[:config.num_edit_rows]
+    checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
         return  *checklist,*show_page(page,Subtitles()),Subtitles()
-    indexlist = args[config.num_edit_rows :]
+    indexlist = args[Sava_Utils.config.num_edit_rows :]
     assert len(checklist)==len(indexlist)
     if speaker not in subtitles.speakers.keys():
         subtitles.speakers[speaker]=0
-    for i in range(config.num_edit_rows):
+    for i in range(Sava_Utils.config.num_edit_rows):
         if checklist[i] and int(indexlist[i])!=-1:
             if subtitles[int(indexlist[i])].speaker is not None:
                 subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1

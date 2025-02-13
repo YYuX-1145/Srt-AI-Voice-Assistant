@@ -108,13 +108,16 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         Projet_dict[proj].before_gen_action(*args,config=config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
+        file_list=[i for i in file_list if i is not None]    
+        if len(file_list)==0:
+            shutil.rmtree(subtitle_list.dir)
+            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
         sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
         t2 = time.time()
         m, s = divmod(t2-t1, 60)
-        use_time="%02d:%02d"%(m, s)
-        file_list=[i for i in file_list if i is not None]
+        use_time="%02d:%02d"%(m, s)        
         if len(file_list)!=len(subtitle_list):
             return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
         return (sr,audio),f'完成！所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
@@ -143,6 +146,45 @@ def generate_custom(*args):
     except Exception as e:
         return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(args,**kwargs)
+
+
+def gen_multispeaker(subtitles,max_workers):
+    for key in list(subtitles.speakers.keys()):
+        if subtitles.speakers[key]<=0:
+            subtitles.speakers.pop(key)
+    for key in subtitles.speakers.keys():
+        with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
+            info = pickle.load(f)
+            args=info["raw_data"]
+            project=info["project"]
+            if project=='gsv':
+                GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
+            args, kwargs = Projet_dict[project].arg_filter(*args)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
+            if len(list(
+                executor.map(
+                    lambda x: save(x[0], **x[1]),
+                    [
+                        (
+                            args,
+                            {
+                                "proj": project,
+                                "text": i.text,
+                                "dir": subtitles.dir,
+                                "subid": i.index,
+                            },
+                        )
+                        for i in subtitles
+                        if i.speaker == key
+                    ],
+                )
+            )
+            )==0:
+                raise gr.Error("单一说话人的全部语音合成失败了！")
+    audio=subtitles.audio_join()
+    gr.Info("合成完毕！")
+    return audio,*load_page(subtitles),subtitles
+
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
     audio = Projet_dict[proj].save_action(*args,text=text)
@@ -354,7 +396,6 @@ def save_spk(name, *args):
         gr.Warning(str(e))
     return getspklist()
 
-
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
@@ -470,6 +511,8 @@ if __name__ == "__main__":
                                 save_spk_btn.click(save_spk,inputs=[speaker_list,*GSV_ARGS],outputs=[speaker_list])
                                 del_spk_list_btn=gr.Button(value="🗑️", scale=1, min_width=60)
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
+                                start_gen_multispeaker_btn=gr.Button(value="开始生成多角色配音!",variant="primary")
+                                start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows,STATE])
 
             with gr.TabItem("额外内容"):
                 available=False

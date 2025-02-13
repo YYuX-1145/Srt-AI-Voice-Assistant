@@ -81,9 +81,14 @@ def apply_spk(speaker,page,subtitles,*args):
         return  *checklist,*show_page(page,Subtitles()),Subtitles()
     indexlist = args[config.num_edit_rows :]
     assert len(checklist)==len(indexlist)
+    if speaker not in subtitles.speakers.keys():
+        subtitles.speakers[speaker]=0
     for i in range(config.num_edit_rows):
         if checklist[i] and int(indexlist[i])!=-1:
+            if subtitles[int(indexlist[i])].speaker is not None:
+                subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
             subtitles[int(indexlist[i])].speaker=speaker
+            subtitles.speakers[speaker] += 1
     return *[False for i in range(config.num_edit_rows)],*show_page(page,subtitles),subtitles
 
 def del_spk(name):

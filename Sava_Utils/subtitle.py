@@ -2,8 +2,10 @@ import os
 import gradio as gr
 import numpy as np
 import datetime
+import pickle
+import shutil
+import Sava_Utils
 from . import logger
-from . import config
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
 
@@ -45,12 +47,13 @@ class Base_subtitle:
 
 
 class Subtitle(Base_subtitle):
-    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
+    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30,speaker=None):
         super().__init__(index, start_time, end_time, text, ntype, fps)
-        self.is_success = False
+        self.is_success = None
         self.is_delayed = False
         self.real_st=0
         self.real_et=0 #frames
+        self.speaker=speaker
 
     def add_offset(self, offset=0):
         self.start_time += offset
@@ -70,6 +73,12 @@ class Subtitles:
         self.proj = proj
         self.dir = dir
         self.sr=0
+        self.speakers=dict()
+
+    def dump(self):
+        assert self.dir is not None
+        with open(os.path.join(self.dir,"st.pkl"), 'wb') as f:
+            pickle.dump(self, f)
 
     def set_proj(self, proj: str):
         self.proj = proj
@@ -77,19 +86,22 @@ class Subtitles:
     def set_dir(self, dir: str):
         self.dir = dir
         os.makedirs(dir, exist_ok=True)
+        self.dump()
 
-    def audio_join(self, sr):  # -> tuple[int,np.array]
+    def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
+        # print(self.speakers)
         audiolist = []
         delayed_list = []
         failed_list = []
         fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
         if fl == []:
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+            gr.Warning("还未合成任何字幕！")
+            return None
         if sr is None:
             wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
         self.sr=sr
-        interval = int(config.min_interval*sr)
+        interval = int(Sava_Utils.config.min_interval*sr)
         del fl        
         ptr = 0
         for id, i in enumerate(self.subtitles):
@@ -121,9 +133,10 @@ class Subtitles:
             )
             gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
         if failed_list != []:
-            logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败！")
-            gr.Warning(f"序号合集为 {failed_list} 的字幕合成失败！")
+            logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败或未合成！")
+            gr.Warning(f"序号合集为 {failed_list} 的字幕合成失败或未合成！")
         audio_content = np.concatenate(audiolist)
+        self.dump()
         return sr, audio_content
 
     def get_state(self, idx):

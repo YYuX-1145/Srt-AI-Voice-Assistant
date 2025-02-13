@@ -292,7 +292,7 @@ def save_preset(name,description,ra,ara,rt,rl,sovits_path,gpt_path):
             return "请上传参考音频"
         dir=os.path.join(current_path,"SAVAdata","presets",name)
         os.makedirs(dir,exist_ok=True)
-        aux_ref_audio_path=[i.name for i in ara] if ara is not None else []
+        aux_ref_audio_path=[Sava_Utils.projects.gsv.temp_aux_ra(i) for i in ara] if ara is not None else []
         idx=1
         aux_list=[]
         for i in aux_ref_audio_path:
@@ -381,6 +381,7 @@ def remake(*args):
     else:
         subtitle_list[int(idx)].is_success=False
         gr.Warning("重新合成失败！")
+    subtitle_list.dump()
     return fp,*show_page(page,subtitle_list),subtitle_list
 
 def recompose(page,subtitle_list):

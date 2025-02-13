@@ -411,7 +411,8 @@ def save_spk(name,*args,project):
         gr.Info(f"保存成功：{name}")
     except Exception as e:
         gr.Warning(str(e))
-    return getspklist()
+        return getspklist()
+    return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))],value=name)
 
 if __name__ == "__main__":
     Man=Man()
@@ -527,9 +528,19 @@ if __name__ == "__main__":
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", min_width=60, scale=0)
                                 apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
-                                select_spk_projet_btn=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=False,label="说话人项目")
-                                save_spk_btn_gsv=gr.Button(value="💾", min_width=60, scale=0)
+                                select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
+
+                                save_spk_btn_bv2=gr.Button(value="💾", min_width=60, scale=0,visible=False)
+                                save_spk_btn_bv2.click(lambda *args:save_spk(*args,project="bv2"),inputs=[speaker_list,*BV2_ARGS],outputs=[speaker_list])
+                                save_spk_btn_gsv=gr.Button(value="💾", min_width=60, scale=0,visible=True)
                                 save_spk_btn_gsv.click(lambda *args:save_spk(*args,project="gsv"),inputs=[speaker_list,*GSV_ARGS],outputs=[speaker_list])
+                                save_spk_btn_mstts=gr.Button(value="💾", min_width=60, scale=0,visible=False)
+                                save_spk_btn_mstts.click(lambda *args:save_spk(*args,project="mstts"),inputs=[speaker_list,*MSTTS_ARGS],outputs=[speaker_list])
+                                save_spk_btn_custom=gr.Button(value="💾", min_width=60, scale=0,visible=False)
+                                save_spk_btn_custom.click(lambda *args:save_spk(*args,project="custom"),inputs=[speaker_list,CUSTOM.choose_custom_api],outputs=[speaker_list])
+
+                                select_spk_projet.change(switch_spk_proj,inputs=[select_spk_projet],outputs=[save_spk_btn_bv2,save_spk_btn_gsv,save_spk_btn_mstts,save_spk_btn_custom])
+
                                 del_spk_list_btn=gr.Button(value="🗑️", min_width=60, scale=0)
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
                                 start_gen_multispeaker_btn=gr.Button(value="生成多角色配音",variant="primary")

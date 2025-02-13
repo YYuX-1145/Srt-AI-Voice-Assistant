@@ -58,7 +58,7 @@ def getworklist():
 def getspklist():
     try:
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c, value=c[-1])
+        return gr.update(choices=c)
     except:
         return gr.update(choices=["None"],value="None")
 
@@ -102,3 +102,15 @@ def del_spk(name):
     except Exception as e:
         gr.Warning(f"错误：str(e)")
     return getspklist
+
+def switch_spk_proj(name):
+    if name=="bv2":
+        return [gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]
+    elif name=="gsv":
+        return [gr.update(visible=False),gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
+    elif name=="mstts":  
+        return [gr.update(visible=False),gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
+    elif name=="custom":
+        return [gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
+    else:
+        raise ""

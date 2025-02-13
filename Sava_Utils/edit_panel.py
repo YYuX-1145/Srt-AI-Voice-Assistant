@@ -50,7 +50,7 @@ def show_page(page_start,subtitle_list):
 def getworklist():
     try:
         c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))
-        return gr.update(choices=c,value=c[0])
+        return gr.update(choices=c,value=c[-1])
     except:
         return gr.update(choices=[""])
 
@@ -58,9 +58,9 @@ def getworklist():
 def getspklist():
     try:
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c, value=c[0])
+        return gr.update(choices=c, value=c[-1])
     except:
-        return gr.update(choices=["None"])
+        return gr.update(choices=["None"],value="None")
 
 
 def load_work(dirname):
@@ -97,6 +97,7 @@ def apply_spk(speaker,page,subtitles,*args):
 
 def del_spk(name):
     try:
+        assert name not in ["", "None", [],None]
         os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
     except Exception as e:
         gr.Warning(f"错误：str(e)")

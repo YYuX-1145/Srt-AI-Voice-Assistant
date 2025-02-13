@@ -396,7 +396,7 @@ def play_audio(idx,subtitle_list):
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
-def save_spk(name,project,*args):
+def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
         gr.Info("请输入有效的名称！")
         return getspklist()

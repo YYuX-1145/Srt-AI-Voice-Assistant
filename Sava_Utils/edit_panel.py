@@ -58,7 +58,7 @@ def getworklist():
 def getspklist():
     try:
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c)
+        return gr.update(choices=c, value="None")
     except:
         return gr.update(choices=["None"],value="None")
 
@@ -97,11 +97,12 @@ def apply_spk(speaker,page,subtitles,*args):
 
 def del_spk(name):
     try:
-        assert name not in ["", "None", [],None]
+        assert name not in ["", "None", [],None],"不得为空"
         os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
+        gr.Info(f"删除：{name}")
     except Exception as e:
-        gr.Warning(f"错误：str(e)")
-    return getspklist
+        gr.Warning(f"错误：{str(e)}")
+    return getspklist()
 
 def switch_spk_proj(name):
     if name=="bv2":

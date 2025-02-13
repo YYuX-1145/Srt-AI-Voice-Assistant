@@ -73,7 +73,8 @@ class Subtitles:
         self.proj = proj
         self.dir = dir
         self.sr=0
-
+        self.speakers=dict()
+    
     def set_proj(self, proj: str):
         self.proj = proj
 
@@ -83,19 +84,16 @@ class Subtitles:
         with open(os.path.join(self.dir,"st.pkl"), 'wb') as f:
             pickle.dump(self, f)
 
-    def audio_join(self, sr):  # -> tuple[int,np.array]
+    def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
+        #print(self.speakers)
         audiolist = []
         delayed_list = []
         failed_list = []
         fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
         if fl == []:
-            if self.get_state(0)==False:
-                shutil.rmtree(self.dir)
-                raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
-            else:
-                gr.Warning("还未合成任何字幕！")
-                return None
+            gr.Warning("还未合成任何字幕！")
+            return None
         if sr is None:
             wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
         self.sr=sr

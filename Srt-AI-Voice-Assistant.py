@@ -158,12 +158,13 @@ def gen_multispeaker(subtitles,max_workers):
         gr.Warning("警告：没有指派任何说话人")
     for key in subtitles.speakers.keys():
         with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
-            info = pickle.load(f)
-            args=info["raw_data"]
-            project=info["project"]
-            if project=='gsv':
-                GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
-            args, kwargs = Projet_dict[project].arg_filter(*args)
+            info = pickle.load(f) 
+        args=info["raw_data"]
+        project=info["project"]
+        if project=='gsv':
+            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
+        args, kwargs = Projet_dict[project].arg_filter(*args)
+        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             if len(list(
                 executor.map(
@@ -372,7 +373,8 @@ def remake(*args):
             args,kwargs=Projet_dict[proj].arg_filter(*args)
         except Exception as e:
             # print(e)
-            return fp,*show_page(page,subtitle_list)        
+            return fp,*show_page(page,subtitle_list)   
+    Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
     if fp is not None:

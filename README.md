@@ -6,11 +6,17 @@
 https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main
 
 ## Todo List
-- [ ] Multi-speaker synthesis.
+- [x] Multi-speaker synthesis.
 - [ ] Multi-language support.
-- [ ] More comprehensive documentation and user guide.
+- [x] More comprehensive documentation and user guide.
 
 ## 重大的更新历史
+
+### 250214更新：<br>
+1.支持读取历史工程  
+2.支持多说话人配音  
+3.更完善的文档  
+
 ### 250123更新：<br>
 1.支持在合成完毕后导出符合实际情况的srt字幕文件，同时也支持通过读取txt纯文本文件来进行合成，在这种情况下会按每句来切分段落。
 

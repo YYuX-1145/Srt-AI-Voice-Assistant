@@ -396,13 +396,15 @@ def play_audio(idx,subtitle_list):
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
-def save_spk(name, *args):
-    project = "gsv"
+def save_spk(name,project,*args):
+    if name in ["",[],None,'None']:
+        gr.Info("请输入有效的名称！")
+        return getspklist()
     args=[None, None, None, None, *args]
     # catch all arguments
     # process raw data before generating
     try:
-        GSV.arg_filter(*args)
+        Projet_dict[project].arg_filter(*args)
         os.makedirs(os.path.join(current_path, "SAVAdata", "speakers"), exist_ok=True)
         with open(os.path.join(current_path, "SAVAdata", "speakers", name), "wb") as f:
             pickle.dump({"project": project, "raw_data":args},f)
@@ -461,7 +463,7 @@ if __name__ == "__main__":
                             start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
                         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
 
-                with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除临时文件。",open=False):
+                with gr.Accordion(label="编辑区域 *Note:请勿在使用本功能时清除临时文件。",open=True):
                     with gr.Column():
                         edit_rows=[]
                         edit_real_index_list=[]
@@ -471,7 +473,7 @@ if __name__ == "__main__":
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
                             workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=3)
-                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=3)
+                            audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
                             recompose_btn = gr.Button(value="重新拼接内容", scale=3)
                             export_btn = gr.Button(value="导出字幕", scale=3)
                         for x in range(Sava_Utils.config.num_edit_rows):
@@ -516,17 +518,21 @@ if __name__ == "__main__":
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                         with gr.Accordion(label="多角色配音"):
                             with gr.Row():
-                                speaker_list=gr.Dropdown(label="",value="test",choices=["test"],allow_custom_value=True)
-                                refresh_spk_list_btn=gr.Button(value="🔄️",scale=1,min_width=60)
+                                try:
+                                    speaker_list_choices=["None",*os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
+                                except:
+                                    speaker_list_choices=["None"]
+                                speaker_list=gr.Dropdown(label="选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
+                                refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
-                                apply_btn = gr.Button(value="✅", scale=1, min_width=60)
+                                apply_btn = gr.Button(value="✅", min_width=60, scale=0)
                                 apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
-                                select_spk_projet_btn=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=False,label="选择说话人所属项目（暂不可用）")
-                                save_spk_btn=gr.Button(value="💾", scale=1, min_width=60)
-                                save_spk_btn.click(save_spk,inputs=[speaker_list,*GSV_ARGS],outputs=[speaker_list])
-                                del_spk_list_btn=gr.Button(value="🗑️", scale=1, min_width=60)
+                                select_spk_projet_btn=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=False,label="说话人项目")
+                                save_spk_btn_gsv=gr.Button(value="💾", min_width=60, scale=0)
+                                save_spk_btn_gsv.click(lambda *args:save_spk(*args,project="gsv"),inputs=[speaker_list,*GSV_ARGS],outputs=[speaker_list])
+                                del_spk_list_btn=gr.Button(value="🗑️", min_width=60, scale=0)
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
-                                start_gen_multispeaker_btn=gr.Button(value="开始生成多角色配音!",variant="primary")
+                                start_gen_multispeaker_btn=gr.Button(value="生成多角色配音",variant="primary")
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows,STATE])
 
             with gr.TabItem("额外内容"):

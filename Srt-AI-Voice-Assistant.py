@@ -19,12 +19,13 @@ import json
 import soundfile as sf
 import datetime
 import time
-import pickle
 import concurrent.futures
 
 import Sava_Utils
+from Sava_Utils import config
 from Sava_Utils.man.manual import Man
 from Sava_Utils.utils import *
+from Sava_Utils.edit_panel import *
 from Sava_Utils import logger
 from Sava_Utils.settings import Settings
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
@@ -178,7 +179,6 @@ def cls_cache():
         gr.Info("目前没有临时文件！")
 
 def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
-    global config
     global componments
     current_edit_rows=config.num_edit_rows
     config=Settings(server_port=server_port,theme=theme,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
@@ -194,7 +194,6 @@ def save_settngs(server_port,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydi
     return config.server_port,config.clear_tmp,config.theme,config.bv2_pydir,config.bv2_dir,config.gsv_pydir,config.gsv_dir,config.bv2_args,config.gsv_args,config.ms_region,config.ms_key
 
 def load_cfg():
-    global config 
     config_path=os.path.join(current_path,"SAVAdata","config.json")
     if os.path.exists(config_path):        
         try:
@@ -207,7 +206,6 @@ def load_cfg():
         logger.info("当前没有自定义设置")
 
 def start_hiyoriui():
-    global config
     if config.bv2_pydir=="":
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"    
@@ -217,7 +215,6 @@ def start_hiyoriui():
     return "HiyoriUI已启动，请确保其配置文件无误"
 
 def start_gsv():
-    global config
     if config.gsv_pydir=="":
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"
@@ -328,7 +325,7 @@ def remake(*args):
     return fp,*show_page(page,subtitle_list),subtitle_list
 
 def recompose(page,subtitle_list):
-    if len(subtitle_list)==0:
+    if subtitle_list is None or len(subtitle_list)==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
         return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list),subtitle_list
     sr,audio=subtitle_list.audio_join(sr=None)
@@ -342,63 +339,6 @@ def play_audio(idx,subtitle_list):
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
-def load_page(subtitle_list):
-    length=len(subtitle_list)
-    if length==0:
-        gr.Info("上次生成未成功，请先完成生成流程！")
-    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1,subtitle_list)
-
-def show_page(page_start,subtitle_list):
-    ret=[]
-    length=len(subtitle_list)
-    pageend=page_start+config.num_edit_rows
-    if pageend>length:
-        pageend=length+1
-    if subtitle_list.proj is not None:
-        if subtitle_list.proj=="bv2":
-            btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]
-        elif subtitle_list.proj=="gsv":
-            btn=[gr.update(visible=False),gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
-        elif subtitle_list.proj=="mstts":  
-            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
-        else:
-            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
-    else:
-        btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]     
-    for i in range(page_start-1,pageend-1):
-        ret.append(gr.update(value=i,visible=False))
-        ret.append(gr.update(value=subtitle_list[i].index,visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time:.2f} -> {subtitle_list[i].end_time:.2f}",visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
-        ret.append(gr.update(value=subtitle_list.get_state(i),visible=True))
-        ret+=btn
-    for i in range(config.num_edit_rows-pageend+page_start):
-        ret.append(gr.update(value=-1,visible=False))
-        ret.append(gr.update(value=-1,visible=True))
-        ret.append(gr.update(value="NO INFO",visible=True))
-        ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
-        ret.append(gr.update(value="NO INFO",visible=True))  
-        ret+=btn        
-    return ret
-
-def getworklist():
-    try:
-        c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))
-        return gr.update(choices=c,value=c[0])
-    except:
-        return gr.update(choices=[""])
-
-def load_work(dirname):
-    try:
-        if dirname in ["",None]:
-            raise Exception("路径不得为空！")
-        with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
-            subtitles = pickle.load(f)
-        return subtitles,*load_page(subtitles)
-    except Exception as e:
-        gr.Warning(f"出错：{str(e)}")
-        return None,*load_page(Subtitles())
-
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
@@ -409,7 +349,6 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
-    load_cfg()
     if config.clear_tmp:
         cls_cache()
     if args.server_port is None:
@@ -424,16 +363,19 @@ if __name__ == "__main__":
         with gr.Tabs():            
             with gr.TabItem("API合成"):
                 with gr.Row():
-                    textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)                     
-                    with gr.TabItem("Bert-VITS2-HiyoriUI"):
-                        BV2_ARGS=BV2.getUI()
-                        BV2.spkchoser.change(switch_spk,inputs=[BV2.spkchoser],outputs=[BV2.spkid,BV2.speaker_name])
-                    with gr.TabItem("GPT-SoVITS"):
-                        GSV_ARGS=GSV.getUI()      
-                    with gr.TabItem("微软TTS"):
-                        MSTTS_ARGS=MSTTS.getUI()  
-                    with gr.TabItem("自定义API"):
-                        CUSTOM.getUI()
+                    with gr.Column():
+                        textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
+                        gen_multispeaker_btn = gr.Button(value="生成多角色项目")
+                    with gr.Column():
+                        with gr.TabItem("Bert-VITS2-HiyoriUI"):
+                            BV2_ARGS=BV2.getUI()
+                            BV2.spkchoser.change(switch_spk,inputs=[BV2.spkchoser],outputs=[BV2.spkid,BV2.speaker_name])
+                        with gr.TabItem("GPT-SoVITS"):
+                            GSV_ARGS=GSV.getUI()      
+                        with gr.TabItem("微软TTS"):
+                            MSTTS_ARGS=MSTTS.getUI()  
+                        with gr.TabItem("自定义API"):
+                            CUSTOM.getUI()
                     with gr.Column():                  
                         fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
                         workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
@@ -450,8 +392,10 @@ if __name__ == "__main__":
                 with gr.Accordion(label="重新抽卡区域 *Note:完成字幕生成后，即可在本页面对每个字幕重新抽卡。合成参数取决于以上面板参数。请勿在使用本功能时清除临时文件。",open=False):
                     with gr.Column():
                         edit_rows=[]
+                        edit_real_index_list=[]
+                        edit_check_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=[""],value="",label="合成历史", scale=1)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],value="",label="合成历史", scale=1)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
                             workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows,scale=3)
@@ -459,36 +403,54 @@ if __name__ == "__main__":
                             recompose_btn = gr.Button(value="重新拼接内容", scale=3)
                             export_btn = gr.Button(value="导出字幕", scale=3)
                         for x in range(config.num_edit_rows):
-                            _=gr.Number(show_label=False,visible=False,value=-1)
+                            edit_real_index=gr.Number(show_label=False,visible=False,value=-1,interactive=False)#real index                         
                             with gr.Row():
-                                edit_rows.append(_)  #real index                             
-                                edit_rows.append(gr.Number(scale=0,show_label=False,interactive=False,value=-1,min_width=80))#index(raw)
-                                edit_rows.append(gr.Textbox(scale=3,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
-                                s_txt=gr.Textbox(scale=5,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
+                                edit_check=gr.Checkbox(value=False,interactive=True,min_width=40,label="",scale=0)
+                                edit_check_list.append(edit_check)
+                                edit_rows.append(edit_real_index)  # real index
+                                edit_real_index_list.append(edit_real_index)
+                                edit_rows.append(gr.Number(scale=1,show_label=False,interactive=False,value=-1,min_width=40))#index(raw)
+                                edit_rows.append(gr.Textbox(scale=4,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
+                                s_txt=gr.Textbox(scale=6,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
                                 edit_rows.append(s_txt)
-                                edit_rows.append(gr.Textbox(value="NO INFO",label="状态",show_label=False,interactive=False,scale=1,max_lines=1))#is success or delayed?
+                                edit_rows.append(gr.Textbox(scale=1,show_label=False,interactive=False,min_width=60,value="None",max_lines=1))#speaker
+                                edit_rows.append(gr.Textbox(value="NO INFO",show_label=False,interactive=False,min_width=70,scale=1,max_lines=1))#is success or delayed?
                                 with gr.Row():
                                     __=gr.Button(value="▶️",scale=1,min_width=60)  
-                                    __.click(play_audio,inputs=[_,STATE],outputs=[audio_player])
+                                    __.click(play_audio,inputs=[edit_real_index,STATE],outputs=[audio_player])
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake,inputs=[page_slider,_,s_txt,*BV2_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    bv2regenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*BV2_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=True)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,_,s_txt,*GSV_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    gsvregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*GSV_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake,inputs=[page_slider,_,s_txt,*MSTTS_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])  
+                                    msttsregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*MSTTS_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])  
                                     customregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(customregenbtn)      
-                                    customregenbtn.click(remake,inputs=[page_slider,_,s_txt,CUSTOM.choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
+                                    customregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,CUSTOM.choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
                         page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
                         workloadbtn.click(load_work,inputs=[worklist],outputs=[STATE,page_slider,*edit_rows])
                         workrefbtn.click(getworklist,inputs=[],outputs=[worklist])
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
                         export_btn.click(lambda x:x.export(),inputs=[STATE])
-            with gr.TabItem("多角色配音"):
-                pass
+                        with gr.Row():
+                            all_selection_btn = gr.Button(value="全选",interactive=True)
+                            all_selection_btn.click(lambda :[True for i in range(config.num_edit_rows)],inputs=[],outputs=edit_check_list)
+                            reverse_selection_btn = gr.Button(value="反选",interactive=True)
+                            reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
+                            clear_selection_btn=gr.Button(value="清除选择",interactive=True)
+                            clear_selection_btn.click(lambda :[False for i in range(config.num_edit_rows)],inputs=[],outputs=edit_check_list)
+                        with gr.Accordion(label="多角色配音"):
+                            with gr.Row():
+                                speaker_list=gr.Dropdown(label="",value="test",choices=["test"])
+                                refresh_spk_list_btn=gr.Button(value="🔄️",scale=1,min_width=60)
+                                apply_btn = gr.Button(value="✅", scale=1, min_width=60)
+                                apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
+                                save_spk_btn=gr.Button(value="💾", scale=1, min_width=60)
+                                del_spk_list_btn=gr.Button(value="🗑️", scale=1, min_width=60)
+
             with gr.TabItem("额外内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT

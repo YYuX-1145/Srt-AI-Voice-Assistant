@@ -47,12 +47,13 @@ class Base_subtitle:
 
 
 class Subtitle(Base_subtitle):
-    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
+    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30,speaker=None):
         super().__init__(index, start_time, end_time, text, ntype, fps)
         self.is_success = False
         self.is_delayed = False
         self.real_st=0
         self.real_et=0 #frames
+        self.speaker=speaker
 
     def add_offset(self, offset=0):
         self.start_time += offset

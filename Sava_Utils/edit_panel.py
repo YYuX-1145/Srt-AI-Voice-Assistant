@@ -57,10 +57,10 @@ def getworklist():
 
 def getspklist():
     try:
-        c = os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))
+        c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
         return gr.update(choices=c, value=c[0])
     except:
-        return gr.update(choices=[""])
+        return gr.update(choices=["None"])
 
 
 def load_work(dirname):
@@ -79,16 +79,20 @@ def apply_spk(speaker,page,subtitles,*args):
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
         return  *checklist,*show_page(page,Subtitles()),Subtitles()
+    if speaker in ["","None",[]]:
+        speaker=None
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     assert len(checklist)==len(indexlist)
-    if speaker not in subtitles.speakers.keys():
+    if speaker is not None and speaker not in subtitles.speakers.keys():
         subtitles.speakers[speaker]=0
     for i in range(Sava_Utils.config.num_edit_rows):
         if checklist[i] and int(indexlist[i])!=-1:
             if subtitles[int(indexlist[i])].speaker is not None:
                 subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
             subtitles[int(indexlist[i])].speaker=speaker
-            subtitles.speakers[speaker] += 1
+            if speaker is not None:
+                subtitles.speakers[speaker] += 1
+    subtitles.dump()
     return *checklist,*show_page(page,subtitles),subtitles
 
 def del_spk(name):

@@ -6,6 +6,7 @@
 https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main
 
 ## Todo List
+- [ ] Multi-speaker synthesis.
 - [ ] Multi-language support.
 - [ ] More comprehensive documentation and user guide.
 

@@ -89,7 +89,7 @@ def apply_spk(speaker,page,subtitles,*args):
                 subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
             subtitles[int(indexlist[i])].speaker=speaker
             subtitles.speakers[speaker] += 1
-    return *[False for i in range(config.num_edit_rows)],*show_page(page,subtitles),subtitles
+    return *checklist,*show_page(page,subtitles),subtitles
 
 def del_spk(name):
     try:

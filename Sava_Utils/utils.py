@@ -6,6 +6,7 @@ import gradio as gr
 import csv
 import re
 from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
+from .edit_panel import *
 
 current_path=os.environ.get("current_path")
 
@@ -107,3 +108,23 @@ def read_txt(filename):
         subtitle_list.append(Subtitle(idx,to_time(REF_DUR * idx - REF_DUR), to_time(REF_DUR * idx), s, ntype="srt"))
         idx+=1
     return subtitle_list
+
+
+def create_multi_speaker(in_file, fps, offset):
+    if in_file is None:
+        gr.Info("请上传字幕文件！")
+        return getworklist(), *load_page(Subtitles()), Subtitles()
+    if in_file.name[-4:].lower()==".csv":
+        subtitle_list=read_prcsv(in_file.name,fps,offset)
+    elif in_file.name[-4:].lower()==".srt":
+        subtitle_list=read_srt(in_file.name,offset)
+    elif in_file.name[-4:].lower()==".txt":
+        subtitle_list=read_txt(in_file.name)
+    else:
+        gr.Warning("未知的格式，请确保扩展名正确！")
+        return getworklist(),*load_page(Subtitles()),Subtitles()
+    dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
+    while os.path.exists(dirname):
+        dirname+="(new)"
+    subtitle_list.set_dir(dirname)
+    return getworklist(),*load_page(subtitle_list), subtitle_list

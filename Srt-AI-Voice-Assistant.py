@@ -124,24 +124,24 @@ def generate_bv2(*args):
         return generate(*args,**kwargs)    
 
 def generate_gsv(*args): 
-        try:
-            args,kwargs=GSV.arg_filter(*args)
-        except Exception as e:
-            return None,str(e),*load_page(Subtitles()),Subtitles()
-        return generate(*args,**kwargs)
+    try:
+        args, kwargs = GSV.arg_filter(*args)
+    except Exception as e:
+        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
+    return generate(*args, **kwargs)
 
 def generate_mstts(*args):
     try:
         args,kwargs=MSTTS.arg_filter(*args)
     except Exception as e:
-        return None,str(e),*load_page(Subtitles()),Subtitles()              
+        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args,**kwargs)
 
 def generate_custom(*args):
     try:
         args,kwargs=CUSTOM.arg_filter(*args)
     except Exception as e:
-        return None,str(e),*load_page(Subtitles()),Subtitles()
+        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(args,**kwargs)
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
@@ -339,6 +339,22 @@ def play_audio(idx,subtitle_list):
         return None
     return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
+def save_spk(name, *args):
+    project = "gsv"
+    args=[None, None, None, None, *args]
+    # catch all arguments
+    # process raw data before generating
+    try:
+        GSV.arg_filter(*args)
+        os.makedirs(os.path.join(current_path, "SAVAdata", "speakers"), exist_ok=True)
+        with open(os.path.join(current_path, "SAVAdata", "speakers", name), "wb") as f:
+            pickle.dump({"project": project, "raw_data":args},f)
+        gr.Info(f"保存成功：{name}")
+    except Exception as e:
+        gr.Warning(str(e))
+    return getspklist()
+
+
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
@@ -395,7 +411,7 @@ if __name__ == "__main__":
                         edit_real_index_list=[]
                         edit_check_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],value="",label="合成历史", scale=1)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=1)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
                             workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=config.num_edit_rows,scale=3)
@@ -444,12 +460,16 @@ if __name__ == "__main__":
                             clear_selection_btn.click(lambda :[False for i in range(config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                         with gr.Accordion(label="多角色配音"):
                             with gr.Row():
-                                speaker_list=gr.Dropdown(label="",value="test",choices=["test"])
+                                speaker_list=gr.Dropdown(label="",value="test",choices=["test"],allow_custom_value=True)
                                 refresh_spk_list_btn=gr.Button(value="🔄️",scale=1,min_width=60)
+                                refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", scale=1, min_width=60)
                                 apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
+                                select_spk_projet_btn=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=False,label="选择说话人所属项目（暂不可用）")
                                 save_spk_btn=gr.Button(value="💾", scale=1, min_width=60)
+                                save_spk_btn.click(save_spk,inputs=[speaker_list,*GSV_ARGS],outputs=[speaker_list])
                                 del_spk_list_btn=gr.Button(value="🗑️", scale=1, min_width=60)
+                                del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
 
             with gr.TabItem("额外内容"):
                 available=False
@@ -493,7 +513,7 @@ if __name__ == "__main__":
                             gr.Markdown(value=Man.getInfo("issues"))
                         with gr.TabItem("帮助"):
                             gr.Markdown(value=Man.getInfo("help"))       
-
+        gen_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(generate_gsv,inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.save_presets_btn.click(save_preset,inputs=[GSV.choose_presets,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,GSV.sovits_path,GSV.gpt_path],outputs=[gen_textbox_output_text])

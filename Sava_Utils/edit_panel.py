@@ -54,9 +54,18 @@ def getworklist():
     except:
         return gr.update(choices=[""])
 
+
+def getspklist():
+    try:
+        c = os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))
+        return gr.update(choices=c, value=c[0])
+    except:
+        return gr.update(choices=[""])
+
+
 def load_work(dirname):
     try:
-        if dirname in ["",None]:
+        if dirname in ["",[],None]:
             raise Exception("路径不得为空！")
         with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
@@ -65,17 +74,21 @@ def load_work(dirname):
         gr.Warning(f"出错：{str(e)}")
         return Subtitles(), *load_page(Subtitles())
 
-def apply_spk(*args):
-    speaker=args[0]
-    page=args[1]
-    subtitles=args[2]
-    checklist=args[3:3+config.num_edit_rows]
+def apply_spk(speaker,page,subtitles,*args):
+    checklist=args[:config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
         return  *checklist,*show_page(page,Subtitles()),Subtitles()
-    indexlist = args[3 + config.num_edit_rows :]
+    indexlist = args[config.num_edit_rows :]
     assert len(checklist)==len(indexlist)
     for i in range(config.num_edit_rows):
         if checklist[i] and int(indexlist[i])!=-1:
             subtitles[int(indexlist[i])].speaker=speaker
     return *[False for i in range(config.num_edit_rows)],*show_page(page,subtitles),subtitles
+
+def del_spk(name):
+    try:
+        os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
+    except Exception as e:
+        gr.Warning(f"错误：str(e)")
+    return getspklist

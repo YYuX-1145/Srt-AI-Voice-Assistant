@@ -154,6 +154,8 @@ def gen_multispeaker(subtitles,max_workers):
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
             subtitles.speakers.pop(key)
+    if len(list(subtitles.speakers.keys()))==0:
+        gr.Warning("警告：没有指派任何说话人")
     for key in subtitles.speakers.keys():
         with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
             info = pickle.load(f)
@@ -524,12 +526,12 @@ if __name__ == "__main__":
                                 except:
                                     speaker_list_choices=["None"]
                                 speaker_list=gr.Dropdown(label="选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
+                                select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", min_width=60, scale=0)
                                 apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
-                                select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
-
+                                
                                 save_spk_btn_bv2=gr.Button(value="💾", min_width=60, scale=0,visible=False)
                                 save_spk_btn_bv2.click(lambda *args:save_spk(*args,project="bv2"),inputs=[speaker_list,*BV2_ARGS],outputs=[speaker_list])
                                 save_spk_btn_gsv=gr.Button(value="💾", min_width=60, scale=0,visible=True)
@@ -587,7 +589,7 @@ if __name__ == "__main__":
                         with gr.TabItem("简介和常见错误"):
                             gr.Markdown(value=Man.getInfo("readme"))
                             gr.Markdown(value=Man.getInfo("issues"))
-                        with gr.TabItem("帮助"):
+                        with gr.TabItem("使用指南"):
                             gr.Markdown(value=Man.getInfo("help"))       
         gen_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])

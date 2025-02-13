@@ -49,7 +49,7 @@ class Base_subtitle:
 class Subtitle(Base_subtitle):
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30,speaker=None):
         super().__init__(index, start_time, end_time, text, ntype, fps)
-        self.is_success = False
+        self.is_success = None
         self.is_delayed = False
         self.real_st=0
         self.real_et=0 #frames
@@ -80,6 +80,8 @@ class Subtitles:
     def set_dir(self, dir: str):
         self.dir = dir
         os.makedirs(dir, exist_ok=True)
+        with open(os.path.join(self.dir,"st.pkl"), 'wb') as f:
+            pickle.dump(self, f)
 
     def audio_join(self, sr):  # -> tuple[int,np.array]
         assert self.dir is not None
@@ -88,8 +90,12 @@ class Subtitles:
         failed_list = []
         fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
         if fl == []:
-            shutil.rmtree(self.dir)
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+            if self.get_state(0)==False:
+                shutil.rmtree(self.dir)
+                raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+            else:
+                gr.Warning("还未合成任何字幕！")
+                return None
         if sr is None:
             wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
         self.sr=sr

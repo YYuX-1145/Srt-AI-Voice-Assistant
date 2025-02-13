@@ -42,6 +42,15 @@ def temp_ra(a: tuple):
         sf.write(dir, wav, sr)
     return dir
 
+def temp_aux_ra(a:bytes):
+    name = hashlib.md5(a).hexdigest() + ".wav"
+    os.makedirs(os.path.join(current_path, "SAVAdata", "temp"), exist_ok=True)
+    dir = os.path.join(current_path, "SAVAdata", "temp", name)
+    if not os.path.exists(dir):
+        with open(dir,'wb') as f:
+            f.write(a)
+    return dir
+
 class GSV(Projet):
     def __init__(self):
         self.gsv_fallback=False
@@ -112,7 +121,7 @@ class GSV(Projet):
         self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")
-            self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple")
+            self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple",type="binary")
         with gr.Row():
             self.refer_text=gr.Textbox(label="参考音频文本")
             self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
@@ -161,16 +170,18 @@ class GSV(Projet):
             self.repetition_penalty,
             self.split_bucket,
             self.how_to_cut,
+            self.gpt_path,
+            self.sovits_path
         ]
         return GSV_ARGS
 
     def arg_filter(self,*args):
-        in_file,fps,offset,max_workers,sr,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        in_file,fps,offset,max_workers,sr,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         if refer_audio is None or refer_text == "":
             gr.Warning("你必须指定参考音频和文本")
             raise Exception("你必须指定参考音频和文本")
         refer_audio_path=temp_ra(refer_audio)
-        aux_ref_audio_path=[i.name for i in aux_ref_audio] if aux_ref_audio is not None else []      
+        aux_ref_audio_path=[temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []      
         pargs=(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])
         kwargs={'in_file':in_file,'sr':sr,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
         return pargs,kwargs

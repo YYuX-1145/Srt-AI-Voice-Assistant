@@ -164,8 +164,11 @@ class GSV(Projet):
                 outputs=[],
             )
         with gr.Row():
-            self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)        
-        self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])         
+            self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)    
+
+        self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])
+        self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[]) 
+        self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
         GSV_ARGS = [
             self.sampling_rate2,
             self.language2,
@@ -202,19 +205,14 @@ class GSV(Projet):
 
     def load_preset(self,name,port):
         try:
-            switch=True
             if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
                 return gr.update(),gr.update(),gr.update(label="",value="",placeholder="描述信息，可选",interactive=True),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
             data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
             if "auxiliary_audios" not in list(data.keys()):
                 data["auxiliary_audios"] = None
             if data["sovits_path"] !="" and data["gpt_path"] != "":
-                if data["sovits_path"]==self.current_sovits_model and data["gpt_path"]==self.current_gpt_model:
-                    switch=False
-                    time.sleep(0.1)
-                else:
-                    if self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port)!='模型切换成功':
-                        gr.Warning("模型切换失败")
+                if not self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port,force=False):
+                    gr.Warning("模型切换失败")
             if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
                 data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
             if data["auxiliary_audios"] is not None:                   
@@ -222,14 +220,21 @@ class GSV(Projet):
                 if len(aux_audio)!=len(data["auxiliary_audios"]):
                     gr.Warning("辅助参考音频存在丢失！")
                 data["auxiliary_audios"]=aux_audio
-            return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"],"预设加载成功" if switch else "预设加载成功,无需切换模型,若需要强制切换请手动点击按钮"
+            gr.Info("预设加载成功！")
+            return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"]
         except Exception as e:
-            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),f"加载失败:{e}"
+            gr.Warning(f"加载失败:{e}")
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
-    def switch_gsvmodel(self,sovits_path,gpt_path,port):
+    def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True):
+        if not force and sovits_path==self.current_sovits_model and gpt_path==self.current_gpt_model:
+            gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
+            return True
         if sovits_path=="" or gpt_path=="":
-            gr.Info("请指定模型路径！")
-            return "请指定模型路径！"
+            if force:
+                gr.Info("请指定模型路径！")
+            return False
+        gr.Info("正在切换模型...")
         try:        
             data_json={
             "sovits_model_path": sovits_path.strip('"'),
@@ -255,13 +260,14 @@ class GSV(Projet):
                 response.raise_for_status()
             self.current_sovits_model = sovits_path
             self.current_gpt_model = gpt_path
+            gr.Info("模型已切换")
             logger.info(f"模型已切换：{data_json}")
-            return '模型切换成功'
+            return True
         except Exception as e:
             err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
             gr.Warning(err)
             logger.error(err)
-            return err
+            return False
 
     def refresh_presets_list(self):
         self.presets_list=['None']
@@ -283,10 +289,10 @@ class GSV(Projet):
         try:
             if name=="None" or name=="":
                 gr.Info("请输入名称!")
-                #return "请输入名称"
+                # return "请输入名称"
             if ra is None:
                 gr.Info("请上传参考音频!")
-                #return "请上传参考音频"
+                # return "请上传参考音频"
             dir=os.path.join(current_path,"SAVAdata","presets",name)
             os.makedirs(dir,exist_ok=True)
             idx=1
@@ -315,7 +321,7 @@ class GSV(Projet):
                 json.dump(data, f, indent=2, ensure_ascii=False) 
             time.sleep(0.1)
             gr.Info("预设保存成功")
-            #return "预设保存成功"
+            # return "预设保存成功"
         except Exception as e:
             gr.Warning(f"出错：{e}")
-            #return f"出错：{e}"
+            # return f"出错：{e}"

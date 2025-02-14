@@ -164,7 +164,7 @@ def gen_multispeaker(subtitles,max_workers):
         if project=='gsv':
             GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
         args, kwargs = Projet_dict[project].arg_filter(*args)
-        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
+        Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             if len(list(
                 executor.map(

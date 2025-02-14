@@ -29,12 +29,12 @@ class Projet(ABC):
     def getUI(self):
         if not self.ui:
             self.ui=True
-            return self.UI()            
+            return self._UI()            
         else:
             raise "ERR"
 
     @abstractmethod
-    def UI(self):
+    def _UI(self):
         raise "err"
 
     @abstractmethod

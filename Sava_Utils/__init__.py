@@ -32,4 +32,7 @@ except ImportError:
     logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
 
 from .settings import load_cfg
+from .utils import cls_cache
 config=load_cfg()
+if config.clear_tmp:
+    cls_cache()

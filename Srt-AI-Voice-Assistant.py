@@ -4,10 +4,10 @@ import sys
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
-    exe = True
+    os.environ["exe"] = 'True'
 elif __file__:
     current_path = os.path.dirname(__file__)
-    exe = False
+    os.environ["exe"] = 'False'
 os.environ["current_path"] = current_path
 
 import shutil
@@ -41,42 +41,6 @@ MSTTS = Sava_Utils.projects.mstts.MSTTS()
 CUSTOM = Sava_Utils.projects.custom.Custom()
 Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
 componments=[BV2,GSV,MSTTS,CUSTOM]
-
-
-# https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
-gradio_hf_hub_themes = [
-    "default",
-    "base",
-    "glass",
-    "soft",
-    "gradio/monochrome",
-    "gradio/seafoam",    
-    "gradio/dracula_test",
-    "abidlabs/dracula_test",
-    "abidlabs/Lime",
-    "abidlabs/pakistan",
-    "Ama434/neutral-barlow",
-    "dawood/microsoft_windows",
-    "finlaymacklon/smooth_slate",
-    "Franklisi/darkmode",
-    "freddyaboulton/dracula_revamped",
-    "freddyaboulton/test-blue",
-    "gstaff/xkcd",
-    "Insuz/Mocha",
-    "Insuz/SimpleIndigo",
-    "JohnSmith9982/small_and_pretty",
-    "nota-ai/theme",
-    "nuttea/Softblue",
-    "ParityError/Anime",
-    "reilnuud/polite",
-    "remilia/Ghostly",
-    "rottenlittlecreature/Moon_Goblin",
-    "step-3-profit/Midnight-Deep",
-    "Taithrah/Minimal",
-    "ysharma/huggingface",
-    "ysharma/steampunk",
-    "NoCrypt/miku"
-]
 
 def custom_api(text):
     raise "需要加载自定义API函数！"
@@ -196,44 +160,6 @@ def switch_spk(choice):
     else:
         return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
 
-def cls_cache():
-    dir=os.path.join(current_path,"SAVAdata","temp")
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-        logger.info("成功清除临时文件！")
-        gr.Info("成功清除临时文件！")
-    else:
-        logger.info("目前没有临时文件！")
-        gr.Info("目前没有临时文件！")
-
-def save_settngs(server_port,overwrite_workspace,clear_tmp,min_interval,num_edit_rows,theme,bv2_pydir,bv2_dir,gsv_pydir,gsv_dir,bv2_args,gsv_args,ms_region,ms_key):
-    global componments
-    current_edit_rows=Sava_Utils.config.num_edit_rows
-    Sava_Utils.config=Settings(server_port=server_port,theme=theme,overwrite_workspace=overwrite_workspace,clear_tmp=clear_tmp,min_interval=min_interval,num_edit_rows=num_edit_rows,bv2_pydir=bv2_pydir.strip('"'),bv2_dir=bv2_dir.strip('"'),gsv_pydir=gsv_pydir.strip('"'),gsv_dir=gsv_dir.strip('"'),bv2_args=bv2_args,gsv_args=gsv_args,ms_region=ms_region,ms_key=ms_key)
-    Sava_Utils.config.save()
-    for i in componments:
-        i.update_cfg(config=Sava_Utils.config)
-    if Sava_Utils.config.num_edit_rows != current_edit_rows:
-        Sava_Utils.config.num_edit_rows = current_edit_rows
-        logger.info("更改字幕栏数需要重启生效")
-        gr.Info("更改字幕栏数需要重启生效")
-    logger.info("成功保存设置！")
-    gr.Info("成功保存设置！")
-    return (
-        Sava_Utils.config.server_port,
-        Sava_Utils.config.overwrite_workspace,
-        Sava_Utils.config.clear_tmp,
-        Sava_Utils.config.theme,
-        Sava_Utils.config.bv2_pydir,
-        Sava_Utils.config.bv2_dir,
-        Sava_Utils.config.gsv_pydir,
-        Sava_Utils.config.gsv_dir,
-        Sava_Utils.config.bv2_args,
-        Sava_Utils.config.gsv_args,
-        Sava_Utils.config.ms_region,
-        Sava_Utils.config.ms_key,
-    )
-
 def start_hiyoriui():
     if Sava_Utils.config.bv2_pydir == "":
         gr.Warning("请前往设置页面指定环境路径并保存!")
@@ -263,28 +189,6 @@ def start_gsv():
     run_command(command=command, dir=Sava_Utils.config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
-
-def restart():
-    gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
-    time.sleep(0.5)
-    os.system("cls")
-    if not exe:
-        os.execl(sys.executable,f'"{sys.executable}"',f'"{os.path.abspath(__file__)}"')
-    else:
-        try:
-            a = os.environ["_PYI_APPLICATION_HOME_DIR"]
-            b = os.environ["_PYI_ARCHIVE_FILE"]
-            c = os.environ["_PYI_PARENT_PROCESS_LEVEL"]
-            os.unsetenv("_PYI_APPLICATION_HOME_DIR")
-            os.unsetenv("_PYI_ARCHIVE_FILE")
-            os.unsetenv("_PYI_PARENT_PROCESS_LEVEL")
-            run_command(command=f"{sys.executable}", dir=current_path)        
-            os.environ["_PYI_APPLICATION_HOME_DIR"]=a
-            os.environ["_PYI_ARCHIVE_FILE"] = b
-            os.environ["_PYI_PARENT_PROCESS_LEVEL"] = c
-        except Exception as e:
-            gr.Warning(f"出现错误{str(e)}，请手动重启！")
-        os.system(f"taskkill /PID {os.getpid()} /F")
 
 def remake(*args):
     fp=None
@@ -362,8 +266,6 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
-    if Sava_Utils.config.clear_tmp:
-        cls_cache()
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
     else:
@@ -495,32 +397,8 @@ if __name__ == "__main__":
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
-                        with gr.Group():
-                            gr.Markdown(value="通用设置")
-                            server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001)
-                            overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
-                            clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
-                            min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
-                            num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
-                            theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
-                            cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
-                        with gr.Group():
-                            gr.Markdown(value="BV2")
-                            bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=Sava_Utils.config.bv2_pydir)
-                            bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.bv2_dir)
-                            bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=Sava_Utils.config.bv2_args)
-                        with gr.Group():
-                            gr.Markdown(value="GSV")
-                            gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=Sava_Utils.config.gsv_pydir)
-                            gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.gsv_dir)
-                            gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=Sava_Utils.config.gsv_args)
-                        with gr.Group(): 
-                            gr.Markdown(value="微软TTS")
-                            ms_region=gr.Textbox(label="服务区域",interactive=True,value=Sava_Utils.config.ms_region)
-                            ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key)    
-                        save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
-                        restart_btn=gr.Button(value="重启UI",variant="stop")
+                        SETTINGS=Sava_Utils.settings.Settings_UI(componments=componments)
+                        SETTINGS.getUI()
                     with gr.Column():
                         with gr.TabItem("简介和常见错误"):
                             gr.Markdown(value=Man.getInfo("readme"))
@@ -534,12 +412,8 @@ if __name__ == "__main__":
         GSV.choose_presets.change(GSV.load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
         MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         CUSTOM.gen_btn4.click(lambda *args:generate_preprocess(*args,project="custom"),inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
-
-        save_settings_btn.click(save_settngs,inputs=[server_port_set,overwrite_workspace,clear_cache,min_interval,num_edit_rows,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key],outputs=[server_port_set,overwrite_workspace,clear_cache,theme,bv2_pydir_input,bv2_dir_input,gsv_pydir_input,gsv_dir_input,bv2_args,gsv_args,ms_region,ms_key])
-        restart_btn.click(restart,[],[])
 
     app.queue().launch(
             share=args.share,

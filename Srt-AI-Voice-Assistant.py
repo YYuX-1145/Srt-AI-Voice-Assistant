@@ -107,7 +107,7 @@ def gen_multispeaker(subtitles,max_workers):
         args=info["raw_data"]
         project=info["project"]
         if project=='gsv':
-            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
+            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
@@ -205,7 +205,7 @@ def remake(*args):
             args=info["raw_data"]
             proj=info["project"]
         if proj=='gsv':
-            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6])
+            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[proj].arg_filter(*args)
     else:
         if subtitle_list.proj is None:
@@ -408,8 +408,6 @@ if __name__ == "__main__":
         gen_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(lambda *args:generate_preprocess(*args,project="bv2"),inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        GSV.switch_gsvmodel_btn.click(GSV.switch_gsvmodel,inputs=[GSV.sovits_path,GSV.gpt_path,GSV.api_port2],outputs=[gen_textbox_output_text]) 
-        GSV.choose_presets.change(GSV.load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
         MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         CUSTOM.gen_btn4.click(lambda *args:generate_preprocess(*args,project="custom"),inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])

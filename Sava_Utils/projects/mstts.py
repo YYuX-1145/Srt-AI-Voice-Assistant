@@ -100,7 +100,7 @@ class MSTTS(Projet):
             logger.error(err)
             return None
 
-    def UI(self):
+    def _UI(self):
         with gr.Column():
             self.ms_refresh_btn=gr.Button(value="刷新说话人列表",variant="secondary")
             if self.ms_speaker_info == {}:

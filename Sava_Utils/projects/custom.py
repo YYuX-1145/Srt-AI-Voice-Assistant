@@ -17,7 +17,7 @@ class Custom(Projet):
     def api(self,text):
         return custom_api(text)
 
-    def UI(self):
+    def _UI(self):
         with gr.Column():
             man=Man()
             gr.Markdown(value=man.getInfo("custom_warn"))

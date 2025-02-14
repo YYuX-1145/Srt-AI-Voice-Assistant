@@ -23,6 +23,16 @@ def positive_int(*a):
         r.append(int(x))
     return r
 
+def cls_cache():
+    dir = os.path.join(current_path, "SAVAdata", "temp")
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+        logger.info("成功清除临时文件！")
+        gr.Info("成功清除临时文件！")
+    else:
+        logger.info("目前没有临时文件！")
+        gr.Info("目前没有临时文件！")
+
 def run_command(command, dir):
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)

@@ -117,7 +117,7 @@ class GSV(Projet):
         )
         return audio
 
-    def UI(self):
+    def _UI(self):
         self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")

@@ -61,7 +61,7 @@ class BV2(Projet):
             audio = self.api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
         return audio
 
-    def UI(self):
+    def _UI(self):
         with gr.Row():            
             with gr.Column():
                 self.spkchoser=gr.Radio(label="选择说话人id或输入名称", choices=['输入id','输入名称'], value="输入id")

@@ -149,6 +149,20 @@ class GSV(Projet):
             with gr.Row():
                 self.save_presets_btn = gr.Button(value="保存预设", variant="primary")
                 self.refresh_presets_btn = gr.Button(value="刷新", variant="secondary")
+            self.save_presets_btn.click(
+                self.save_preset,
+                inputs=[
+                    self.choose_presets,
+                    self.desc_presets,
+                    self.refer_audio,
+                    self.aux_ref_audio,
+                    self.refer_text,
+                    self.refer_lang,
+                    self.sovits_path,
+                    self.gpt_path,
+                ],
+                outputs=[],
+            )
         with gr.Row():
             self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)        
         self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])         
@@ -264,3 +278,44 @@ class GSV(Projet):
             gr.Warning(err)
         time.sleep(0.1)
         return gr.update(value="None", choices=self.presets_list)
+
+    def save_preset(self,name,description,ra,ara,rt,rl,sovits_path,gpt_path):
+        try:
+            if name=="None" or name=="":
+                gr.Info("请输入名称!")
+                #return "请输入名称"
+            if ra is None:
+                gr.Info("请上传参考音频!")
+                #return "请上传参考音频"
+            dir=os.path.join(current_path,"SAVAdata","presets",name)
+            os.makedirs(dir,exist_ok=True)
+            idx=1
+            aux_list=[]
+            for i in ara:
+                try:
+                    with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
+                        f.write(i)             
+                    aux_list.append(f"aux_{idx}.wav")
+                    idx+=1
+                except Exception as ex:
+                    print(ex)
+                    continue
+            data={"name":name,
+                "description":description,
+                "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
+                "reference_audio_text":rt,
+                "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
+                "reference_audio_lang":rl,
+                "sovits_path":sovits_path.strip('"'),
+                "gpt_path":gpt_path.strip('"')
+                }
+            sr,wav=ra
+            sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
+            with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False) 
+            time.sleep(0.1)
+            gr.Info("预设保存成功")
+            #return "预设保存成功"
+        except Exception as e:
+            gr.Warning(f"出错：{e}")
+            #return f"出错：{e}"

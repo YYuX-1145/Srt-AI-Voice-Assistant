@@ -124,31 +124,12 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
             return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
         return (sr,audio),f'完成！所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
 
-def generate_bv2(*args):
-        args,kwargs=BV2.arg_filter(*args)
-        return generate(*args,**kwargs)    
-
-def generate_gsv(*args): 
+def generate_preprocess(*args,project=None): 
     try:
-        args, kwargs = GSV.arg_filter(*args)
+        args, kwargs = Projet_dict[project].arg_filter(*args)
     except Exception as e:
         return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args, **kwargs)
-
-def generate_mstts(*args):
-    try:
-        args,kwargs=MSTTS.arg_filter(*args)
-    except Exception as e:
-        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
-    return generate(*args,**kwargs)
-
-def generate_custom(*args):
-    try:
-        args,kwargs=CUSTOM.arg_filter(*args)
-    except Exception as e:
-        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
-    return generate(*args,**kwargs)
-
 
 def gen_multispeaker(subtitles,max_workers):
     for key in list(subtitles.speakers.keys()):
@@ -283,47 +264,6 @@ def start_gsv():
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
 
-def save_preset(name,description,ra,ara,rt,rl,sovits_path,gpt_path):
-    try:
-        if name=="None" or name=="":
-            gr.Info("请输入名称")
-            return "请输入名称"
-        if ra is None:
-            gr.Info("请上传参考音频")
-            return "请上传参考音频"
-        dir=os.path.join(current_path,"SAVAdata","presets",name)
-        os.makedirs(dir,exist_ok=True)
-        aux_ref_audio_path=[Sava_Utils.projects.gsv.temp_aux_ra(i) for i in ara] if ara is not None else []
-        idx=1
-        aux_list=[]
-        for i in aux_ref_audio_path:
-            try:
-                shutil.copy(i,os.path.join(dir,f"aux_{idx}.wav"))                
-                aux_list.append(f"aux_{idx}.wav")
-                idx+=1
-            except Exception as ex:
-                print(ex)
-                continue
-        data={"name":name,
-              "description":description,
-              "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
-              "reference_audio_text":rt,
-              "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
-              "reference_audio_lang":rl,
-              "sovits_path":sovits_path.strip('"'),
-              "gpt_path":gpt_path.strip('"')
-              }
-        sr,wav=ra
-        sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
-        with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False) 
-        time.sleep(0.1)
-        gr.Info("预设保存成功")
-        return "预设保存成功"
-    except Exception as e:
-        gr.Warning(f"出错：{e}")
-        return f"出错：{e}"
-
 def restart():
     gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
     time.sleep(0.5)
@@ -393,13 +333,6 @@ def recompose(page,subtitle_list):
     sr,audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
     return (sr,audio),"OK",*show_page(page,subtitle_list),subtitle_list
-
-def play_audio(idx,subtitle_list):
-    i=int(idx)
-    if i==-1 or not subtitle_list[i].is_success:
-        gr.Info("Not available !")
-        return None
-    return os.path.join(subtitle_list.dir,f'{subtitle_list[i].index}.wav')
 
 def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
@@ -595,13 +528,12 @@ if __name__ == "__main__":
                         with gr.TabItem("使用指南"):
                             gr.Markdown(value=Man.getInfo("help"))       
         gen_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
-        BV2.gen_btn1.click(generate_bv2,inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        GSV.gen_btn2.click(generate_gsv,inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        GSV.save_presets_btn.click(save_preset,inputs=[GSV.choose_presets,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,GSV.sovits_path,GSV.gpt_path],outputs=[gen_textbox_output_text])
+        BV2.gen_btn1.click(lambda *args:generate_preprocess(*args,project="bv2"),inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
+        GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.switch_gsvmodel_btn.click(GSV.switch_gsvmodel,inputs=[GSV.sovits_path,GSV.gpt_path,GSV.api_port2],outputs=[gen_textbox_output_text]) 
         GSV.choose_presets.change(GSV.load_preset,inputs=[GSV.choose_presets,GSV.api_port2],outputs=[GSV.sovits_path,GSV.gpt_path,GSV.desc_presets,GSV.refer_audio,GSV.aux_ref_audio,GSV.refer_text,GSV.refer_lang,gen_textbox_output_text])
-        MSTTS.gen_btn3.click(generate_mstts,inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        CUSTOM.gen_btn4.click(generate_custom,inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
+        MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
+        CUSTOM.gen_btn4.click(lambda *args:generate_preprocess(*args,project="custom"),inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         cls_cache_btn.click(cls_cache,inputs=[],outputs=[])
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])

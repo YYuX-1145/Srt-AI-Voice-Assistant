@@ -147,7 +147,7 @@ def generate_custom(*args):
         args,kwargs=CUSTOM.arg_filter(*args)
     except Exception as e:
         return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
-    return generate(args,**kwargs)
+    return generate(*args,**kwargs)
 
 
 def gen_multispeaker(subtitles,max_workers):

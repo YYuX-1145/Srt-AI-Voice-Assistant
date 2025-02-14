@@ -47,6 +47,13 @@ def show_page(page_start,subtitle_list):
         ret+=btn        
     return ret
 
+def play_audio(idx, subtitle_list):
+    i = int(idx)
+    if i == -1 or not subtitle_list[i].is_success:
+        gr.Info("Not available !")
+        return None
+    return os.path.join(subtitle_list.dir, f"{subtitle_list[i].index}.wav")
+
 def getworklist():
     try:
         c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))

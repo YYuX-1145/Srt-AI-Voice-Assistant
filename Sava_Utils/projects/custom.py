@@ -29,7 +29,7 @@ class Custom(Projet):
         return []
     
     def before_gen_action(self,*args,**kwargs):
-            print(args)
+            #print(args)
             custom_api_path=args[0]
             logger.info(f"Exec: custom_api_path {custom_api_path}")
             with open(os.path.join(current_path,"SAVAdata","presets",custom_api_path),"r",encoding="utf-8") as f:
@@ -61,4 +61,4 @@ class Custom(Projet):
             gr.Info("请选择API配置文件！")
             raise Exception("请选择API配置文件！")
         kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
-        return (custom_api), kwargs
+        return (custom_api,None), kwargs #

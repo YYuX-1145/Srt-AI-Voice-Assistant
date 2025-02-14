@@ -3,6 +3,7 @@
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
 ## 下载配合GPT-SoVITS的整合包（HF）
+* 注意：包内自带的程序现在已经不是最新版本了，覆盖掉以完成更新  
 https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main
 
 ## Todo List

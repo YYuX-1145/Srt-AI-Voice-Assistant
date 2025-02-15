@@ -265,6 +265,10 @@ class GSV(Projet):
             return True
         except Exception as e:
             err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
+            try:
+                err+=f"返回信息：{response.json()}"
+            except:
+                pass
             gr.Warning(err)
             logger.error(err)
             return False

@@ -228,7 +228,7 @@ def remake(*args):
         subtitle_list[int(idx)].is_success=False
         gr.Warning("重新合成失败！")
     subtitle_list.dump()
-    return fp,*show_page(page,subtitle_list),subtitle_list
+    return fp,*show_page(page,subtitle_list)
 
 def recompose(page,subtitle_list):
     if subtitle_list is None or len(subtitle_list)==0:
@@ -335,16 +335,16 @@ if __name__ == "__main__":
                                     __.click(play_audio,inputs=[edit_real_index,STATE],outputs=[audio_player])
                                     bv2regenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)  
                                     edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*BV2_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    bv2regenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*BV2_ARGS,STATE],outputs=[audio_player,*edit_rows])
                                     gsvregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=True)
                                     edit_rows.append(gsvregenbtn)  
-                                    gsvregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*GSV_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])
+                                    gsvregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*GSV_ARGS,STATE],outputs=[audio_player,*edit_rows])
                                     msttsregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*MSTTS_ARGS,STATE],outputs=[audio_player,*edit_rows,STATE])  
+                                    msttsregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,*MSTTS_ARGS,STATE],outputs=[audio_player,*edit_rows])  
                                     customregenbtn=gr.Button(value="🔄️",scale=1,min_width=60,visible=False)
                                     edit_rows.append(customregenbtn)      
-                                    customregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,CUSTOM.choose_custom_api,STATE],outputs=[audio_player,*edit_rows,STATE])                         
+                                    customregenbtn.click(remake,inputs=[page_slider,edit_real_index,s_txt,CUSTOM.choose_custom_api,STATE],outputs=[audio_player,*edit_rows])                         
                         page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
                         workloadbtn.click(load_work,inputs=[worklist],outputs=[STATE,page_slider,*edit_rows])
                         workrefbtn.click(getworklist,inputs=[],outputs=[worklist])

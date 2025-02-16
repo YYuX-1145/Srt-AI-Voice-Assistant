@@ -220,7 +220,7 @@ class GSV(Projet):
                 if len(aux_audio)!=len(data["auxiliary_audios"]):
                     gr.Warning("辅助参考音频存在丢失！")
                 data["auxiliary_audios"]=aux_audio
-            gr.Info("预设加载成功！")
+            gr.Info("预设加载完毕")
             return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"]
         except Exception as e:
             gr.Warning(f"加载失败:{e}")

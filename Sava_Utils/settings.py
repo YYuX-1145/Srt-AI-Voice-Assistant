@@ -63,6 +63,7 @@ class Settings:
         gsv_args: str = "",
         ms_region: str = "eastasia",
         ms_key: str = "",
+        ms_lang_option: str="zh"
     ):
         self.server_port = int(server_port)        
         self.overwrite_workspace = overwrite_workspace
@@ -72,6 +73,7 @@ class Settings:
         self.theme = theme
         self.ms_region = ms_region
         self.ms_key = ms_key
+        self.ms_lang_option = ms_lang_option
         # detect python envs####
         if bv2_pydir != "":
             if os.path.exists(bv2_pydir):
@@ -172,7 +174,7 @@ class Settings_UI():
     def __init__(self,componments:list):
         self.componments=componments
         self.ui=False
-        
+
     def save_settngs(self,*args):
         current_edit_rows = Sava_Utils.config.num_edit_rows
         Sava_Utils.config = Settings(*args)
@@ -193,7 +195,7 @@ class Settings_UI():
             return self._UI()
         else:
             raise "ERR"
-        
+
     def _UI(self):
         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
         with gr.Group():
@@ -218,7 +220,8 @@ class Settings_UI():
         with gr.Group(): 
             gr.Markdown(value="微软TTS")
             self.ms_region=gr.Textbox(label="服务区域",interactive=True,value=Sava_Utils.config.ms_region)
-            self.ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key)    
+            self.ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key) 
+            self.ms_lang_option=gr.Textbox(label="筛选需要的语言，用逗号或空格隔开",interactive=True,value=Sava_Utils.config.ms_lang_option)
         self.save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
         self.restart_btn = gr.Button(value="重启UI", variant="stop")
 
@@ -240,6 +243,7 @@ class Settings_UI():
                 self.gsv_args,
                 self.ms_region,
                 self.ms_key,
+                self.ms_lang_option,
             ],
             outputs=[
                 self.server_port_set,
@@ -256,6 +260,7 @@ class Settings_UI():
                 self.gsv_args,
                 self.ms_region,
                 self.ms_key,
-            ]
+                self.ms_lang_option,
+            ],
         )
         self.restart_btn.click(restart,[],[])

@@ -1,5 +1,6 @@
 from .base import Projet
 import os
+import re
 import json
 import requests
 import gradio as gr
@@ -15,13 +16,15 @@ class MSTTS(Projet):
         self.ms_speaker_info=None
         self.cfg_ms_region=None
         self.cfg_ms_key = None
+        self.ms_lang_option = ""
 
     def update_cfg(self,config):
         self.cfg_ms_region=config.ms_region
         self.cfg_ms_key = config.ms_key
+        self.ms_lang_option=config.ms_lang_option
 
     def getms_speakers(self):
-        if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
+        #if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
             if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info_raw.json")):
                 try:
                     assert self.cfg_ms_key not in [None,""], "please fill in your key to get MSTTS speaker list."
@@ -40,14 +43,19 @@ class MSTTS(Projet):
                     return None
             dataraw = json.load(open(os.path.join(current_path,"SAVAdata", "ms_speaker_info_raw.json"), encoding="utf-8"))  # list
             classified_info = {}
+            #target_language=["zh","ja","en","ko","fr"]
+            target_language=re.split(r'(?<=[,，])| ',self.ms_lang_option)
+            target_language=[x.strip() for x in target_language if x.strip()]
+            if len(target_language)==0:
+                target_language=[""]
             for i in dataraw:
-                if "zh" in i["Locale"]:
+                if any(lan in i["Locale"] for lan in target_language):
                     if i["Locale"] not in classified_info.keys():
                         classified_info[i["Locale"]] = {}
                     classified_info[i["Locale"]][i["LocalName"]] = i
             with open(os.path.join("SAVAdata", "ms_speaker_info.json"), "w", encoding="utf-8") as f:
                 json.dump(classified_info, f, indent=2, ensure_ascii=False)
-        self.ms_speaker_info = json.load(open(os.path.join("SAVAdata", "ms_speaker_info.json"), encoding="utf-8"))
+            self.ms_speaker_info = json.load(open(os.path.join("SAVAdata", "ms_speaker_info.json"), encoding="utf-8"))
 
     def getms_token(self):
         fetch_token_url = (

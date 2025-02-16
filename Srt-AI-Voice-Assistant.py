@@ -61,6 +61,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
             return None,"未知的格式，请确保扩展名正确！",getworklist(),*load_page(Subtitles()),Subtitles()
+        assert len(subtitle_list)!=0,"文件为空？？？"
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
         while os.path.exists(dirname):

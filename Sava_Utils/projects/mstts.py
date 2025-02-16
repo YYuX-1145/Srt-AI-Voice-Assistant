@@ -56,6 +56,7 @@ class MSTTS(Projet):
         headers = {"Ocp-Apim-Subscription-Key": self.cfg_ms_key}
         try:
             response = requests.post(fetch_token_url, headers=headers)
+            response.raise_for_status()
             self.ms_access_token = str(response.text)
         except Exception as e:
             err = f"获取微软token出错，检查密钥、服务器状态和网络连接。报错内容: {e}"

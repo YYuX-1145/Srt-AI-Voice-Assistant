@@ -301,15 +301,16 @@ class GSV(Projet):
             os.makedirs(dir,exist_ok=True)
             idx=1
             aux_list=[]
-            for i in ara:
-                try:
-                    with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
-                        f.write(i)             
-                    aux_list.append(f"aux_{idx}.wav")
-                    idx+=1
-                except Exception as ex:
-                    print(ex)
-                    continue
+            if ara not in [None,[]]:
+                for i in ara:
+                    try:
+                        with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
+                            f.write(i)             
+                        aux_list.append(f"aux_{idx}.wav")
+                        idx+=1
+                    except Exception as ex:
+                        print(ex)
+                        continue
             data={"name":name,
                 "description":description,
                 "reference_audio_path":os.path.join(dir,"reference_audio.wav"),

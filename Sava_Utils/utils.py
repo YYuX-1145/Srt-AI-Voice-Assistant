@@ -136,11 +136,5 @@ def create_multi_speaker(in_file, fps, offset):
         gr.Warning("未知的格式，请确保扩展名正确！")
         return getworklist(),*load_page(Subtitles()),Subtitles()
     assert len(subtitle_list) != 0, "文件为空？？？"
-    dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
-    while os.path.exists(dirname):
-        if Sava_Utils.config.overwrite_workspace:
-            shutil.rmtree(dirname)
-            break
-        dirname+="(new)"
-    subtitle_list.set_dir(dirname)
+    subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     return getworklist(),*load_page(subtitle_list), subtitle_list

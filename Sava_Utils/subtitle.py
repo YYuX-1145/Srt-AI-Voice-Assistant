@@ -77,29 +77,39 @@ class Subtitles:
 
     def dump(self):
         assert self.dir is not None
-        with open(os.path.join(self.dir,"st.pkl"), 'wb') as f:
+        with open(os.path.join(self.get_abs_dir(),"st.pkl"), 'wb') as f:
             pickle.dump(self, f)
 
     def set_proj(self, proj: str):
         self.proj = proj
 
-    def set_dir(self, dir: str):
-        self.dir = dir
-        os.makedirs(dir, exist_ok=True)
+    def set_dir_name(self, dir_name: str):
+        abspath=os.path.join(current_path,"SAVAdata","temp","work",dir_name)
+        while os.path.exists(abspath):
+            if Sava_Utils.config.overwrite_workspace:
+                shutil.rmtree(abspath)
+                break
+            abspath += "(new)"
+        self.dir = os.path.join("SAVAdata", "temp", "work", dir_name) #relative path
+        os.makedirs(abspath, exist_ok=True)
         self.dump()
+
+    def get_abs_dir(self):
+        return os.path.join(current_path,self.dir)
 
     def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
+        abs_path=os.path.join(current_path,self.dir)
         # print(self.speakers)
         audiolist = []
         delayed_list = []
         failed_list = []
-        fl = [i for i in os.listdir(self.dir) if i.endswith(".wav")]
+        fl = [i for i in os.listdir(abs_path) if i.endswith(".wav")]
         if fl == []:
             gr.Warning("还未合成任何字幕！")
             return None
         if sr is None:
-            wav, sr = load_audio(os.path.join(self.dir, fl[0]),sr=sr) 
+            wav, sr = load_audio(os.path.join(abs_path, fl[0]),sr=sr) 
         self.sr=sr
         interval = int(Sava_Utils.config.min_interval*sr)
         del fl        
@@ -114,7 +124,7 @@ class Subtitles:
             elif ptr > start_frame:
                 self.subtitles[id].is_delayed = True
                 delayed_list.append(self.subtitles[id].index)
-            f_path = os.path.join(self.dir, f"{i.index}.wav")
+            f_path = os.path.join(abs_path, f"{i.index}.wav")
             if os.path.exists(f_path):
                 wav, sr = load_audio(f_path,sr=sr)
                 dur = wav.shape[-1]  # frames

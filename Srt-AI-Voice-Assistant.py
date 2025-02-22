@@ -63,21 +63,15 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
             return None,"未知的格式，请确保扩展名正确！",getworklist(),*load_page(Subtitles()),Subtitles()
         assert len(subtitle_list)!=0,"文件为空？？？"
         t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        dirname=os.path.join(current_path,"SAVAdata","temp","work",os.path.basename(in_file.name).replace('.',"-"))
-        while os.path.exists(dirname):
-            if Sava_Utils.config.overwrite_workspace:
-                shutil.rmtree(dirname)
-                break
-            dirname+="(new)"
         #subtitle_list.sort()
-        subtitle_list.set_dir(dirname)
+        subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)
         Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': dirname, 'subid': i.index}) for i in subtitle_list]))
+            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': subtitle_list.get_abs_dir(), 'subid': i.index}) for i in subtitle_list]))
         file_list=[i for i in file_list if i is not None]    
         if len(file_list)==0:
-            shutil.rmtree(subtitle_list.dir)
+            shutil.rmtree(subtitle_list.get_abs_dir())
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
@@ -121,7 +115,7 @@ def gen_multispeaker(subtitles,max_workers):
                             {
                                 "proj": project,
                                 "text": i.text,
-                                "dir": subtitles.dir,
+                                "dir": subtitles.get_abs_dir(),
                                 "subid": i.index,
                             },
                         )
@@ -221,7 +215,7 @@ def remake(*args):
             return fp,*show_page(page,subtitle_list)   
     Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
     subtitle_list[int(idx)].text=s_txt
-    fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.dir,subid=subtitle_list[int(idx)].index)
+    fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.get_abs_dir(),subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
         gr.Info("重新合成成功！点击重新拼接内容。")

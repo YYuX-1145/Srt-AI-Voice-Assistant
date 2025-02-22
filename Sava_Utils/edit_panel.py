@@ -52,7 +52,7 @@ def play_audio(idx, subtitle_list):
     if i == -1 or not subtitle_list[i].is_success:
         gr.Info("Not available !")
         return None
-    return os.path.join(subtitle_list.dir, f"{subtitle_list[i].index}.wav")
+    return os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
 
 def getworklist():
     try:

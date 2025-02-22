@@ -67,11 +67,12 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)
         Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
+        abs_dir=subtitle_list.get_abs_dir()
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': subtitle_list.get_abs_dir(), 'subid': i.index}) for i in subtitle_list]))
+            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': abs_dir, 'subid': i.index}) for i in subtitle_list]))
         file_list=[i for i in file_list if i is not None]    
         if len(file_list)==0:
-            shutil.rmtree(subtitle_list.get_abs_dir())
+            shutil.rmtree(abs_dir)
             raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
         sr,audio = subtitle_list.audio_join(sr=sr)
         os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
@@ -105,6 +106,7 @@ def gen_multispeaker(subtitles,max_workers):
             GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)
+        abs_dir=subtitles.get_abs_dir()
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             if len(list(
                 executor.map(
@@ -115,7 +117,7 @@ def gen_multispeaker(subtitles,max_workers):
                             {
                                 "proj": project,
                                 "text": i.text,
-                                "dir": subtitles.get_abs_dir(),
+                                "dir": abs_dir,
                                 "subid": i.index,
                             },
                         )

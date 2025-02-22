@@ -61,6 +61,17 @@ class BV2(Projet):
             audio = self.api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
         return audio
 
+
+    def switch_spk(self,choice):
+        if choice == "输入id":
+            return gr.update(
+                label="说话人ID", value=0, visible=True, interactive=True
+            ), gr.update(label="说话人名称", visible=False, value="", interactive=True)
+        else:
+            return gr.update(
+                label="说话人ID", value=0, visible=False, interactive=True
+            ), gr.update(label="说话人名称", visible=True, value="", interactive=True)
+
     def _UI(self):
         with gr.Row():            
             with gr.Column():
@@ -79,6 +90,7 @@ class BV2(Projet):
                 with gr.Row(): 
                     self.sampling_rate1=gr.Number(label="采样率",value=44100,visible=True,interactive=True)                                
                     self.api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
+        self.spkchoser.change(self.switch_spk,inputs=[self.spkchoser],outputs=[self.spkid,self.speaker_name])
         self.gen_btn1 = gr.Button("生成", variant="primary", visible=True)
         BV2_ARGS = [
             self.sampling_rate1,
@@ -94,7 +106,7 @@ class BV2(Projet):
             self.emo_text,
         ]
         return BV2_ARGS
-    
+
     def arg_filter(self,*args):
         in_file,fps,offset,max_workers,sr,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         pargs=(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text)

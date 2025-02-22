@@ -148,13 +148,6 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
         logger.error(f"出错字幕id：{subid}")
         return None
 
-
-def switch_spk(choice):
-    if choice=="输入id":
-        return gr.update(label="说话人ID",value=0,visible=True,interactive=True),gr.update(label="说话人名称",visible=False,value="",interactive=True)
-    else:
-        return gr.update(label="说话人ID",value=0,visible=False,interactive=True),gr.update(label="说话人名称",visible=True,value="",interactive=True)
-
 def start_hiyoriui():
     if Sava_Utils.config.bv2_pydir == "":
         gr.Warning("请前往设置页面指定环境路径并保存!")
@@ -279,7 +272,6 @@ if __name__ == "__main__":
                     with gr.Column():
                         with gr.TabItem("Bert-VITS2-HiyoriUI"):
                             BV2_ARGS=BV2.getUI()
-                            BV2.spkchoser.change(switch_spk,inputs=[BV2.spkchoser],outputs=[BV2.spkid,BV2.speaker_name])
                         with gr.TabItem("GPT-SoVITS"):
                             GSV_ARGS=GSV.getUI()      
                         with gr.TabItem("微软TTS"):

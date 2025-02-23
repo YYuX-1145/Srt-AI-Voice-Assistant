@@ -105,7 +105,7 @@ class Subtitles:
         delayed_list = []
         failed_list = []
         fl = [i for i in os.listdir(abs_path) if i.endswith(".wav")]
-        if fl == []:
+        if len(fl) == 0:
             gr.Warning("还未合成任何字幕！")
             return None
         if sr is None:

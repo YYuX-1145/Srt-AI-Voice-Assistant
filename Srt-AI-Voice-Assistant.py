@@ -142,7 +142,7 @@ def gen_multispeaker(subtitles,max_workers):
     if len(list(subtitles.speakers.keys()))==0:
         gr.Warning("警告：没有指派任何说话人")
     abs_dir=subtitles.get_abs_dir()
-    file_list=[]
+    progress=0
     for key in subtitles.speakers.keys():
         with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
             info = pickle.load(f) 
@@ -172,11 +172,12 @@ def gen_multispeaker(subtitles,max_workers):
                         ],
                     ),
                     total=len(subtitles),
-                    initial=len(file_list),
+                    initial=progress,
                     desc=f"正在合成多说话人任务，当前说话人为 {key}",
                 )
             )
         file_list=[i for i in file_list if i is not None]
+        progress+=len(file_list)
         if len(file_list)==0:
             raise gr.Error("单一说话人的全部语音合成失败了！")
     audio=subtitles.audio_join()

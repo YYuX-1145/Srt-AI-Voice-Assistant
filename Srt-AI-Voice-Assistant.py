@@ -20,6 +20,7 @@ import soundfile as sf
 import datetime
 import time
 import concurrent.futures
+from tqdm import tqdm
 
 import Sava_Utils
 from Sava_Utils.man.manual import Man
@@ -46,43 +47,86 @@ def custom_api(text):
     raise "需要加载自定义API函数！"
 
 def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
-        #global subtitle_list
-        t1 = time.time()
-        sr,fps=positive_int(sr,fps)
-        if in_file is None:
-            gr.Info("请上传字幕文件！")
-            return None,"请上传字幕文件！",getworklist(),*load_page(Subtitles()),Subtitles()
-        if in_file.name[-4:].lower()==".csv":
-            subtitle_list=read_prcsv(in_file.name,fps,offset)
-        elif in_file.name[-4:].lower()==".srt":
-            subtitle_list=read_srt(in_file.name,offset)
-        elif in_file.name[-4:].lower()==".txt":
-            subtitle_list=read_txt(in_file.name)
-        else:
-            gr.Warning("未知的格式，请确保扩展名正确！")
-            return None,"未知的格式，请确保扩展名正确！",getworklist(),*load_page(Subtitles()),Subtitles()
-        assert len(subtitle_list)!=0,"文件为空？？？"
-        t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        #subtitle_list.sort()
-        subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
-        subtitle_list.set_proj(proj)
-        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
-        abs_dir=subtitle_list.get_abs_dir()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(executor.map(lambda x: save(x[0], **x[1]),[(args, {'proj': proj, 'text': i.text, 'dir': abs_dir, 'subid': i.index}) for i in subtitle_list]))
-        file_list=[i for i in file_list if i is not None]    
-        if len(file_list)==0:
-            shutil.rmtree(abs_dir)
-            raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
-        sr,audio = subtitle_list.audio_join(sr=sr)
-        os.makedirs(os.path.join(current_path,"SAVAdata","output"),exist_ok=True)
-        sf.write(os.path.join(current_path,"SAVAdata","output",f"{t}.wav"), audio, sr)
-        t2 = time.time()
-        m, s = divmod(t2-t1, 60)
-        use_time="%02d:%02d"%(m, s)        
-        if len(file_list)!=len(subtitle_list):
-            return (sr,audio),f'完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
-        return (sr,audio),f'完成！所用时间:{use_time}',getworklist(),*load_page(subtitle_list),subtitle_list
+    t1 = time.time()
+    sr, fps = positive_int(sr, fps)
+    if in_file is None:
+        gr.Info("请上传字幕文件！")
+        return (
+            None,
+            "请上传字幕文件！",
+            getworklist(),
+            *load_page(Subtitles()),
+            Subtitles(),
+        )
+    if in_file.name[-4:].lower() == ".csv":
+        subtitle_list = read_prcsv(in_file.name, fps, offset)
+    elif in_file.name[-4:].lower() == ".srt":
+        subtitle_list = read_srt(in_file.name, offset)
+    elif in_file.name[-4:].lower() == ".txt":
+        subtitle_list = read_txt(in_file.name)
+    else:
+        gr.Warning("未知的格式，请确保扩展名正确！")
+        return (
+            None,
+            "未知的格式，请确保扩展名正确！",
+            getworklist(),
+            *load_page(Subtitles()),
+            Subtitles(),
+        )
+    assert len(subtitle_list) != 0, "文件为空？？？"
+    t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # subtitle_list.sort()
+    subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
+    subtitle_list.set_proj(proj)
+    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config)
+    abs_dir = subtitle_list.get_abs_dir()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        file_list = list(
+            tqdm(
+                executor.map(
+                    lambda x: save(x[0], **x[1]),
+                    [
+                        (
+                            args,
+                            {
+                                "proj": proj,
+                                "text": i.text,
+                                "dir": abs_dir,
+                                "subid": i.index,
+                            },
+                        )
+                        for i in subtitle_list
+                    ],
+                ),
+                total=len(subtitle_list),
+                desc="正在合成单说话人任务"
+            )
+        )
+    file_list = [i for i in file_list if i is not None]
+    if len(file_list) == 0:
+        shutil.rmtree(abs_dir)
+        raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+    sr, audio = subtitle_list.audio_join(sr=sr)
+    os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
+    sf.write(os.path.join(current_path, "SAVAdata", "output", f"{t}.wav"), audio, sr)
+    t2 = time.time()
+    m, s = divmod(t2 - t1, 60)
+    use_time = "%02d:%02d" % (m, s)
+    if len(file_list) != len(subtitle_list):
+        return (
+            (sr, audio),
+            f"完成,但某些字幕的合成出现了错误,请查看控制台的提示信息。所用时间:{use_time}",
+            getworklist(),
+            *load_page(subtitle_list),
+            subtitle_list,
+        )
+    return (
+        (sr, audio),
+        f"完成！所用时间:{use_time}",
+        getworklist(),
+        *load_page(subtitle_list),
+        subtitle_list,
+    )
 
 def generate_preprocess(*args,project=None): 
     try:
@@ -97,6 +141,8 @@ def gen_multispeaker(subtitles,max_workers):
             subtitles.speakers.pop(key)
     if len(list(subtitles.speakers.keys()))==0:
         gr.Warning("警告：没有指派任何说话人")
+    abs_dir=subtitles.get_abs_dir()
+    file_list=[]
     for key in subtitles.speakers.keys():
         with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
             info = pickle.load(f) 
@@ -105,29 +151,34 @@ def gen_multispeaker(subtitles,max_workers):
         if project=='gsv':
             GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[project].arg_filter(*args)
-        Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)
-        abs_dir=subtitles.get_abs_dir()
+        Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
-            if len(list(
-                executor.map(
-                    lambda x: save(x[0], **x[1]),
-                    [
-                        (
-                            args,
-                            {
-                                "proj": project,
-                                "text": i.text,
-                                "dir": abs_dir,
-                                "subid": i.index,
-                            },
-                        )
-                        for i in subtitles
-                        if i.speaker == key
-                    ],
+            file_list = list(
+                tqdm(
+                    executor.map(
+                        lambda x: save(x[0], **x[1]),
+                        [
+                            (
+                                args,
+                                {
+                                    "proj": project,
+                                    "text": i.text,
+                                    "dir": abs_dir,
+                                    "subid": i.index,
+                                },
+                            )
+                            for i in subtitles
+                            if i.speaker == key
+                        ],
+                    ),
+                    total=len(subtitles),
+                    initial=len(file_list),
+                    desc=f"正在合成多说话人任务，当前说话人为 {key}",
                 )
             )
-            )==0:
-                raise gr.Error("单一说话人的全部语音合成失败了！")
+        file_list=[i for i in file_list if i is not None]
+        if len(file_list)==0:
+            raise gr.Error("单一说话人的全部语音合成失败了！")
     audio=subtitles.audio_join()
     gr.Info("合成完毕！")
     return audio,*load_page(subtitles),subtitles

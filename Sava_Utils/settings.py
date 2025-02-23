@@ -49,7 +49,8 @@ gradio_hf_hub_themes = [
 class Settings:
     def __init__(
         self,
-        server_port: int = 5001,        
+        server_port: int = 5001,
+        LAN_access:bool = False,        
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
         min_interval:float=0.5,
@@ -65,7 +66,8 @@ class Settings:
         ms_key: str = "",
         ms_lang_option: str="zh"
     ):
-        self.server_port = int(server_port)        
+        self.server_port = int(server_port)
+        self.LAN_access = LAN_access
         self.overwrite_workspace = overwrite_workspace
         self.clear_tmp = clear_tmp        
         self.min_interval = min_interval
@@ -200,7 +202,9 @@ class Settings_UI():
         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
         with gr.Group():
             gr.Markdown(value="通用设置")
-            self.server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001)
+            with gr.Row():
+                self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001,scale=3)
+                self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
             self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
             self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
             self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
@@ -226,41 +230,25 @@ class Settings_UI():
         self.restart_btn = gr.Button(value="重启UI", variant="stop")
 
         self.cls_cache_btn.click(Sava_Utils.utils.cls_cache,inputs=[],outputs=[])
-        self.save_settings_btn.click(
-            self.save_settngs,
-            inputs=[
-                self.server_port_set,
-                self.overwrite_workspace,
-                self.clear_cache,
-                self.min_interval,
-                self.num_edit_rows,
-                self.theme,
-                self.bv2_pydir_input,
-                self.bv2_dir_input,
-                self.bv2_args,
-                self.gsv_pydir_input,
-                self.gsv_dir_input,
-                self.gsv_args,
-                self.ms_region,
-                self.ms_key,
-                self.ms_lang_option,
-            ],
-            outputs=[
-                self.server_port_set,
-                self.overwrite_workspace,
-                self.clear_cache,
-                self.min_interval,
-                self.num_edit_rows,
-                self.theme,
-                self.bv2_pydir_input,
-                self.bv2_dir_input,
-                self.bv2_args,
-                self.gsv_pydir_input,
-                self.gsv_dir_input,
-                self.gsv_args,
-                self.ms_region,
-                self.ms_key,
-                self.ms_lang_option,
-            ],
-        )
+
+        componments_list=[
+            self.server_port,
+            self.LAN_access,
+            self.overwrite_workspace,
+            self.clear_cache,
+            self.min_interval,
+            self.num_edit_rows,
+            self.theme,
+            self.bv2_pydir_input,
+            self.bv2_dir_input,
+            self.bv2_args,
+            self.gsv_pydir_input,
+            self.gsv_dir_input,
+            self.gsv_args,
+            self.ms_region,
+            self.ms_key,
+            self.ms_lang_option,
+        ]
+
+        self.save_settings_btn.click(self.save_settngs,inputs=componments_list,outputs=componments_list)
         self.restart_btn.click(restart,[],[])

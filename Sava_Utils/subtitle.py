@@ -154,6 +154,8 @@ class Subtitles:
             return "delayed"
         if self.subtitles[idx].is_success:
             return "ok"
+        elif self.subtitles[idx].is_success is None:
+            return "None"
         return "failed"
 
     def append(self, subtitle: Subtitle):

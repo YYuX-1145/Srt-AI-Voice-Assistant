@@ -252,7 +252,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
-    parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
+    #parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
     args, unknown = parser.parse_known_args()
     GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
@@ -299,13 +299,13 @@ if __name__ == "__main__":
                         edit_real_index_list=[]
                         edit_check_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=1)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
                             workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
-                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=3)
+                            page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=4)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
-                            recompose_btn = gr.Button(value="重新拼接内容", scale=3)
-                            export_btn = gr.Button(value="导出字幕", scale=3)
+                            recompose_btn = gr.Button(value="重新拼接", scale=1, min_width=60)
+                            export_btn = gr.Button(value="导出字幕", scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index=gr.Number(show_label=False,visible=False,value=-1,interactive=False)#real index                         
                             with gr.Row():
@@ -317,8 +317,8 @@ if __name__ == "__main__":
                                 edit_rows.append(gr.Textbox(scale=4,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
                                 s_txt=gr.Textbox(scale=6,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
                                 edit_rows.append(s_txt)
-                                edit_rows.append(gr.Textbox(scale=1,show_label=False,interactive=False,min_width=60,value="None",max_lines=1))#speaker
-                                edit_rows.append(gr.Textbox(value="NO INFO",show_label=False,interactive=False,min_width=70,scale=1,max_lines=1))#is success or delayed?
+                                edit_rows.append(gr.Textbox(show_label=False,interactive=False,min_width=100,value="None",scale=1,max_lines=1))#speaker
+                                edit_rows.append(gr.Textbox(value="NO INFO",show_label=False,interactive=False,min_width=100,scale=1,max_lines=1))#is success or delayed?
                                 with gr.Row():
                                     __=gr.Button(value="▶️",scale=1,min_width=60)  
                                     __.click(play_audio,inputs=[edit_real_index,STATE],outputs=[audio_player])
@@ -406,5 +406,5 @@ if __name__ == "__main__":
             share=args.share,
             server_port=server_port if server_port>5001 else None,
             inbrowser=True,
-            server_name='0.0.0.0' if args.local else '127.0.0.1'
+            server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1'
             )

@@ -123,7 +123,7 @@ class GSV(Projet):
             self.refer_audio=gr.Audio(label="主参考音频")
             self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple",type="binary")
         with gr.Row():
-            self.refer_text=gr.Textbox(label="参考音频文本")
+            self.refer_text=gr.Textbox(label="参考音频文本",value="",placeholder="不填视为开启无参考文本模式，建议搭配微调的模型")
             self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
         with gr.Accordion("模型切换",open=False):
             self.sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
@@ -194,9 +194,9 @@ class GSV(Projet):
 
     def arg_filter(self,*args):
         in_file,fps,offset,max_workers,sr,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
-        if refer_audio is None or refer_text == "":
-            gr.Warning("你必须指定参考音频和文本")
-            raise Exception("你必须指定参考音频和文本")
+        if refer_audio is None:
+            gr.Warning("你必须指定参考音频")
+            raise Exception("你必须指定参考音频")
         refer_audio_path=temp_ra(refer_audio)
         aux_ref_audio_path=[temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []      
         pargs=(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])

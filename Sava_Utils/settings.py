@@ -49,7 +49,7 @@ gradio_hf_hub_themes = [
 class Settings:
     def __init__(
         self,
-        server_port: int = 5001,
+        server_port: int = 0,
         LAN_access:bool = False,        
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
@@ -203,7 +203,7 @@ class Settings_UI():
         with gr.Group():
             gr.Markdown(value="通用设置")
             with gr.Row():
-                self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001,scale=3)
+                self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。0=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=0,scale=3)
                 self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
             self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
             self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)

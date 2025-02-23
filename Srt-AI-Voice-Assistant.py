@@ -404,7 +404,7 @@ if __name__ == "__main__":
 
     app.queue().launch(
             share=args.share,
-            server_port=server_port if server_port>5001 else None,
+            server_port=server_port if server_port>0 else None,
             inbrowser=True,
             server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1'
             )

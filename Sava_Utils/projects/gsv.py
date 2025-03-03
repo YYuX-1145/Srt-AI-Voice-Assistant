@@ -252,11 +252,11 @@ class GSV(Projet):
                 response = requests.post(url=API_URL,json=data_json)
                 response.raise_for_status()
             else:
-                API_URL = f'http://127.0.0.1:{port}/set_gpt_weights?weights_path={data_json["gpt_model_path"]}'
-                response = requests.get(url=API_URL)
+                API_URL = f'http://127.0.0.1:{port}/set_gpt_weights'
+                response = requests.get(url=API_URL, params={"weights_path":data_json["gpt_model_path"]})
                 response.raise_for_status()
-                API_URL = f'http://127.0.0.1:{port}/set_sovits_weights?weights_path={data_json["sovits_model_path"]}'
-                response = requests.get(url=API_URL)
+                API_URL = f'http://127.0.0.1:{port}/set_sovits_weights'
+                response = requests.get(url=API_URL, params={"weights_path":data_json["sovits_model_path"]})
                 response.raise_for_status()
             self.current_sovits_model = sovits_path
             self.current_gpt_model = gpt_path

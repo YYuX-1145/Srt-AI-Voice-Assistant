@@ -304,7 +304,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-p", "--server_port",type=int,help="server_port")
     parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
-    #parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
+    # parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
     args, unknown = parser.parse_known_args()
     GSV.refresh_presets_list()
     CUSTOM.refresh_custom_api_list()
@@ -398,6 +398,10 @@ if __name__ == "__main__":
                             reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
                             clear_selection_btn=gr.Button(value="清除选择",interactive=True)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
+                            copy_btn = gr.Button(value="复制", interactive=True)
+                            merge_btn = gr.Button(value="合并", interactive=True)
+                            delete_btn = gr.Button(value="删除", interactive=True)
+                            delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                         with gr.Accordion(label="多角色配音"):
                             with gr.Row():
                                 try:
@@ -410,7 +414,7 @@ if __name__ == "__main__":
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", min_width=60, scale=0)
                                 apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
-                                
+
                                 save_spk_btn_bv2=gr.Button(value="💾", min_width=60, scale=0,visible=False)
                                 save_spk_btn_bv2.click(lambda *args:save_spk(*args,project="bv2"),inputs=[speaker_list,*BV2_ARGS],outputs=[speaker_list])
                                 save_spk_btn_gsv=gr.Button(value="💾", min_width=60, scale=0,visible=True)

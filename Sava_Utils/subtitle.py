@@ -18,7 +18,7 @@ def to_time(time_raw: float):
 
 class Base_subtitle:
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
-        self.index = int(index)
+        self.index = str(index)
         self.start_time_raw = start_time
         self.end_time_raw = end_time
         self.text = text.strip()
@@ -54,6 +54,7 @@ class Subtitle(Base_subtitle):
         self.real_st=0
         self.real_et=0 #frames
         self.speaker=speaker
+        self.copy_count=0
 
     def add_offset(self, offset=0):
         self.start_time += offset
@@ -169,6 +170,9 @@ class Subtitles:
 
     def __getitem__(self, index):
         return self.subtitles[index]
+
+    def pop(self,index):
+        self.subtitles.pop(index)
 
     def __len__(self):
         return len(self.subtitles)

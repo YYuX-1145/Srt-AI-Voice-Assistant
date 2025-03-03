@@ -11,7 +11,7 @@ def load_page(subtitle_list,target_index=1):
     if length==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
     if target_index > 1:
-        value=min(target_index,(length//Sava_Utils.config.num_edit_rows) + 1)
+        value=min(target_index,((length-1)//Sava_Utils.config.num_edit_rows) + 1)
     else:
         value=target_index
     return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=value),*show_page(1,subtitle_list)
@@ -84,6 +84,21 @@ def load_work(dirname):
     except Exception as e:
         gr.Warning(f"出错：{str(e)}")
         return Subtitles(), *load_page(Subtitles())
+
+def delete_subtitle(page,subtitles,*args):
+    checklist = args[: Sava_Utils.config.num_edit_rows]
+    if subtitles is None or len(subtitles)==0:
+        gr.Info("当前没有字幕")
+        return  *checklist,*load_page(Subtitles()),Subtitles()
+    indexlist = args[Sava_Utils.config.num_edit_rows :]
+    targetlist = []
+    for i in range(Sava_Utils.config.num_edit_rows):
+        if checklist[i] and indexlist[i]!=-1:
+            targetlist.append(int(indexlist[i]))
+    targetlist.sort(reverse=True)
+    for idx in targetlist:
+        subtitles.pop(idx)
+    return *checklist, *load_page(subtitles,target_index=page), subtitles
 
 def apply_spk(speaker,page,subtitles,*args):
     checklist = args[: Sava_Utils.config.num_edit_rows]

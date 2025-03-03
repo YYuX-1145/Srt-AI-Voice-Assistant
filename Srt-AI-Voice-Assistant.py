@@ -400,6 +400,7 @@ if __name__ == "__main__":
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                             copy_btn = gr.Button(value="复制", interactive=True)
                             merge_btn = gr.Button(value="合并", interactive=True)
+                            merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                             delete_btn = gr.Button(value="删除", interactive=True)
                             delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                         with gr.Accordion(label="多角色配音"):

@@ -85,7 +85,8 @@ def load_work(dirname):
         gr.Warning(f"出错：{str(e)}")
         return Subtitles(), *load_page(Subtitles())
 
-def delete_subtitle(page,subtitles,*args):
+
+def delete_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
@@ -100,7 +101,33 @@ def delete_subtitle(page,subtitles,*args):
         subtitles.pop(idx)
     return *checklist, *load_page(subtitles,target_index=page), subtitles
 
-def apply_spk(speaker,page,subtitles,*args):
+
+def merge_subtitle(page,subtitles:Subtitles, *args):
+    checklist = args[: Sava_Utils.config.num_edit_rows]
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info("当前没有字幕")
+        return *checklist, *load_page(Subtitles()), Subtitles()
+    indexlist = args[Sava_Utils.config.num_edit_rows :]
+    targetlist = []
+    for i in range(Sava_Utils.config.num_edit_rows):
+        if checklist[i] and indexlist[i] != -1:
+            targetlist.append(int(indexlist[i]))
+    if(len(targetlist))>1:
+        max_i=max(targetlist)
+        min_i=min(targetlist)
+        for i in range(min_i+1,max_i+1):
+            if subtitles[min_i].text[-1] not in [" ", "\n", "!",".","?","。","！","？"]:
+                subtitles[min_i].text+=','
+            subtitles[min_i].text += subtitles[i].text
+            subtitles[min_i].end_time_raw = subtitles[i].end_time_raw
+            subtitles[min_i].end_time = subtitles[i].end_time
+            subtitles.pop(min_i+1)
+    else:
+        gr.Info("请选择起点和终点！")
+    return *checklist, *load_page(subtitles, target_index=page), subtitles
+
+
+def apply_spk(speaker, page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
@@ -120,6 +147,7 @@ def apply_spk(speaker,page,subtitles,*args):
                 subtitles.speakers[speaker] += 1
     subtitles.dump()
     return *checklist,*show_page(page,subtitles),subtitles
+
 
 def del_spk(name):
     try:

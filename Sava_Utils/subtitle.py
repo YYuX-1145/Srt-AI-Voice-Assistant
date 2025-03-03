@@ -70,7 +70,7 @@ class Subtitle(Base_subtitle):
 
 class Subtitles:
     def __init__(self, proj: str = None, dir: str = None) -> None:
-        self.subtitles = []
+        self.subtitles:list[Subtitle] = []
         self.proj = proj
         self.dir = dir
         self.sr=0

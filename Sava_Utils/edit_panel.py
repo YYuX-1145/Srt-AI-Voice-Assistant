@@ -6,11 +6,15 @@ import Sava_Utils
 
 current_path = os.environ.get("current_path")
 
-def load_page(subtitle_list):
+def load_page(subtitle_list,target_index=1):
     length=len(subtitle_list)
     if length==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
-    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=1),*show_page(1,subtitle_list)
+    if target_index > 1:
+        value=min(target_index,(length//Sava_Utils.config.num_edit_rows) + 1)
+    else:
+        value=target_index
+    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=value),*show_page(1,subtitle_list)
 
 def show_page(page_start,subtitle_list):
     ret=[]

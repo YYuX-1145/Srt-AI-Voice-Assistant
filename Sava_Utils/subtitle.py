@@ -109,6 +109,7 @@ class Subtitles:
         self.proj = proj
         self.dir = dir
         self.sr=0
+        self.default_speaker=None
         self.speakers=dict()
 
     def dump(self):

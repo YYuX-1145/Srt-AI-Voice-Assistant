@@ -186,6 +186,13 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
     return *checklist,*show_page(page,subtitles),subtitles
 
 
+def set_default_speaker(speaker,subtitles:Subtitles):
+    if subtitles is None or len(subtitles) == 0:
+        return
+    if speaker in ["", "None", []]:
+        speaker = None
+    subtitles.default_speaker=speaker
+
 def del_spk(name):
     try:
         assert name not in ["", "None", [],None],"不得为空"

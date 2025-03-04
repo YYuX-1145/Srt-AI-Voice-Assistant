@@ -324,10 +324,10 @@ if __name__ == "__main__":
                         textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
                         gen_multispeaker_btn = gr.Button(value="生成多角色项目")
                     with gr.Column():
-                        with gr.TabItem("Bert-VITS2-HiyoriUI"):
-                            BV2_ARGS=BV2.getUI()
                         with gr.TabItem("GPT-SoVITS"):
-                            GSV_ARGS=GSV.getUI()      
+                            GSV_ARGS=GSV.getUI()                             
+                        with gr.TabItem("Bert-VITS2-HiyoriUI"):
+                            BV2_ARGS=BV2.getUI() 
                         with gr.TabItem("微软TTS"):
                             MSTTS_ARGS=MSTTS.getUI()  
                         with gr.TabItem("自定义API"):
@@ -365,7 +365,7 @@ if __name__ == "__main__":
                                 edit_check_list.append(edit_check)
                                 edit_rows.append(edit_real_index)  # real index
                                 edit_real_index_list.append(edit_real_index)
-                                edit_rows.append(gr.Number(scale=1,show_label=False,interactive=False,value=-1,min_width=40))#index(raw)
+                                edit_rows.append(gr.Text(scale=1,show_label=False,interactive=False,value='-1',max_lines=1,min_width=40))#index(raw)
                                 edit_rows.append(gr.Textbox(scale=4,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
                                 s_txt=gr.Textbox(scale=6,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
                                 edit_rows.append(s_txt)
@@ -399,6 +399,7 @@ if __name__ == "__main__":
                             clear_selection_btn=gr.Button(value="清除选择",interactive=True)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                             copy_btn = gr.Button(value="复制", interactive=True)
+                            copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                             merge_btn = gr.Button(value="合并", interactive=True)
                             merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                             delete_btn = gr.Button(value="删除", interactive=True)

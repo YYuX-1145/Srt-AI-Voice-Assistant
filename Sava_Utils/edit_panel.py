@@ -1,7 +1,7 @@
 import gradio as gr
 import os
 import pickle
-from .subtitle import Subtitles
+from .subtitle import Subtitles,Subtitle
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
@@ -11,12 +11,12 @@ def load_page(subtitle_list,target_index=1):
     if length==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
     if target_index > 1:
-        value=min(target_index,((length-1)//Sava_Utils.config.num_edit_rows) + 1)
+        value=min(target_index,((length-1)//Sava_Utils.config.num_edit_rows)*Sava_Utils.config.num_edit_rows+1)
     else:
         value=target_index
-    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=value),*show_page(1,subtitle_list)
+    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=value),*show_page(value,subtitle_list)
 
-def show_page(page_start,subtitle_list):
+def show_page(page_start,subtitle_list:Subtitles):
     ret=[]
     length=len(subtitle_list)
     pageend = page_start + Sava_Utils.config.num_edit_rows
@@ -36,7 +36,7 @@ def show_page(page_start,subtitle_list):
     for i in range(page_start-1,pageend-1):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,interactive=False,visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].start_time_raw} -> {subtitle_list[i].end_time_raw} | {subtitle_list[i].start_time:.2f} -> {subtitle_list[i].end_time:.2f}",visible=True))
+        ret.append(gr.update(value=subtitle_list[i].get_srt_time(),visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].speaker}",interactive=False,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),interactive=False,visible=True))
@@ -96,10 +96,12 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
     for i in range(Sava_Utils.config.num_edit_rows):
         if checklist[i] and indexlist[i]!=-1:
             targetlist.append(int(indexlist[i]))
+    if len(targetlist)==0:
+        gr.Info("未选中任何字幕")
     targetlist.sort(reverse=True)
     for idx in targetlist:
         subtitles.pop(idx)
-    return *checklist, *load_page(subtitles,target_index=page), subtitles
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles,target_index=page), subtitles
 
 
 def merge_subtitle(page,subtitles:Subtitles, *args):
@@ -114,17 +116,34 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
             targetlist.append(int(indexlist[i]))
     if(len(targetlist))>1:
         max_i=max(targetlist)
-        min_i=min(targetlist)
+        min_i=min(targetlist) 
+        subtitles[min_i].end_time_raw = subtitles[max_i].end_time_raw
+        subtitles[min_i].end_time = subtitles[max_i].end_time
         for i in range(min_i+1,max_i+1):
             if subtitles[min_i].text[-1] not in [" ", "\n", "!",".","?","。","！","？"]:
                 subtitles[min_i].text+=','
             subtitles[min_i].text += subtitles[i].text
-            subtitles[min_i].end_time_raw = subtitles[i].end_time_raw
-            subtitles[min_i].end_time = subtitles[i].end_time
             subtitles.pop(min_i+1)
     else:
         gr.Info("请选择起点和终点！")
-    return *checklist, *load_page(subtitles, target_index=page), subtitles
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page), subtitles
+
+def copy_subtitle(page,subtitles:Subtitles, *args):
+    checklist = args[: Sava_Utils.config.num_edit_rows]
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info("当前没有字幕")
+        return *checklist, *load_page(Subtitles()), Subtitles()
+    indexlist = args[Sava_Utils.config.num_edit_rows :]
+    targetlist = []
+    for i in range(Sava_Utils.config.num_edit_rows):
+        if checklist[i] and indexlist[i] != -1:
+            targetlist.append(int(indexlist[i]))
+    if len(targetlist)==0:
+        gr.Info("未选中任何字幕")
+    targetlist.sort(reverse=True)
+    for i in targetlist:
+        subtitles.insert(i+1+subtitles[i].copy_count,subtitles[i].copy())
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page), subtitles
 
 
 def apply_spk(speaker, page, subtitles: Subtitles, *args):

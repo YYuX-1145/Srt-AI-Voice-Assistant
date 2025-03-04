@@ -53,7 +53,7 @@ class Settings:
         LAN_access:bool = False,        
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
-        min_interval:float=0.5,
+        min_interval:float=0.3,
         num_edit_rows: int = 7,
         theme: str = "default",
         bv2_pydir: str = "",

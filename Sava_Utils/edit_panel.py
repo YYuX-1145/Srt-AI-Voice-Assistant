@@ -36,7 +36,7 @@ def show_page(page_start,subtitle_list:Subtitles):
     for i in range(page_start-1,pageend-1):
         ret.append(gr.update(value=i,visible=False))
         ret.append(gr.update(value=subtitle_list[i].index,interactive=False,visible=True))
-        ret.append(gr.update(value=subtitle_list[i].get_srt_time(),visible=True))
+        ret.append(gr.update(value=subtitle_list[i].get_srt_time(),interactive=True,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
         ret.append(gr.update(value=f"{subtitle_list[i].speaker}",interactive=False,visible=True))
         ret.append(gr.update(value=subtitle_list.get_state(i),interactive=False,visible=True))
@@ -44,7 +44,7 @@ def show_page(page_start,subtitle_list:Subtitles):
     for i in range(Sava_Utils.config.num_edit_rows - pageend + page_start):
         ret.append(gr.update(value=-1,visible=False))
         ret.append(gr.update(value=-1,interactive=False,visible=True))
-        ret.append(gr.update(value="NO INFO",visible=True))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
         ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
         ret.append(gr.update(value="None",interactive=False,visible=True))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
@@ -119,10 +119,10 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
         min_i=min(targetlist) 
         subtitles[min_i].end_time_raw = subtitles[max_i].end_time_raw
         subtitles[min_i].end_time = subtitles[max_i].end_time
-        for i in range(min_i+1,max_i+1):
+        for i in range(min_i,max_i):
             if subtitles[min_i].text[-1] not in [" ", "\n", "!",".","?","。","！","？"]:
                 subtitles[min_i].text+=','
-            subtitles[min_i].text += subtitles[i].text
+            subtitles[min_i].text += subtitles[min_i+1].text
             subtitles.pop(min_i+1)
     else:
         gr.Info("请选择起点和终点！")
@@ -144,6 +144,24 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
     for i in targetlist:
         subtitles.insert(i+1+subtitles[i].copy_count,subtitles[i].copy())
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page), subtitles
+
+
+def apply_start_end_time(page,subtitles:Subtitles, *args):
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info("当前没有字幕")
+        return *show_page(page,Subtitles()),Subtitles()
+    indexlist = [int(i) for i in args[ :Sava_Utils.config.num_edit_rows]]
+    timelist = args[Sava_Utils.config.num_edit_rows :]
+    # for i in range(page-1,min(page+Sava_Utils.config.num_edit_rows-1,len(subtitles)-1)):
+    for i,title_index in enumerate(indexlist):
+        try:
+            if title_index!=-1 and timelist[i]!=subtitles[title_index].get_srt_time():
+                st, et = timelist[i].split("-->")
+                subtitles[title_index].reset_srt_time(st.strip(),et.strip())
+        except ValueError:
+            gr.Info(f"输入格式不匹配：{timelist[i]}")
+    subtitles.dump()
+    return *show_page(page, subtitles), subtitles
 
 
 def apply_spk(speaker, page, subtitles: Subtitles, *args):

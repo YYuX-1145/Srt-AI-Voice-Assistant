@@ -135,7 +135,10 @@ def generate_preprocess(*args,project=None):
         return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args, **kwargs)
 
-def gen_multispeaker(subtitles,max_workers):
+def gen_multispeaker(subtitles:Subtitles,max_workers):
+    if len(subtitles)==0 or subtitles is None:
+        gr.Info("当前没有字幕")
+        return None, *load_page(Subtitles()), Subtitles()
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
             subtitles.speakers.pop(key)
@@ -149,7 +152,7 @@ def gen_multispeaker(subtitles,max_workers):
         args=info["raw_data"]
         project=info["project"]
         if project=='gsv':
-            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
+            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=True)
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
@@ -272,13 +275,13 @@ def remake(*args):
     subtitle_list.dump()
     return fp,*show_page(page,subtitle_list)
 
-def recompose(page,subtitle_list):
+def recompose(page,subtitle_list:Subtitles):
     if subtitle_list is None or len(subtitle_list)==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
         return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list),subtitle_list
-    sr,audio=subtitle_list.audio_join(sr=None)
+    audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
-    return (sr,audio),"OK",*show_page(page,subtitle_list),subtitle_list
+    return audio,"OK",*show_page(page,subtitle_list),subtitle_list
 
 def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
@@ -350,6 +353,7 @@ if __name__ == "__main__":
                         edit_rows=[]
                         edit_real_index_list=[]
                         edit_check_list=[]
+                        edit_start_end_time_list=[]
                         with gr.Row():
                             worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
@@ -366,7 +370,9 @@ if __name__ == "__main__":
                                 edit_rows.append(edit_real_index)  # real index
                                 edit_real_index_list.append(edit_real_index)
                                 edit_rows.append(gr.Text(scale=1,show_label=False,interactive=False,value='-1',max_lines=1,min_width=40))#index(raw)
-                                edit_rows.append(gr.Textbox(scale=4,show_label=False,interactive=False,value="NO INFO",max_lines=1))#start time and end time
+                                edit_start_end_time=gr.Textbox(scale=3,show_label=False,interactive=False,value="NO INFO",max_lines=1)
+                                edit_start_end_time_list.append(edit_start_end_time)
+                                edit_rows.append(edit_start_end_time)#start time and end time
                                 s_txt=gr.Textbox(scale=6,show_label=False,interactive=False,value="NO INFO",max_lines=1)#content
                                 edit_rows.append(s_txt)
                                 edit_rows.append(gr.Textbox(show_label=False,interactive=False,min_width=100,value="None",scale=1,max_lines=1))#speaker
@@ -391,21 +397,23 @@ if __name__ == "__main__":
                         workrefbtn.click(getworklist,inputs=[],outputs=[worklist])
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
                         export_btn.click(lambda x:x.export(),inputs=[STATE])
-                        with gr.Row():
-                            all_selection_btn = gr.Button(value="全选",interactive=True)
+                        with gr.Row(equal_height=True):
+                            all_selection_btn = gr.Button(value="全选",interactive=True,min_width=60)
                             all_selection_btn.click(lambda :[True for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
-                            reverse_selection_btn = gr.Button(value="反选",interactive=True)
+                            reverse_selection_btn = gr.Button(value="反选",interactive=True,min_width=60)
                             reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
-                            clear_selection_btn=gr.Button(value="清除选择",interactive=True)
+                            clear_selection_btn=gr.Button(value="清除选择",interactive=True,min_width=60)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
-                            copy_btn = gr.Button(value="复制", interactive=True)
+                            apply_se_btn = gr.Button(value="应用时间", interactive=True,min_width=60)
+                            apply_se_btn.click(apply_start_end_time,inputs=[page_slider,STATE,*edit_real_index_list,*edit_start_end_time_list],outputs=[*edit_rows,STATE])
+                            copy_btn = gr.Button(value="复制", interactive=True,min_width=60)
                             copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
-                            merge_btn = gr.Button(value="合并", interactive=True)
+                            merge_btn = gr.Button(value="合并", interactive=True,min_width=60)
                             merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
-                            delete_btn = gr.Button(value="删除", interactive=True)
+                            delete_btn = gr.Button(value="删除", interactive=True,min_width=60)
                             delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
                         with gr.Accordion(label="多角色配音"):
-                            with gr.Row():
+                            with gr.Row(equal_height=True):
                                 try:
                                     speaker_list_choices=["None",*os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
                                 except:

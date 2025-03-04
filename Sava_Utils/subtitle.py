@@ -5,9 +5,20 @@ import datetime
 import pickle
 import shutil
 import Sava_Utils
+import copy
 from . import logger
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
+
+
+def compare_index(i1, i2):
+    l1 = list(map(int, i1.split(".")))
+    l2 = list(map(int, i2.split(".")))
+    while len(l1) < len(l2):
+        l1.append(0)
+    while len(l2) < len(l1):
+        l2.append(0)
+    return l1 < l2
 
 
 def to_time(time_raw: float):
@@ -18,10 +29,12 @@ def to_time(time_raw: float):
 
 class Base_subtitle:
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
-        self.index = str(index)
-        self.start_time_raw = start_time
-        self.end_time_raw = end_time
-        self.text = text.strip()
+        self.index:str = str(index)
+        self.start_time_raw:str = start_time
+        self.end_time_raw:str = end_time
+        self.start_time=0.0
+        self.end_time=0.0
+        self.text:str = text.strip()
         # def normalize(self,ntype:str,fps=30):
         if ntype == "prcsv":
             h, m, s, fs = (start_time.replace(";", ":")).split(":")  # seconds
@@ -59,10 +72,20 @@ class Subtitle(Base_subtitle):
     def add_offset(self, offset=0):
         self.start_time += offset
         if self.start_time < 0:
-            self.start_time = 0
+            self.start_time = 0.0
         self.end_time += offset
         if self.end_time < 0:
-            self.end_time = 0
+            self.end_time = 0.0
+
+    def get_srt_time(self):
+        return f"{to_time(self.start_time)} --> {to_time(self.end_time)}"
+
+    def copy(self):
+        x=copy.deepcopy(self)
+        self.copy_count+=1
+        x.copy_count=0
+        x.index=f"{self.index}-{self.copy_count}"
+        return x
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}"
@@ -163,7 +186,7 @@ class Subtitles:
         self.subtitles.append(subtitle)
 
     def sort(self):
-        self.subtitles.sort(key=lambda x: x.index)
+        self.subtitles.sort(key=compare_index)
 
     def __iter__(self):
         return iter(self.subtitles)
@@ -173,6 +196,9 @@ class Subtitles:
 
     def pop(self,index):
         self.subtitles.pop(index)
+
+    def insert(self,index,item):
+        self.subtitles.insert(index,item)
 
     def __len__(self):
         return len(self.subtitles)

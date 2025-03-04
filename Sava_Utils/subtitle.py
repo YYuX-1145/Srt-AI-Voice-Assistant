@@ -1,4 +1,5 @@
 import os
+import re
 import gradio as gr
 import numpy as np
 import datetime
@@ -37,23 +38,34 @@ class Base_subtitle:
         self.text:str = text.strip()
         # def normalize(self,ntype:str,fps=30):
         if ntype == "prcsv":
-            h, m, s, fs = (start_time.replace(";", ":")).split(":")  # seconds
-            self.start_time = (
-                int(h) * 3600 + int(m) * 60 + int(s) + round(int(fs) / fps, 2)
-            )
-            h, m, s, fs = (end_time.replace(";", ":")).split(":")
-            self.end_time = (
-                int(h) * 3600 + int(m) * 60 + int(s) + round(int(fs) / fps, 2)
-            )
+            self.start_time = self.to_float_prcsv_time(self.start_time_raw,fps)
+            self.end_time = self.to_float_prcsv_time(self.end_time_raw, fps)
         elif ntype == "srt":
-            h, m, s = start_time.split(":")
-            s = s.replace(",", ".")
-            self.start_time = int(h) * 3600 + int(m) * 60 + round(float(s), 2)
-            h, m, s = end_time.split(":")
-            s = s.replace(",", ".")
-            self.end_time = int(h) * 3600 + int(m) * 60 + round(float(s), 2)
+            self.start_time = self.to_float_srt_time(self.start_time_raw)
+            self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
             raise ValueError
+
+    def to_float_prcsv_time(self,time:str,fps:int):
+        h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds
+        result = int(h) * 3600 + int(m) * 60 + int(s) + round(int(fs) / fps, 2)
+        return result
+
+    def to_float_srt_time(self,time:str):
+        h, m, s = time.split(":")
+        s = s.replace(",", ".")
+        result = int(h) * 3600 + int(m) * 60 + round(float(s), 2)     
+        return result
+
+    def reset_srt_time(self,st,et):
+        pattern = re.compile(r"\d{2}:\d{2}:\d{2},\d{3}")
+        if pattern.fullmatch(st) and pattern.fullmatch(et):
+            self.start_time_raw=st
+            self.start_time=self.to_float_srt_time(self.start_time_raw)
+            self.end_time_raw=et
+            self.end_time = self.to_float_srt_time(self.end_time_raw)
+        else:
+            raise ValueError(f"输入的格式不匹配！{st} --> {et}")
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"

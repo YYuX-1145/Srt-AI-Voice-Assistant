@@ -142,12 +142,19 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
             subtitles.speakers.pop(key)
-    if len(list(subtitles.speakers.keys()))==0:
+    if len(list(subtitles.speakers.keys()))==0 and subtitles.default_speaker is None:
         gr.Warning("警告：没有指派任何说话人")
     abs_dir=subtitles.get_abs_dir()
     progress=0
-    for key in subtitles.speakers.keys():
-        with open(os.path.join(current_path, "SAVAdata", "speakers",key), 'rb') as f:
+    tasks = {key: [] for key in [*subtitles.speakers.keys(),None]}
+    for i in subtitles:
+        tasks[i.speaker].append(i)
+    for key in tasks.keys():
+        if key is None and len(tasks[None])>0 and subtitles.default_speaker is not None:
+            print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
+        else:
+            continue
+        with open(os.path.join(current_path, "SAVAdata", "speakers",key if key is not None else subtitles.default_speaker), 'rb') as f:
             info = pickle.load(f) 
         args=info["raw_data"]
         project=info["project"]
@@ -170,13 +177,12 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
                                     "subid": i.index,
                                 },
                             )
-                            for i in subtitles
-                            if i.speaker == key
+                            for i in tasks[key]
                         ],
                     ),
                     total=len(subtitles),
                     initial=progress,
-                    desc=f"正在合成多说话人任务，当前说话人为 {key}",
+                    desc=f"正在合成多说话人任务，当前说话人为 {key if key is not None else subtitles.default_speaker}",
                 )
             )
         file_list=[i for i in file_list if i is not None]
@@ -244,8 +250,11 @@ def remake(*args):
         gr.Info("Not available !")
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
-    if subtitle_list[int(idx)].speaker is not None:
-        with open(os.path.join(current_path, "SAVAdata", "speakers",subtitle_list[int(idx)].speaker), 'rb') as f:
+    if subtitle_list[int(idx)].speaker is not None or (subtitle_list.proj is None and subtitle_list.default_speaker is not None):
+        spk = subtitle_list[int(idx)].speaker
+        if spk is None:
+            spk=subtitle_list.default_speaker
+        with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
             info = pickle.load(f)
             args=info["raw_data"]
             proj=info["project"]
@@ -418,7 +427,8 @@ if __name__ == "__main__":
                                     speaker_list_choices=["None",*os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
                                 except:
                                     speaker_list_choices=["None"]
-                                speaker_list=gr.Dropdown(label="选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
+                                speaker_list=gr.Dropdown(label="选定默认/选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
+                                speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
                                 select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])

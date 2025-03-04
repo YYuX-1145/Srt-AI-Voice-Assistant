@@ -154,8 +154,16 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
             print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
         else:
             continue
-        with open(os.path.join(current_path, "SAVAdata", "speakers",key if key is not None else subtitles.default_speaker), 'rb') as f:
-            info = pickle.load(f) 
+
+        spk = key if key is not None else subtitles.default_speaker
+
+        try:
+            with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
+                info = pickle.load(f) 
+        except FileNotFoundError:
+            logger.error(f"找不到说话人存档{spk}")
+            gr.Warning(f"找不到说话人存档{spk}")
+            continue
         args=info["raw_data"]
         project=info["project"]
         if project=='gsv':
@@ -182,7 +190,7 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
                     ),
                     total=len(subtitles),
                     initial=progress,
-                    desc=f"正在合成多说话人任务，当前说话人为 {key if key is not None else subtitles.default_speaker}",
+                    desc=f"正在合成多说话人任务，当前说话人为 {spk}",
                 )
             )
         file_list=[i for i in file_list if i is not None]
@@ -254,10 +262,15 @@ def remake(*args):
         spk = subtitle_list[int(idx)].speaker
         if spk is None:
             spk=subtitle_list.default_speaker
-        with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
-            info = pickle.load(f)
-            args=info["raw_data"]
-            proj=info["project"]
+        try:
+            with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
+                info = pickle.load(f)
+        except FileNotFoundError:
+            logger.error(f"找不到说话人存档{spk}")
+            gr.Warning(f"找不到说话人存档{spk}")
+            return fp, *show_page(page, subtitle_list)
+        args=info["raw_data"]
+        proj=info["project"]
         if proj=='gsv':
             GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[proj].arg_filter(*args)

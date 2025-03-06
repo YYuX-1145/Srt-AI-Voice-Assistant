@@ -1,10 +1,10 @@
-from .base import Projet
+from . import TTSProjet
 import requests
 import gradio as gr
 from ..utils import positive_int
 from .. import logger
 
-class BV2(Projet):
+class BV2(TTSProjet):
     def __init__(self):
         super().__init__("bv2")
 

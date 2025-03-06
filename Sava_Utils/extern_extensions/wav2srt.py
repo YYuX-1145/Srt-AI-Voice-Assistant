@@ -7,9 +7,16 @@ current_path = os.environ.get("current_path")
 class WAV2SRT():
     def __init__(self,config):
           self.config=config
+          self.ui=False
     def update_cfg(self,config):
           self.config=config
     def UI(self):
+        if not self.ui:
+             self.ui=True
+             self._UI()
+        else:
+             raise "err"
+    def _UI(self):
         available=False
         if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
             available=True

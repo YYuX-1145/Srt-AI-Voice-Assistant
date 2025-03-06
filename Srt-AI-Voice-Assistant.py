@@ -30,16 +30,18 @@ from Sava_Utils import logger
 from Sava_Utils.settings import Settings
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
-import Sava_Utils.projects
-import Sava_Utils.projects.bv2
-import Sava_Utils.projects.gsv
-import Sava_Utils.projects.mstts
-import Sava_Utils.projects.custom
+import Sava_Utils.tts_projects
+import Sava_Utils.tts_projects.bv2
+import Sava_Utils.tts_projects.gsv
+import Sava_Utils.tts_projects.mstts
+import Sava_Utils.tts_projects.custom
+from Sava_Utils.subtitle_translation import Translation_module
 
-BV2 = Sava_Utils.projects.bv2.BV2()
-GSV = Sava_Utils.projects.gsv.GSV()
-MSTTS = Sava_Utils.projects.mstts.MSTTS()
-CUSTOM = Sava_Utils.projects.custom.Custom()
+BV2 = Sava_Utils.tts_projects.bv2.BV2()
+GSV = Sava_Utils.tts_projects.gsv.GSV()
+MSTTS = Sava_Utils.tts_projects.mstts.MSTTS()
+CUSTOM = Sava_Utils.tts_projects.custom.Custom()
+TRANSLATION_MODULE = Translation_module()
 Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
 componments=[BV2,GSV,MSTTS,CUSTOM]
 
@@ -343,7 +345,7 @@ if __name__ == "__main__":
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
         with gr.Tabs():            
-            with gr.TabItem("API合成"):
+            with gr.TabItem("字幕音频合成"):
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
@@ -463,15 +465,16 @@ if __name__ == "__main__":
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
                                 start_gen_multispeaker_btn=gr.Button(value="生成多角色配音",variant="primary")
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows,STATE])
-
-            with gr.TabItem("额外内容"):
+            with gr.TabItem("辅助功能"):
+                TRANSLATION_MODULE.UI()
+            with gr.TabItem("外部扩展内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
                 WAV2SRT = WAV2SRT(config=Sava_Utils.config)
                 componments.append(WAV2SRT)
                 available=WAV2SRT.UI()
                 if not available:
-                    gr.Markdown("没有任何扩展，安装后重启生效<br>[获取额外内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
+                    gr.Markdown("没有任何扩展，安装后重启生效<br>[获取外部扩展内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem("设置"):
                 with gr.Row():
                     with gr.Column():

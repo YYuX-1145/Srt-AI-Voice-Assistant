@@ -216,7 +216,7 @@ class Subtitles:
     def __len__(self):
         return len(self.subtitles)
 
-    def export(self):
+    def export(self,fp=None,open=True):
         if len(self.subtitles)==0:
             gr.Info("当前没有字幕")
             return None
@@ -230,8 +230,12 @@ class Subtitles:
             srt_content.append(f"{to_time(start)} --> {to_time(end)}"+"\n")
             srt_content.append(i.text + "\n")
             srt_content.append("\n")
-        t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file_path=os.path.join(current_path,"SAVAdata","output",f"{t}.srt")
+        if fp is None:
+            t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            file_path=os.path.join(current_path,"SAVAdata","output",f"{t}.srt")
+        else:
+            file_path=fp
         with open(file_path,"w",encoding="utf-8") as f:
             f.writelines(srt_content)
-        os.system(f'explorer /select, {file_path}')
+        if open:
+            os.system(f'explorer /select, {file_path}')

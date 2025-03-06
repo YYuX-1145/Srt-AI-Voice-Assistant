@@ -1,4 +1,4 @@
-from .base import Projet
+from . import TTSProjet
 import os
 import re
 import json
@@ -9,7 +9,7 @@ from xml.etree import ElementTree
 
 current_path = os.environ.get("current_path")
 
-class MSTTS(Projet):
+class MSTTS(TTSProjet):
     def __init__(self):
         super().__init__("mstts")
         self.ms_access_token=None

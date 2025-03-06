@@ -1,4 +1,4 @@
-from .base import Projet
+from . import TTSProjet
 import requests
 import gradio as gr
 from ..utils import positive_int
@@ -9,7 +9,7 @@ import os
 
 current_path=os.environ.get("current_path")
 
-class Custom(Projet):
+class Custom(TTSProjet):
     def __init__(self):
         super().__init__("bv2")
         self.custom_api_list = []

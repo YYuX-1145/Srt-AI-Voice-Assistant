@@ -1,4 +1,4 @@
-from .base import Projet
+from . import TTSProjet
 import requests
 import gradio as gr
 from ..utils import positive_int
@@ -51,7 +51,7 @@ def temp_aux_ra(a:bytes):
             f.write(a)
     return dir
 
-class GSV(Projet):
+class GSV(TTSProjet):
     def __init__(self):
         self.gsv_fallback=False
         self.presets_list=['None']

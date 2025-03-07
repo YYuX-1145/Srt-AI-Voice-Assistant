@@ -90,7 +90,7 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
-        return  *checklist,*load_page(Subtitles()),Subtitles()
+        return  *checklist,*load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
     for i in range(Sava_Utils.config.num_edit_rows):
@@ -101,14 +101,14 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
     targetlist.sort(reverse=True)
     for idx in targetlist:
         subtitles.pop(idx)
-    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles,target_index=page), subtitles
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles,target_index=page)
 
 
 def merge_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
         gr.Info("当前没有字幕")
-        return *checklist, *load_page(Subtitles()), Subtitles()
+        return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
     for i in range(Sava_Utils.config.num_edit_rows):
@@ -126,13 +126,13 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
             subtitles.pop(min_i+1)
     else:
         gr.Info("请选择起点和终点！")
-    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page), subtitles
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 def copy_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
         gr.Info("当前没有字幕")
-        return *checklist, *load_page(Subtitles()), Subtitles()
+        return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
     for i in range(Sava_Utils.config.num_edit_rows):
@@ -143,13 +143,13 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
     targetlist.sort(reverse=True)
     for i in targetlist:
         subtitles.insert(i+1+subtitles[i].copy_count,subtitles[i].copy())
-    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page), subtitles
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 
 def apply_start_end_time(page,subtitles:Subtitles, *args):
     if subtitles is None or len(subtitles) == 0:
         gr.Info("当前没有字幕")
-        return *show_page(page,Subtitles()),Subtitles()
+        return show_page(page,Subtitles())
     indexlist = [int(i) for i in args[ :Sava_Utils.config.num_edit_rows]]
     timelist = args[Sava_Utils.config.num_edit_rows :]
     # for i in range(page-1,min(page+Sava_Utils.config.num_edit_rows-1,len(subtitles)-1)):
@@ -161,14 +161,14 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
         except ValueError:
             gr.Info(f"输入格式不匹配：{timelist[i]}")
     subtitles.dump()
-    return *show_page(page, subtitles), subtitles
+    return show_page(page, subtitles)
 
 
 def apply_spk(speaker, page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
         gr.Info("当前没有字幕")
-        return  *checklist,*show_page(page,Subtitles()),Subtitles()
+        return  *checklist,*show_page(page,Subtitles())
     if speaker in ["","None",[]]:
         speaker=None
     indexlist = args[Sava_Utils.config.num_edit_rows :]
@@ -183,7 +183,7 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
             if speaker is not None:
                 subtitles.speakers[speaker] += 1
     subtitles.dump()
-    return *checklist,*show_page(page,subtitles),subtitles
+    return *checklist,*show_page(page,subtitles)
 
 
 def set_default_speaker(speaker,subtitles:Subtitles):

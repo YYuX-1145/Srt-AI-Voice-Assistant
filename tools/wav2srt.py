@@ -10,7 +10,7 @@ from funasr import AutoModel
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("-input_dir", default=None,type=str)
-parser.add_argument("-output_dir",default=current_directory,type=str)
+parser.add_argument("-output_dir",default=None,type=str)
 parser.add_argument("-engine",default="whisper",type=str)
 parser.add_argument("--whisper_size", default="large-v3",type=str)
 parser.add_argument("--threshold",default=-40,type=float)
@@ -113,7 +113,10 @@ def transcribe(audio_path):
         srt_content.append(text+"\n")
         srt_content.append("\n")
 
-    savepath=os.path.join(args.output_dir,"output.srt")
+    if args.output_dir is None:
+        savepath=os.path.join(current_directory,"output.srt")
+    else:
+        savepath=args.output_dir
     os.makedirs(args.output_dir,exist_ok=True)
     with open(savepath,"w",encoding="utf-8") as f:
         f.writelines(srt_content)

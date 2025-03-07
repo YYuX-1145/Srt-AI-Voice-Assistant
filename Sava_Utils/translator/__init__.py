@@ -15,10 +15,10 @@ class Traducteur(ABC):
     def api(self, *args, **kwargs):
         pass
 
-    def getUI(self,*args):
+    def getUI(self,*args,**kwargs):
         if not self.ui:
             self.ui = True
-            return self._UI(*args)
+            return self._UI(*args,**kwargs)
         else:
             raise "ERR"
 

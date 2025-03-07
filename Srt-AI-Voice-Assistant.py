@@ -472,7 +472,7 @@ if __name__ == "__main__":
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
                 WAV2SRT = WAV2SRT(config=Sava_Utils.config)
                 componments.append(WAV2SRT)
-                available=WAV2SRT.UI()
+                available=WAV2SRT.UI(input_file,TRANSLATION_MODULE.translation_upload)
                 if not available:
                     gr.Markdown("没有任何扩展，安装后重启生效<br>[获取外部扩展内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem("设置"):

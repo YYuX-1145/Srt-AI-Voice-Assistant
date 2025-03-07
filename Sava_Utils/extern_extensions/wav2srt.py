@@ -10,18 +10,19 @@ class WAV2SRT():
           self.ui=False
     def update_cfg(self,config):
           self.config=config
-    def UI(self):
+    def UI(self,file_main,file_tr):
         if not self.ui:
              self.ui=True
-             self._UI()
+             self._UI(file_main,file_tr)
         else:
              raise "err"
-    def _UI(self):
+    def _UI(self,file_main,file_tr):
         available=False
         if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
             available=True
             with gr.TabItem("音频转字幕"):
                         with gr.Row():
+                            self.wav2srt_last_output=gr.State(value="")
                             with gr.Column():
                                 self.wav2srt_input=gr.File(label="上传音频文件",interactive=True)
                                 self.wav2srt_out_dir=gr.Textbox(value=os.path.join(current_path,"SAVAdata","output"),label="保存路径，填文件夹名",interactive=True)
@@ -32,7 +33,11 @@ class WAV2SRT():
                                 self.wav2srt_sil=gr.Slider(label="(ms)切完后静音最多留多长",minimum=0,maximum=2000,step=100,value=1000)
                                 self.wav2srt_args=gr.Textbox(value="",label="其他参数",interactive=True)
                                 self.wav2srt_run=gr.Button(value="开始",variant="primary",interactive=True)
-                                self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args])
+                                self.wav2srt_send2main=gr.Button(value="发送到主页面",variant="secondary",interactive=True)
+                                self.wav2srt_send2main.click(send,inputs=[self.wav2srt_last_output],outputs=[file_main])
+                                self.wav2srt_send2tr=gr.Button(value="发送到翻译",variant="secondary",interactive=True)
+                                self.wav2srt_send2tr.click(send,inputs=[self.wav2srt_last_output],outputs=[file_tr])
+                                self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_last_output])
                             with gr.Column():
                                 gr.Markdown("""
 本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
@@ -51,5 +56,14 @@ class WAV2SRT():
             gr.Warning("请指定解释器！")
             return None          
         out_dir=out_dir.strip('"')
+        out_dir=f"{os.path.join(out_dir,os.path.basename(input.name))}.srt"
         run_command(command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{out_dir}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}',dir=current_path)
         gr.Info("已打开新的处理窗口")
+        return out_dir
+
+def send(fp):
+     if os.path.isfile(fp):
+          return fp
+     else:
+          gr.Info("输出文件不存在！")
+          return None

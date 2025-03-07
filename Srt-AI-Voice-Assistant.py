@@ -152,7 +152,7 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
     for i in subtitles:
         tasks[i.speaker].append(i)
     for key in tasks.keys():
-        if key is None and len(tasks[None])>0 and subtitles.default_speaker is not None:
+        if subtitles.proj is None and key is None and len(tasks[None])>0 and subtitles.default_speaker is not None:
             print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
         else:
             continue
@@ -443,7 +443,7 @@ if __name__ == "__main__":
                                 except:
                                     speaker_list_choices=["None"]
                                 speaker_list=gr.Dropdown(label="选定默认/选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
-                                speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
+                                #speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
                                 select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])

@@ -173,6 +173,7 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
         speaker=None
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     assert len(checklist)==len(indexlist)
+    subtitles.default_speaker=speaker
     if speaker is not None and speaker not in subtitles.speakers.keys():
         subtitles.speakers[speaker]=0
     for i in range(Sava_Utils.config.num_edit_rows):
@@ -186,12 +187,13 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
     return *checklist,*show_page(page,subtitles)
 
 
-def set_default_speaker(speaker,subtitles:Subtitles):
-    if subtitles is None or len(subtitles) == 0:
-        return
-    if speaker in ["", "None", []]:
-        speaker = None
-    subtitles.default_speaker=speaker
+# def set_default_speaker(speaker,subtitles:Subtitles):
+#     if subtitles is None or len(subtitles) == 0:
+#         return
+#     if speaker in ["", "None", []]:
+#         speaker = None
+#     subtitles.default_speaker=speaker
+
 
 def del_spk(name):
     try:

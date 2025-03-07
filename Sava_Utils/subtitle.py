@@ -11,6 +11,7 @@ from . import logger
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
 
+SRT_TIME_Pattern = re.compile(r"\d{2}:\d{2}:\d{2},\d{3}")
 
 def compare_index(i1, i2):
     l1 = list(map(int, i1.split(".")))
@@ -58,8 +59,8 @@ class Base_subtitle:
         return result
 
     def reset_srt_time(self,st,et):
-        pattern = re.compile(r"\d{2}:\d{2}:\d{2},\d{3}")
-        if pattern.fullmatch(st) and pattern.fullmatch(et):
+        
+        if SRT_TIME_Pattern.fullmatch(st) and SRT_TIME_Pattern.fullmatch(et):
             self.start_time_raw=st
             self.start_time=self.to_float_srt_time(self.start_time_raw)
             self.end_time_raw=et
@@ -108,7 +109,7 @@ class Subtitles:
         self.subtitles:list[Subtitle] = []
         self.proj = proj
         self.dir = dir
-        self.sr=0
+        self.sr=32000
         self.default_speaker=None
         self.speakers=dict()
 
@@ -216,7 +217,7 @@ class Subtitles:
     def __len__(self):
         return len(self.subtitles)
 
-    def export(self,fp=None,open=True):
+    def export(self,fp=None,open_explorer=True,raw=False):
         if len(self.subtitles)==0:
             gr.Info("当前没有字幕")
             return None
@@ -224,18 +225,28 @@ class Subtitles:
         srt_content = []
         for i in self.subtitles:
             idx+=1
-            start=i.real_st/self.sr
-            end=i.real_et/self.sr
+            if raw:
+                if SRT_TIME_Pattern.fullmatch(i.start_time_raw) and SRT_TIME_Pattern.fullmatch(i.end_time_raw):
+                    start = i.start_time_raw
+                    end = i.end_time_raw
+                else:
+                    start = to_time(i.start_time)
+                    end = to_time(i.end_time)
+            else:
+                start=to_time(i.real_st/self.sr)
+                end=to_time(i.real_et/self.sr)
             srt_content.append(str(idx)+"\n")
-            srt_content.append(f"{to_time(start)} --> {to_time(end)}"+"\n")
+            srt_content.append(f"{start} --> {end}"+"\n")
             srt_content.append(i.text + "\n")
             srt_content.append("\n")
         if fp is None:
             t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             file_path=os.path.join(current_path,"SAVAdata","output",f"{t}.srt")
         else:
-            file_path=fp
+            file_path=fp        
+        os.makedirs(os.path.dirname(file_path),exist_ok=True)
+        print(file_path)
         with open(file_path,"w",encoding="utf-8") as f:
             f.writelines(srt_content)
-        if open:
+        if open_explorer:
             os.system(f'explorer /select, {file_path}')

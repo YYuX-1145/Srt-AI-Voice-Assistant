@@ -23,13 +23,12 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
             return "未知的格式，请确保扩展名正确！"
-        with tqdm(total=len(subtitle_list), desc=f"正在翻译{in_file.name}"):
-            for i in subtitle_list:
-                translated_text = TRANSLATORS[translator].api(i.text, language, *args)
-                if translated_text is not None:
-                    i.text = translated_text
-                else:
-                    return "出错，翻译终止"
+        for i in tqdm(subtitle_list,total=len(subtitle_list), desc=f"正在翻译{os.path.basename(in_file.name)}"):
+            translated_text = TRANSLATORS[translator].api(i.text, language, *args)
+            if translated_text is not None:
+                i.text = translated_text
+            else:
+                return "出错，翻译终止"
         subtitle_list.export(fp=os.path.join(output_dir, f"{os.path.basename(in_file.name)[:-4]}_translated_to_{language}.srt"),open_explorer=False,raw=True)
     os.system(f'explorer {output_dir}')
     return "ok"

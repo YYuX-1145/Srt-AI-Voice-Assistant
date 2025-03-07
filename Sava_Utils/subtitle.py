@@ -225,7 +225,7 @@ class Subtitles:
         srt_content = []
         for i in self.subtitles:
             idx+=1
-            if raw:
+            if raw or i.real_st==0 or i.real_et==0:
                 if SRT_TIME_Pattern.fullmatch(i.start_time_raw) and SRT_TIME_Pattern.fullmatch(i.end_time_raw):
                     start = i.start_time_raw
                     end = i.end_time_raw
@@ -245,7 +245,6 @@ class Subtitles:
         else:
             file_path=fp        
         os.makedirs(os.path.dirname(file_path),exist_ok=True)
-        print(file_path)
         with open(file_path,"w",encoding="utf-8") as f:
             f.writelines(srt_content)
         if open_explorer:

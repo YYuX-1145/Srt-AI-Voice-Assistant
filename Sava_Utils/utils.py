@@ -33,7 +33,7 @@ def cls_cache():
         logger.info("目前没有临时文件！")
         gr.Info("目前没有临时文件！")
 
-def run_command(command, dir):
+def run_command(command, dir=current_path):
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
     logger.info(f"执行命令:" + command)

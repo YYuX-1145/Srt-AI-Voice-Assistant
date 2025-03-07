@@ -110,7 +110,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
         raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
     sr, audio = subtitle_list.audio_join(sr=sr)
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
-    sf.write(os.path.join(current_path, "SAVAdata", "output", f"{t}.wav"), audio, sr)
+    #sf.write(os.path.join(current_path, "SAVAdata", "output", f"{t}.wav"), audio, sr)
     t2 = time.time()
     m, s = divmod(t2 - t1, 60)
     use_time = "%02d:%02d" % (m, s)
@@ -140,7 +140,7 @@ def generate_preprocess(*args,project=None):
 def gen_multispeaker(subtitles:Subtitles,max_workers):
     if len(subtitles)==0 or subtitles is None:
         gr.Info("当前没有字幕")
-        return None, *load_page(Subtitles()), Subtitles()
+        return None, *load_page(Subtitles())
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
             subtitles.speakers.pop(key)
@@ -201,7 +201,7 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
             raise gr.Error("单一说话人的全部语音合成失败了！")
     audio=subtitles.audio_join()
     gr.Info("合成完毕！")
-    return audio,*load_page(subtitles),subtitles
+    return audio,*load_page(subtitles)
 
 
 def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
@@ -349,7 +349,7 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
-                        gen_multispeaker_btn = gr.Button(value="生成多角色项目")
+                        create_multispeaker_btn = gr.Button(value="创建多角色项目")
                     with gr.Column():
                         with gr.TabItem("GPT-SoVITS"):
                             GSV_ARGS=GSV.getUI()                             
@@ -464,7 +464,7 @@ if __name__ == "__main__":
                                 del_spk_list_btn=gr.Button(value="🗑️", min_width=60, scale=0)
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
                                 start_gen_multispeaker_btn=gr.Button(value="生成多角色配音",variant="primary")
-                                start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows,STATE])
+                                start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows])
             with gr.TabItem("辅助功能"):
                 TRANSLATION_MODULE.UI()
             with gr.TabItem("外部扩展内容"):
@@ -486,7 +486,7 @@ if __name__ == "__main__":
                             gr.Markdown(value=Man.getInfo("issues"))
                         with gr.TabItem("使用指南"):
                             gr.Markdown(value=Man.getInfo("help"))       
-        gen_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
+        create_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(lambda *args:generate_preprocess(*args,project="bv2"),inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="mstts"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])

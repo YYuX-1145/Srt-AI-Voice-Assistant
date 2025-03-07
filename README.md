@@ -1,4 +1,3 @@
-readme = """
 # Srt-AI-Voice-Assistant
 
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
@@ -42,4 +41,3 @@ readme = """
 2.自动检测项目路径  
 3.再次兼容api-v1(但部分参数调整和功能受限)，请在本程序内启动API服务以识别降级后的版本。  
 4.重大功能更新：支持重新抽卡合成  
-"""

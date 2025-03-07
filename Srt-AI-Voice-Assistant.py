@@ -302,10 +302,10 @@ def remake(*args):
 def recompose(page,subtitle_list:Subtitles):
     if subtitle_list is None or len(subtitle_list)==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
-        return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list),subtitle_list
+        return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list)
     audio=subtitle_list.audio_join(sr=None)
     gr.Info("重新合成完毕！")
-    return audio,"OK",*show_page(page,subtitle_list),subtitle_list
+    return audio,"OK",*show_page(page,subtitle_list)
 
 def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
@@ -419,7 +419,7 @@ if __name__ == "__main__":
                         page_slider.change(show_page,inputs=[page_slider,STATE],outputs=edit_rows)       
                         workloadbtn.click(load_work,inputs=[worklist],outputs=[STATE,page_slider,*edit_rows])
                         workrefbtn.click(getworklist,inputs=[],outputs=[worklist])
-                        recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows,STATE])
+                        recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
                         export_btn.click(lambda x:x.export(),inputs=[STATE])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value="全选",interactive=True,min_width=60)
@@ -429,13 +429,13 @@ if __name__ == "__main__":
                             clear_selection_btn=gr.Button(value="清除选择",interactive=True,min_width=60)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
                             apply_se_btn = gr.Button(value="应用时间", interactive=True,min_width=60)
-                            apply_se_btn.click(apply_start_end_time,inputs=[page_slider,STATE,*edit_real_index_list,*edit_start_end_time_list],outputs=[*edit_rows,STATE])
+                            apply_se_btn.click(apply_start_end_time,inputs=[page_slider,STATE,*edit_real_index_list,*edit_start_end_time_list],outputs=[*edit_rows])
                             copy_btn = gr.Button(value="复制", interactive=True,min_width=60)
-                            copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
+                            copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
                             merge_btn = gr.Button(value="合并", interactive=True,min_width=60)
-                            merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
+                            merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
                             delete_btn = gr.Button(value="删除", interactive=True,min_width=60)
-                            delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows,STATE])
+                            delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
                         with gr.Accordion(label="多角色配音"):
                             with gr.Row(equal_height=True):
                                 try:
@@ -448,7 +448,7 @@ if __name__ == "__main__":
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", min_width=60, scale=0)
-                                apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows,STATE])
+                                apply_btn.click(apply_spk,inputs=[speaker_list,page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,*edit_rows])
 
                                 save_spk_btn_bv2=gr.Button(value="💾", min_width=60, scale=0,visible=False)
                                 save_spk_btn_bv2.click(lambda *args:save_spk(*args,project="bv2"),inputs=[speaker_list,*BV2_ARGS],outputs=[speaker_list])

@@ -31,22 +31,16 @@ class Ollama(Traducteur):
 
     def api(self,text,target_lang,model_name,url):
         if model_name in [None,[],""]:
-            gr.Warning(f"翻译失败：必须指定模型")
-            return None
+            raise ValueError(f"必须指定模型")
         data_json = {
             "model": model_name,
-            "prompt": f"Translate the following text to {target_lang}, do not reply with irrelevant content:{text}",
+            "prompt": f"Directly translate the following content to {target_lang} WITHOUT replying any additional notes or questions:{text}",
             "stream": False,
         }
-        try:
-            response=requests.post(url=f'{url}/api/generate',json=data_json) 
-            response.raise_for_status()
-            return re.sub(r'<think>.*?</think>','',json.loads(response.content)["response"],flags=re.DOTALL).strip()
-            
-        except Exception as e:
-            logger.error(f"翻译失败：{str(e)}")
-            gr.Warning(f"翻译失败：{str(e)}")
-            return None
+        #print(data_json["prompt"])
+        response=requests.post(url=f'{url}/api/generate',json=data_json) 
+        response.raise_for_status()
+        return re.sub(r'<think>.*?</think>','',json.loads(response.content)["response"],flags=re.DOTALL).strip()
 
     def _UI(self,*inputs,output_info):
         from ..subtitle_translation import start_translation
@@ -54,7 +48,7 @@ class Ollama(Traducteur):
             gr.Markdown("⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️")
             gr.Markdown("⚠️不建议使用推理模型执行翻译任务！⚠️")
             self.select_model=gr.Dropdown(label="选择模型",choices=self.models,allow_custom_value=True)
-            self.api_url=gr.Text(value="http://localhost:11434",interactive=True,max_lines=1) 
+            self.api_url=gr.Text(value="http://localhost:11434",interactive=True,label="请求地址",max_lines=1) 
             with gr.Row():  
                 self.unload_model_btn=gr.Button(value="卸载模型")
                 self.unload_model_btn.click(self.unload_model,inputs=[self.select_model])

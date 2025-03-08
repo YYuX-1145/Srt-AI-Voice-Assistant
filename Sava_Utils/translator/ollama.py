@@ -34,7 +34,7 @@ class Ollama(Traducteur):
             raise ValueError(f"必须指定模型")
         data_json = {
             "model": model_name,
-            "prompt": f"Directly translate the following content to {target_lang} WITHOUT replying any additional notes or questions:{text}",
+            "prompt": f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}",
             "stream": False,
         }
         #print(data_json["prompt"])

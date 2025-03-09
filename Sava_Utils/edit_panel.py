@@ -77,7 +77,7 @@ def getspklist():
 def load_work(dirname):
     try:
         if dirname in ["",[],None]:
-            raise Exception("路径不得为空！")
+            raise Exception("不得为空！")
         with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
         return subtitles,*load_page(subtitles)

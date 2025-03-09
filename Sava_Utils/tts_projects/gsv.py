@@ -51,6 +51,7 @@ def temp_aux_ra(a:bytes):
             f.write(a)
     return dir
 
+
 class GSV(TTSProjet):
     def __init__(self):
         self.gsv_fallback=False
@@ -59,29 +60,37 @@ class GSV(TTSProjet):
         self.current_gpt_model=""
         super().__init__("gsv")
 
-    def api(self,port,**kwargs):
+
+    def update_cfg(self, config):
+        self.gsv_fallback=config.gsv_fallback
+
+
+    def api(self,port,artts_name,**kwargs):
         try:
-            data_json = kwargs
-            API_URL = f"http://127.0.0.1:{port}/tts"
-            if self.gsv_fallback:
-                data_json = {
-                "refer_wav_path": kwargs["ref_audio_path"],
-                "prompt_text": kwargs["prompt_text"],
-                "prompt_language": kwargs["prompt_lang"],
-                "text": kwargs["text"],
-                "text_language": kwargs["text_lang"],
-                "top_k": kwargs["top_k"],
-                "top_p": kwargs["top_p"],
-                "temperature": kwargs["temperature"],
-                "speed": kwargs["speed_factor"],
-                }
-                API_URL = f"http://127.0.0.1:{port}/"
-            # print(data_json)
+            if artts_name=="GPT_SoVITS":
+                data_json = kwargs
+                API_URL = f"http://127.0.0.1:{port}/tts"
+                if self.gsv_fallback:
+                    data_json = {
+                    "refer_wav_path": kwargs["ref_audio_path"],
+                    "prompt_text": kwargs["prompt_text"],
+                    "prompt_language": kwargs["prompt_lang"],
+                    "text": kwargs["text"],
+                    "text_language": kwargs["text_lang"],
+                    "top_k": kwargs["top_k"],
+                    "top_p": kwargs["top_p"],
+                    "temperature": kwargs["temperature"],
+                    "speed": kwargs["speed_factor"],
+                    }
+                    API_URL = f"http://127.0.0.1:{port}/"
+                # print(data_json)
+            else:
+                raise
             response = requests.post(url=API_URL, json=data_json)
             response.raise_for_status()
             return response.content
         except Exception as e:
-            err = f"GPT-SoVITS推理发生错误，请检查API服务是否正确运行。报错内容: {e}  "
+            err = f"推理发生错误，请检查API服务是否正确运行。报错内容: {e}  "
             try:
                 err+=f"返回信息：{response.json()}"
             except:
@@ -90,10 +99,11 @@ class GSV(TTSProjet):
             return None
 
     def save_action(self, *args, text: str = None):
-        text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        artts_proj,text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
         port = positive_int(port)[0]
         audio = self.api(
             port,
+            artts_name=artts_proj,
             text=text,
             text_lang=text_language,  ###language->lang
             ref_audio_path=refer_wav_path,  # ref
@@ -118,7 +128,8 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="Language",interactive=True,allow_custom_value=False)
+        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CozyVoice2"],value="GPT_SoVITS")
+        self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")
             self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple",type="binary")
@@ -130,8 +141,9 @@ class GSV(TTSProjet):
             self.gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
             self.switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
         with gr.Row():
-            self.sampling_rate2=gr.Number(label="采样率",value=32000,visible=True,interactive=True)
+            self.sampling_rate2=gr.Number(label="采样率，0=自动",value=0,visible=True,interactive=True)
             self.api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
+        self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 0,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
         with gr.Accordion("高级合成参数",open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
             self.batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
@@ -171,6 +183,7 @@ class GSV(TTSProjet):
         self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
         GSV_ARGS = [
             self.sampling_rate2,
+            self.choose_ar_tts,
             self.language2,
             self.api_port2,
             self.refer_audio,
@@ -193,14 +206,14 @@ class GSV(TTSProjet):
         return GSV_ARGS
 
     def arg_filter(self,*args):
-        in_file,fps,offset,max_workers,sr,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
+        in_file,fps,offset,max_workers,sr,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         if refer_audio is None:
             gr.Warning("你必须指定参考音频")
             raise Exception("你必须指定参考音频")
         refer_audio_path=temp_ra(refer_audio)
         aux_ref_audio_path=[temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []      
-        pargs=(dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])
-        kwargs={'in_file':in_file,'sr':sr,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
+        pargs=(artts_proj,dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])
+        kwargs={'in_file':in_file,'sr':sr if sr!=0 else None,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
         return pargs,kwargs
 
     def load_preset(self,name,port):

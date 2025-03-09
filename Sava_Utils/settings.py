@@ -59,6 +59,7 @@ class Settings:
         bv2_pydir: str = "",
         bv2_dir: str = "",
         bv2_args: str = "",
+        gsv_fallback:bool=False,
         gsv_pydir: str = "",        
         gsv_dir: str = "",        
         gsv_args: str = "",
@@ -93,6 +94,7 @@ class Settings:
             else:
                 self.bv2_pydir = ""
 
+        self.gsv_fallback=gsv_fallback
         if gsv_pydir != "":
             if os.path.exists(gsv_pydir):
                 self.gsv_pydir = os.path.abspath(gsv_pydir)
@@ -218,6 +220,7 @@ class Settings_UI():
             self.bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=Sava_Utils.config.bv2_args)
         with gr.Group():
             gr.Markdown(value="GSV")
+            self.gsv_fallback=gr.Checkbox(value=False,label="使用api_v1而不是v2",interactive=True)
             self.gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=Sava_Utils.config.gsv_pydir)
             self.gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.gsv_dir)
             self.gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=Sava_Utils.config.gsv_args)
@@ -242,6 +245,7 @@ class Settings_UI():
             self.bv2_pydir_input,
             self.bv2_dir_input,
             self.bv2_args,
+            self.gsv_fallback,
             self.gsv_pydir_input,
             self.gsv_dir_input,
             self.gsv_args,

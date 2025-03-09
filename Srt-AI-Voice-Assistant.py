@@ -232,19 +232,16 @@ def start_hiyoriui():
 
 def start_gsv():
     if Sava_Utils.config.gsv_pydir == "":
-        gr.Warning("请前往设置页面指定环境路径并保存!")
-        return "请前往设置页面指定环境路径并保存!"
-    if os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, "api_v2.py")):
-        apath="api_v2.py"
-        GSV.gsv_fallback=False
+        gr.Warning("请前往设置页面指定GSV环境路径并保存!")
+        return "请前往设置页面指定GSV环境路径并保存!"
+    if Sava_Utils.config.gsv_fallback:
+        apath="api.py"    
+        gr.Info("api降级至v1，功能受限。")
+        logger.warning("api降级至v1，功能受限。")
     else:
-        apath="api.py"
-        GSV.gsv_fallback=True
-        assert os.path.exists(
-            os.path.join(Sava_Utils.config.gsv_dir, "api.py")
-        ), "api文件丢失？？？"
-        gr.Warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
-        logger.warning("api_v2不存在，降级至v1。可能导致兼容问题并且部分功能无法使用。")
+        apath="api_v2.py"
+    if not os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, apath)):
+        raise gr.Error("api文件不存在？？？")
 
     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
     run_command(command=command, dir=Sava_Utils.config.gsv_dir)
@@ -351,7 +348,7 @@ if __name__ == "__main__":
                         textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
                         create_multispeaker_btn = gr.Button(value="创建多角色项目")
                     with gr.Column():
-                        with gr.TabItem("GPT-SoVITS"):
+                        with gr.TabItem("AR-TTS"):
                             GSV_ARGS=GSV.getUI()                             
                         with gr.TabItem("Bert-VITS2-HiyoriUI"):
                             BV2_ARGS=BV2.getUI() 

@@ -25,7 +25,7 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
             gr.Warning("未知的格式，请确保扩展名正确！")
             return "未知的格式，请确保扩展名正确！"
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 x=list(
                         tqdm(executor.map(lambda x:TRANSLATORS[translator].api(*x),[(i.text,language,*args) for i in subtitle_list]),
                             total=len(subtitle_list), 

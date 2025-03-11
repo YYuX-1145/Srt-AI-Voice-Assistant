@@ -54,6 +54,7 @@ class Settings:
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
         min_interval:float=0.3,
+        output_sr:int=0,
         num_edit_rows: int = 7,
         theme: str = "default",
         bv2_pydir: str = "",
@@ -72,6 +73,7 @@ class Settings:
         self.overwrite_workspace = overwrite_workspace
         self.clear_tmp = clear_tmp        
         self.min_interval = min_interval
+        self.output_sr=int(output_sr)
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
         self.ms_region = ms_region
@@ -209,7 +211,9 @@ class Settings_UI():
                 self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
             self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
             self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
-            self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+            with gr.Row():
+                self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+                self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',choices=['0','16000','22050','32000','44100','48000'])
             self.num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
             self.cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
@@ -240,6 +244,7 @@ class Settings_UI():
             self.overwrite_workspace,
             self.clear_cache,
             self.min_interval,
+            self.output_sr,
             self.num_edit_rows,
             self.theme,
             self.bv2_pydir_input,

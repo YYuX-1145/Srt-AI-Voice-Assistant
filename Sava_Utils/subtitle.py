@@ -146,7 +146,7 @@ class Subtitles:
         if len(fl) == 0:
             gr.Warning("还未合成任何字幕！")
             return None
-        if sr is None:
+        if sr in [None,0]:
             wav, sr = load_audio(os.path.join(abs_path, fl[0]),sr=sr) 
         self.sr=sr
         interval = int(Sava_Utils.config.min_interval*sr)

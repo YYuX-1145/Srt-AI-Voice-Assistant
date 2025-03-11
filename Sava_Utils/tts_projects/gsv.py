@@ -84,8 +84,26 @@ class GSV(TTSProjet):
                     }
                     API_URL = f"http://127.0.0.1:{port}/"
                 # print(data_json)
-            else:
-                raise
+            
+            else:#cozy
+                if kwargs["ref_audio_path"] == '':
+                    print("使用预训练音色模式...")
+                    data_json = {
+                    "spk_id": kwargs["spk_id"],
+                    "tts_text": kwargs["tts_text"],
+                    "speed": kwargs["speed_factor"],
+                    }
+                    API_URL = f"http://127.0.0.1:{port}/inference_sft"
+                else:
+                    print("使用3s克隆模式...")
+                    data_json = {
+                    "prompt_wav": open(kwargs["prompt_wav"],'rb'),
+                    "prompt_text": kwargs["prompt_text"],
+                    "tts_text": kwargs["tts_text"],
+                    "speed": kwargs["speed_factor"]
+                    }
+                    API_URL = f"http://127.0.0.1:{port}/inference_zero_shot"
+
             response = requests.post(url=API_URL, json=data_json)
             response.raise_for_status()
             return response.content
@@ -99,7 +117,7 @@ class GSV(TTSProjet):
             return None
 
     def save_action(self, *args, text: str = None):
-        artts_proj,text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method=args
+        artts_proj,text_language,port,refer_wav_path,aux_refer_wav_path,prompt_text,prompt_language,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         port = positive_int(port)[0]
         audio = self.api(
             port,
@@ -128,7 +146,7 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CozyVoice2"],value="GPT_SoVITS")
+        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CozyVoice"],value="GPT_SoVITS")
         self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")
@@ -141,9 +159,8 @@ class GSV(TTSProjet):
             self.gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
             self.switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
         with gr.Row():
-            self.sampling_rate2=gr.Number(label="采样率，0=自动",value=0,visible=True,interactive=True)
             self.api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
-        self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 0,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
+        self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
         with gr.Accordion("高级合成参数",open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
             self.batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
@@ -182,7 +199,6 @@ class GSV(TTSProjet):
         self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[]) 
         self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
         GSV_ARGS = [
-            self.sampling_rate2,
             self.choose_ar_tts,
             self.language2,
             self.api_port2,
@@ -205,16 +221,29 @@ class GSV(TTSProjet):
         ]
         return GSV_ARGS
 
+
     def arg_filter(self,*args):
-        in_file,fps,offset,max_workers,sr,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
-        if refer_audio is None:
-            gr.Warning("你必须指定参考音频")
-            raise Exception("你必须指定参考音频")
-        refer_audio_path=temp_ra(refer_audio)
+        in_file,fps,offset,max_workers,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
+        if artts_proj=="GPT_SoVITS":
+            if refer_audio is None:
+                gr.Warning("你必须指定参考音频")
+                raise Exception("你必须指定参考音频")
+        if refer_audio is not None:
+            refer_audio_path=temp_ra(refer_audio)
+        else:
+            refer_audio_path=''
         aux_ref_audio_path=[temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []      
-        pargs=(artts_proj,dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method])
-        kwargs={'in_file':in_file,'sr':sr if sr!=0 else None,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
+        pargs=(artts_proj,dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],gpt_path,sovits_path)
+        kwargs={'in_file':in_file,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
         return pargs,kwargs
+
+
+    def before_gen_action(self, *args, **kwargs):
+        if args[0]=='GPT_SoVITS':
+            force=kwargs.get("force",True)
+            notify=kwargs.get("notify",True)
+            self.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[2],force=force,notify=notify)
+
 
     def load_preset(self,name,port):
         try:
@@ -239,12 +268,13 @@ class GSV(TTSProjet):
             gr.Warning(f"加载失败:{e}")
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
-    def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True):
+    def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
         if not force and sovits_path==self.current_sovits_model and gpt_path==self.current_gpt_model:
-            gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
+            if notify:
+                gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
             return True
         if sovits_path=="" or gpt_path=="":
-            if force:
+            if force and notify:
                 gr.Info("请指定模型路径！")
             return False
         gr.Info("正在切换模型...")

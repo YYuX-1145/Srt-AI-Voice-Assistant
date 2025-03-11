@@ -60,5 +60,5 @@ class Custom(TTSProjet):
         if custom_api in [None,'None','']:
             gr.Info("请选择API配置文件！")
             raise Exception("请选择API配置文件！")
-        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
+        kwargs={'in_file':input_file,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
         return (custom_api,None), kwargs #

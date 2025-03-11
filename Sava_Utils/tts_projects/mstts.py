@@ -155,7 +155,7 @@ class MSTTS(TTSProjet):
             gr.Warning("请配置密钥!")
             raise Exception("请配置密钥")
         pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
-        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
+        kwargs={'in_file':input_file,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
         return pargs,kwargs
 
     def ms_refresh(self):  # language

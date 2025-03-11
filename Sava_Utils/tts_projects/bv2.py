@@ -87,13 +87,11 @@ class BV2(TTSProjet):
                     self.noise_scale_w = gr.Slider(minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise Scale W")
                     self.length_scale = gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Length Scale")
                     self.emo_text=gr.Textbox(label="text prompt",interactive=True,value="")
-                with gr.Row(): 
-                    self.sampling_rate1=gr.Number(label="采样率",value=44100,visible=True,interactive=True)                                
+                with gr.Row():                              
                     self.api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
         self.spkchoser.change(self.switch_spk,inputs=[self.spkchoser],outputs=[self.spkid,self.speaker_name])
         self.gen_btn1 = gr.Button("生成", variant="primary", visible=True)
         BV2_ARGS = [
-            self.sampling_rate1,
             self.language1,
             self.api_port1,
             self.model_id,
@@ -110,5 +108,5 @@ class BV2(TTSProjet):
     def arg_filter(self,*args):
         in_file,fps,offset,max_workers,sr,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         pargs=(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text)
-        kwargs={'in_file':in_file,'sr':sr,'fps':fps,'offset':offset,'proj':"bv2",'max_workers':max_workers}
+        kwargs={'in_file':in_file,'fps':fps,'offset':offset,'proj':"bv2",'max_workers':max_workers}
         return pargs,kwargs

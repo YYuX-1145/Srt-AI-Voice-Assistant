@@ -2,6 +2,8 @@ import numpy as np
 import soundfile as sf
 import soxr
 
+# obtained form librosa
+
 def to_mono(y):
     if y.ndim > 1:
         y = np.mean(y, axis=tuple(range(y.ndim - 1)))

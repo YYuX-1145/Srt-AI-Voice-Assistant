@@ -48,9 +48,9 @@ componments=[BV2,GSV,MSTTS,CUSTOM]
 def custom_api(text):
     raise "需要加载自定义API函数！"
 
-def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
+def generate(*args,proj="",in_file="",fps=30,offset=0,max_workers=1):
     t1 = time.time()
-    sr, fps = positive_int(sr, fps)
+    fps = positive_int(fps)[0]
     if in_file is None:
         gr.Info("请上传字幕文件！")
         return (
@@ -80,7 +80,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
     # subtitle_list.sort()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     subtitle_list.set_proj(proj)
-    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config)
+    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,fore=False)
     abs_dir = subtitle_list.get_abs_dir()
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         file_list = list(
@@ -108,7 +108,7 @@ def generate(*args,proj="",in_file="",sr=None,fps=30,offset=0,max_workers=1):
     if len(file_list) == 0:
         shutil.rmtree(abs_dir)
         raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
-    sr, audio = subtitle_list.audio_join(sr=sr)
+    sr, audio = subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     #sf.write(os.path.join(current_path, "SAVAdata", "output", f"{t}.wav"), audio, sr)
     t2 = time.time()
@@ -168,8 +168,6 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
             continue
         args=info["raw_data"]
         project=info["project"]
-        if project=='gsv':
-            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=True)
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
@@ -199,7 +197,7 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
         progress+=len(file_list)
         if len(file_list)==0:
             raise gr.Error("单一说话人的全部语音合成失败了！")
-    audio=subtitles.audio_join()
+    audio=subtitles.audio_join(sr=Sava_Utils.config.output_sr)
     gr.Info("合成完毕！")
     return audio,*load_page(subtitles)
 
@@ -270,9 +268,8 @@ def remake(*args):
             return fp, *show_page(page, subtitle_list)
         args=info["raw_data"]
         proj=info["project"]
-        if proj=='gsv':
-            GSV.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[6],force=False)
         args, kwargs = Projet_dict[proj].arg_filter(*args)
+        Projet_dict[proj].before_gen_action(*args,notify=False,force=True)
     else:
         if subtitle_list.proj is None:
             gr.Info("使用多角色合成时，必须指定说话人！")
@@ -284,7 +281,7 @@ def remake(*args):
         except Exception as e:
             # print(e)
             return fp,*show_page(page,subtitle_list)   
-    Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config)
+    Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config,notify=False,force=False)
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.get_abs_dir(),subid=subtitle_list[int(idx)].index)
     if fp is not None:
@@ -300,15 +297,15 @@ def recompose(page,subtitle_list:Subtitles):
     if subtitle_list is None or len(subtitle_list)==0:
         gr.Info("上次生成未成功，请先完成生成流程！")
         return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list)
-    audio=subtitle_list.audio_join(sr=None)
+    audio=subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
     gr.Info("重新合成完毕！")
     return audio,"OK",*show_page(page,subtitle_list)
 
 def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
         gr.Info("请输入有效的名称！")
-        return getspklist()
-    args=[None, None, None, None, *args]
+        return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
+    args=[None, None, None,*args]
     # catch all arguments
     # process raw data before generating
     try:
@@ -319,7 +316,7 @@ def save_spk(name,*args,project):
         gr.Info(f"保存成功：{name}")
     except Exception as e:
         gr.Warning(str(e))
-        return getspklist()
+        return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
     return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))],value=name)
 
 if __name__ == "__main__":

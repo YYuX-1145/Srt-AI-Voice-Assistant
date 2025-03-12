@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-class Projet(ABC):
+class TTSProjet(ABC):
     _instances = {}    
 
     def __init__(self,name):

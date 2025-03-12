@@ -1,10 +1,10 @@
-from .base import Projet
+from . import TTSProjet
 import requests
 import gradio as gr
 from ..utils import positive_int
 from .. import logger
 
-class BV2(Projet):
+class BV2(TTSProjet):
     def __init__(self):
         super().__init__("bv2")
 
@@ -61,6 +61,17 @@ class BV2(Projet):
             audio = self.api(text=text,mid=mid,spk_name=None,sid=sid,lang=language,length=length_scale,noise=noise_scale,noisew=noise_scale_w,sdp=sdp_ratio,split=False,style_text=None,style_weight=0,port=port,emotion=emotion_text)
         return audio
 
+
+    def switch_spk(self,choice):
+        if choice == "输入id":
+            return gr.update(
+                label="说话人ID", value=0, visible=True, interactive=True
+            ), gr.update(label="说话人名称", visible=False, value="", interactive=True)
+        else:
+            return gr.update(
+                label="说话人ID", value=0, visible=False, interactive=True
+            ), gr.update(label="说话人名称", visible=True, value="", interactive=True)
+
     def _UI(self):
         with gr.Row():            
             with gr.Column():
@@ -76,12 +87,11 @@ class BV2(Projet):
                     self.noise_scale_w = gr.Slider(minimum=0.1, maximum=2, value=0.8, step=0.1, label="Noise Scale W")
                     self.length_scale = gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Length Scale")
                     self.emo_text=gr.Textbox(label="text prompt",interactive=True,value="")
-                with gr.Row(): 
-                    self.sampling_rate1=gr.Number(label="采样率",value=44100,visible=True,interactive=True)                                
+                with gr.Row():                              
                     self.api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
+        self.spkchoser.change(self.switch_spk,inputs=[self.spkchoser],outputs=[self.spkid,self.speaker_name])
         self.gen_btn1 = gr.Button("生成", variant="primary", visible=True)
         BV2_ARGS = [
-            self.sampling_rate1,
             self.language1,
             self.api_port1,
             self.model_id,
@@ -94,9 +104,9 @@ class BV2(Projet):
             self.emo_text,
         ]
         return BV2_ARGS
-    
+
     def arg_filter(self,*args):
-        in_file,fps,offset,max_workers,sr,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
+        in_file,fps,offset,max_workers,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         pargs=(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text)
-        kwargs={'in_file':in_file,'sr':sr,'fps':fps,'offset':offset,'proj':"bv2",'max_workers':max_workers}
+        kwargs={'in_file':in_file,'fps':fps,'offset':offset,'proj':"bv2",'max_workers':max_workers}
         return pargs,kwargs

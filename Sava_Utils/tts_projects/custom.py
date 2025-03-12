@@ -1,4 +1,4 @@
-from .base import Projet
+from . import TTSProjet
 import requests
 import gradio as gr
 from ..utils import positive_int
@@ -9,7 +9,7 @@ import os
 
 current_path=os.environ.get("current_path")
 
-class Custom(Projet):
+class Custom(TTSProjet):
     def __init__(self):
         super().__init__("bv2")
         self.custom_api_list = []
@@ -60,5 +60,5 @@ class Custom(Projet):
         if custom_api in [None,'None','']:
             gr.Info("请选择API配置文件！")
             raise Exception("请选择API配置文件！")
-        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
+        kwargs={'in_file':input_file,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
         return (custom_api,None), kwargs #

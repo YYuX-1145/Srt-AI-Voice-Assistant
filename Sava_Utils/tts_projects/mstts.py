@@ -1,4 +1,4 @@
-from .base import Projet
+from . import TTSProjet
 import os
 import re
 import json
@@ -9,7 +9,7 @@ from xml.etree import ElementTree
 
 current_path = os.environ.get("current_path")
 
-class MSTTS(Projet):
+class MSTTS(TTSProjet):
     def __init__(self):
         super().__init__("mstts")
         self.ms_access_token=None
@@ -155,7 +155,7 @@ class MSTTS(Projet):
             gr.Warning("请配置密钥!")
             raise Exception("请配置密钥")
         pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
-        kwargs={'in_file':input_file,'sr':None,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
+        kwargs={'in_file':input_file,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
         return pargs,kwargs
 
     def ms_refresh(self):  # language

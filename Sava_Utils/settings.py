@@ -49,15 +49,18 @@ gradio_hf_hub_themes = [
 class Settings:
     def __init__(
         self,
-        server_port: int = 5001,        
+        server_port: int = 0,
+        LAN_access:bool = False,        
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
-        min_interval:float=0.5,
+        min_interval:float=0.3,
+        output_sr:int=0,
         num_edit_rows: int = 7,
         theme: str = "default",
         bv2_pydir: str = "",
         bv2_dir: str = "",
         bv2_args: str = "",
+        gsv_fallback:bool=False,
         gsv_pydir: str = "",        
         gsv_dir: str = "",        
         gsv_args: str = "",
@@ -65,12 +68,15 @@ class Settings:
         ms_key: str = "",
         ms_lang_option: str="zh"
     ):
-        self.server_port = int(server_port)        
+        self.server_port = int(server_port)
+        self.LAN_access = LAN_access
         self.overwrite_workspace = overwrite_workspace
         self.clear_tmp = clear_tmp        
         self.min_interval = min_interval
+        self.output_sr=int(output_sr)
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
+        self.gsv_fallback=gsv_fallback
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
@@ -82,15 +88,12 @@ class Settings:
                 self.bv2_pydir = ""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if (
-                os.path.exists(os.path.join(current_path, "venv\\python.exe"))
-                and "VITS2" in current_path.upper()
-            ):
+            if (os.path.exists(os.path.join(current_path, "venv\\python.exe"))and "VITS2" in current_path.upper()):
                 self.bv2_pydir = os.path.join(current_path, "venv\\python.exe")
                 logger.info("已检测到Bert-VITS2环境")
             else:
                 self.bv2_pydir = ""
-
+        
         if gsv_pydir != "":
             if os.path.exists(gsv_pydir):
                 self.gsv_pydir = os.path.abspath(gsv_pydir)
@@ -98,10 +101,7 @@ class Settings:
                 self.gsv_pydir = ""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if (
-                os.path.exists(os.path.join(current_path, "runtime\\python.exe"))
-                and "GPT" in current_path.upper()
-            ):
+            if (os.path.exists(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper()):
                 self.gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
                 logger.info("已检测到GPT-SoVITS环境")
             else:
@@ -117,6 +117,9 @@ class Settings:
         if self.gsv_pydir != "":
             if gsv_dir == "":
                 self.gsv_dir = os.path.dirname(os.path.dirname(self.gsv_pydir))
+
+    def to_list(self):
+        return []
 
     def to_dict(self):
         return self.__dict__
@@ -200,10 +203,14 @@ class Settings_UI():
         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
         with gr.Group():
             gr.Markdown(value="通用设置")
-            self.server_port_set=gr.Number(label="本程序所使用的默认端口，重启生效。5001=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=5001)
+            with gr.Row():
+                self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。0=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=0,scale=3)
+                self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
             self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
             self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
-            self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+            with gr.Row():
+                self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+                self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',choices=['0','16000','22050','32000','44100','48000'])
             self.num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
             self.cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
@@ -214,6 +221,7 @@ class Settings_UI():
             self.bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=Sava_Utils.config.bv2_args)
         with gr.Group():
             gr.Markdown(value="GSV")
+            self.gsv_fallback=gr.Checkbox(value=False,label="使用api_v1而不是v2",interactive=True)
             self.gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=Sava_Utils.config.gsv_pydir)
             self.gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.gsv_dir)
             self.gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=Sava_Utils.config.gsv_args)
@@ -226,41 +234,27 @@ class Settings_UI():
         self.restart_btn = gr.Button(value="重启UI", variant="stop")
 
         self.cls_cache_btn.click(Sava_Utils.utils.cls_cache,inputs=[],outputs=[])
-        self.save_settings_btn.click(
-            self.save_settngs,
-            inputs=[
-                self.server_port_set,
-                self.overwrite_workspace,
-                self.clear_cache,
-                self.min_interval,
-                self.num_edit_rows,
-                self.theme,
-                self.bv2_pydir_input,
-                self.bv2_dir_input,
-                self.bv2_args,
-                self.gsv_pydir_input,
-                self.gsv_dir_input,
-                self.gsv_args,
-                self.ms_region,
-                self.ms_key,
-                self.ms_lang_option,
-            ],
-            outputs=[
-                self.server_port_set,
-                self.overwrite_workspace,
-                self.clear_cache,
-                self.min_interval,
-                self.num_edit_rows,
-                self.theme,
-                self.bv2_pydir_input,
-                self.bv2_dir_input,
-                self.bv2_args,
-                self.gsv_pydir_input,
-                self.gsv_dir_input,
-                self.gsv_args,
-                self.ms_region,
-                self.ms_key,
-                self.ms_lang_option,
-            ],
-        )
+
+        componments_list=[
+            self.server_port,
+            self.LAN_access,
+            self.overwrite_workspace,
+            self.clear_cache,
+            self.min_interval,
+            self.output_sr,
+            self.num_edit_rows,
+            self.theme,
+            self.bv2_pydir_input,
+            self.bv2_dir_input,
+            self.bv2_args,
+            self.gsv_fallback,
+            self.gsv_pydir_input,
+            self.gsv_dir_input,
+            self.gsv_args,
+            self.ms_region,
+            self.ms_key,
+            self.ms_lang_option,
+        ]
+
+        self.save_settings_btn.click(self.save_settngs,inputs=componments_list,outputs=componments_list)
         self.restart_btn.click(restart,[],[])

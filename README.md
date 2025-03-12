@@ -1,8 +1,9 @@
 # Srt-AI-Voice-Assistant
+### 本项目可利用多个AI-TTS为你的字幕或者是文本文件配音。并提供多种便捷的辅助功能。
 
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
-# 特性
+## 特性
 - ✅ 界面友好，本地运行，可局域网访问
 - ✅ 支持多个TTS项目：BV2,GSV,AzureTTS，以及可以自定义API!
 - ✅ 保存个性化设置和预设

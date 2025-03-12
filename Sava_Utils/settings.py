@@ -76,6 +76,7 @@ class Settings:
         self.output_sr=int(output_sr)
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
+        self.gsv_fallback=gsv_fallback
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
@@ -87,16 +88,12 @@ class Settings:
                 self.bv2_pydir = ""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if (
-                os.path.exists(os.path.join(current_path, "venv\\python.exe"))
-                and "VITS2" in current_path.upper()
-            ):
+            if (os.path.exists(os.path.join(current_path, "venv\\python.exe"))and "VITS2" in current_path.upper()):
                 self.bv2_pydir = os.path.join(current_path, "venv\\python.exe")
                 logger.info("已检测到Bert-VITS2环境")
             else:
                 self.bv2_pydir = ""
-
-        self.gsv_fallback=gsv_fallback
+        
         if gsv_pydir != "":
             if os.path.exists(gsv_pydir):
                 self.gsv_pydir = os.path.abspath(gsv_pydir)
@@ -104,10 +101,7 @@ class Settings:
                 self.gsv_pydir = ""
                 gr.Warning("错误：填写的路径不存在！")
         else:
-            if (
-                os.path.exists(os.path.join(current_path, "runtime\\python.exe"))
-                and "GPT" in current_path.upper()
-            ):
+            if (os.path.exists(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper()):
                 self.gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
                 logger.info("已检测到GPT-SoVITS环境")
             else:
@@ -123,6 +117,9 @@ class Settings:
         if self.gsv_pydir != "":
             if gsv_dir == "":
                 self.gsv_dir = os.path.dirname(os.path.dirname(self.gsv_pydir))
+
+    def to_list(self):
+        return []
 
     def to_dict(self):
         return self.__dict__

@@ -36,7 +36,7 @@ class WAV2SRT():
                                 self.wav2srt_send2main=gr.Button(value="发送到主页面",variant="secondary",interactive=True)
                                 self.wav2srt_send2main.click(send,inputs=[self.wav2srt_last_output],outputs=[file_main])
                                 self.wav2srt_send2tr=gr.Button(value="发送到翻译",variant="secondary",interactive=True)
-                                self.wav2srt_send2tr.click(send,inputs=[self.wav2srt_last_output],outputs=[file_tr])
+                                self.wav2srt_send2tr.click(lambda x:send(x,list=True),inputs=[self.wav2srt_last_output],outputs=[file_tr])
                                 self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_last_output])
                             with gr.Column():
                                 gr.Markdown("""
@@ -61,8 +61,10 @@ class WAV2SRT():
         gr.Info("已打开新的处理窗口")
         return out_dir
 
-def send(fp):
+def send(fp,list=False):
      if os.path.isfile(fp):
+          if list:
+               return [fp]
           return fp
      else:
           gr.Info("输出文件不存在！")

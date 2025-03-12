@@ -9,6 +9,7 @@ import soundfile as sf
 import time
 import json
 import wave
+import shutil
 import io
 
 current_path=os.environ.get("current_path")
@@ -88,7 +89,8 @@ class GSV(TTSProjet):
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content          
-            else:#cosy2
+            else:
+                #cosy2
                 files=None
                 if kwargs["ref_audio_path"] == '':
                     print("使用预训练音色模式...")
@@ -161,7 +163,7 @@ class GSV(TTSProjet):
             self.refer_audio=gr.Audio(label="主参考音频")
             self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple",type="binary")
         with gr.Row():
-            self.refer_text=gr.Textbox(label="参考音频文本",value="",placeholder="不填视为开启无参考文本模式，建议搭配微调的模型")
+            self.refer_text=gr.Textbox(label="参考音频文本",value="",placeholder="参考音频文本|Cosy预训练音色")
             self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
         with gr.Accordion("模型切换",open=False):
             self.sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
@@ -185,8 +187,11 @@ class GSV(TTSProjet):
             self.choose_presets = gr.Dropdown(label="",value="None",choices=self.presets_list,interactive=True,allow_custom_value=True,)
             self.desc_presets = gr.Textbox(label="", placeholder="描述信息，可选", interactive=True)
             with gr.Row():
-                self.save_presets_btn = gr.Button(value="保存预设", variant="primary")
-                self.refresh_presets_btn = gr.Button(value="刷新", variant="secondary")
+                self.save_presets_btn = gr.Button(value="💾", variant="primary", min_width=60)
+                self.refresh_presets_btn = gr.Button(value="🔄️", variant="secondary", min_width=60)
+                self.del_preset_btn = gr.Button(value="🗑️", variant="stop", min_width=60)
+                self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])        
+                self.del_preset_btn.click(self.del_preset,inputs=[self.choose_presets],outputs=[self.choose_presets]) 
             self.save_presets_btn.click(
                 self.save_preset,
                 inputs=[
@@ -200,13 +205,11 @@ class GSV(TTSProjet):
                     self.sovits_path,
                     self.gpt_path,
                 ],
-                outputs=[],
+                outputs=[self.choose_presets],
             )
         with gr.Row():
             self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)    
-
-        self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])
-        self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[]) 
+        self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[])
         self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.choose_ar_tts,self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
         GSV_ARGS = [
             self.choose_ar_tts,
@@ -293,9 +296,10 @@ class GSV(TTSProjet):
             with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False) 
             time.sleep(0.1)
-            gr.Info("预设保存成功")
+            gr.Info(f"预设保存成功:{name}")
         except Exception as e:
             gr.Warning(f"出错：{e}")
+        return self.refresh_presets_list(reset=False)
 
 
     def load_preset(self,name,port):
@@ -370,7 +374,18 @@ class GSV(TTSProjet):
             logger.error(err)
             return False
 
-    def refresh_presets_list(self):
+    def del_preset(self,name):
+        try:
+            if name not in ['',None,"None"]:
+                shutil.rmtree(os.path.join(current_path,"SAVAdata","presets",name))
+                gr.Info(f"删除成功:{name}")
+            else:
+                gr.Info(f"请选择一个有效的预设")
+        except Exception as e:
+            gr.Warning(f"删除失败:{str(e)}")
+        return self.refresh_presets_list()
+
+    def refresh_presets_list(self,reset=True):
         self.presets_list=['None']
         try:
             preset_dir=os.path.join(current_path,"SAVAdata","presets")
@@ -384,5 +399,8 @@ class GSV(TTSProjet):
             logger.error(err)
             gr.Warning(err)
         time.sleep(0.1)
-        return gr.update(value="None", choices=self.presets_list)
+        if reset:
+            return gr.update(value="None", choices=self.presets_list)
+        else:
+            return gr.update(choices=self.presets_list)
 

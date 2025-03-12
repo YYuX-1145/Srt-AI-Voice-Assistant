@@ -152,13 +152,12 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
     for i in subtitles:
         tasks[i.speaker].append(i)
     for key in tasks.keys():
-        if subtitles.proj is None and key is None and len(tasks[None])>0 and subtitles.default_speaker is not None:
-            print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
-        else:
-            continue
-
+        if subtitles.proj is None and key is None:
+            if subtitles.default_speaker is not None and len(tasks[None])>0:
+                print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
+            else:
+                continue
         spk = key if key is not None else subtitles.default_speaker
-
         try:
             with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
                 info = pickle.load(f) 
@@ -281,7 +280,7 @@ def remake(*args):
         except Exception as e:
             # print(e)
             return fp,*show_page(page,subtitle_list)   
-    Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config,notify=False,force=False)
+        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config,notify=False,force=False)
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.get_abs_dir(),subid=subtitle_list[int(idx)].index)
     if fp is not None:
@@ -305,7 +304,7 @@ def save_spk(name,*args,project):
     if name in ["",[],None,'None']:
         gr.Info("请输入有效的名称！")
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
-    args=[None, None, None,*args]
+    args=[None, None, None, None,*args]
     # catch all arguments
     # process raw data before generating
     try:

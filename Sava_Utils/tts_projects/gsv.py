@@ -8,6 +8,8 @@ import hashlib
 import soundfile as sf
 import time
 import json
+import wave
+import io
 
 current_path=os.environ.get("current_path")
 
@@ -83,30 +85,37 @@ class GSV(TTSProjet):
                     "speed": kwargs["speed_factor"],
                     }
                     API_URL = f"http://127.0.0.1:{port}/"
-                # print(data_json)
-            
-            else:#cozy
+                response = requests.post(url=API_URL, json=data_json)
+                response.raise_for_status()
+                return response.content          
+            else:#cozy2
+                files=None
                 if kwargs["ref_audio_path"] == '':
                     print("使用预训练音色模式...")
                     data_json = {
                     "spk_id": kwargs["spk_id"],
-                    "tts_text": kwargs["tts_text"],
+                    "tts_text": kwargs["text"],
                     "speed": kwargs["speed_factor"],
                     }
                     API_URL = f"http://127.0.0.1:{port}/inference_sft"
                 else:
                     print("使用3s克隆模式...")
                     data_json = {
-                    "prompt_wav": open(kwargs["prompt_wav"],'rb'),
                     "prompt_text": kwargs["prompt_text"],
-                    "tts_text": kwargs["tts_text"],
+                    "tts_text": kwargs["text"],
                     "speed": kwargs["speed_factor"]
                     }
                     API_URL = f"http://127.0.0.1:{port}/inference_zero_shot"
-
-            response = requests.post(url=API_URL, json=data_json)
-            response.raise_for_status()
-            return response.content
+                    files = [('prompt_wav', ('prompt_wav', open(kwargs["ref_audio_path"],'rb'), 'application/octet-stream'))]
+                response = requests.request("GET", url=API_URL, data=data_json, files=files,stream=False)
+                response.raise_for_status()
+                wav_buffer = io.BytesIO()
+                with wave.open(wav_buffer, "wb") as wav_file:
+                    wav_file.setnchannels(1)
+                    wav_file.setsampwidth(2)
+                    wav_file.setframerate(24000)#cozy api does not provide sr.
+                    wav_file.writeframes(response.content) 
+                return wav_buffer.getvalue()
         except Exception as e:
             err = f"推理发生错误，请检查API服务是否正确运行。报错内容: {e}  "
             try:

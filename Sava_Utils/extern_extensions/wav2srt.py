@@ -13,7 +13,7 @@ class WAV2SRT():
     def UI(self,file_main,file_tr):
         if not self.ui:
              self.ui=True
-             self._UI(file_main,file_tr)
+             return self._UI(file_main,file_tr)
         else:
              raise "err"
     def _UI(self,file_main,file_tr):

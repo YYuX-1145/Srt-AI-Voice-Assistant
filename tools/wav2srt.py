@@ -115,9 +115,13 @@ def transcribe(audio_path):
 
     if args.output_dir is None:
         savepath=os.path.join(current_directory,"output.srt")
-    else:
+    elif args.output_dir.endswith(".srt"):
         savepath=args.output_dir
-    os.makedirs(args.output_dir,exist_ok=True)
+        os.makedirs(os.path.dirname(args.output_dir),exist_ok=True)
+    else:        
+        savepath=f"{os.path.join(args.output_dir,os.path.basename(input.name))}.srt"
+        os.makedirs(args.output_dir,exist_ok=True)
+
     with open(savepath,"w",encoding="utf-8") as f:
         f.writelines(srt_content)
     os.system(f'explorer /select, {savepath}')

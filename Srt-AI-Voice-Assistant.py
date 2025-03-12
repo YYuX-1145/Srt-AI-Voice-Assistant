@@ -152,8 +152,8 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
     for i in subtitles:
         tasks[i.speaker].append(i)
     for key in tasks.keys():
-        if subtitles.proj is None and key is None:
-            if subtitles.default_speaker is not None and len(tasks[None])>0:
+        if key is None:
+            if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None])>0:
                 print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
             else:
                 continue
@@ -268,7 +268,7 @@ def remake(*args):
         args=info["raw_data"]
         proj=info["project"]
         args, kwargs = Projet_dict[proj].arg_filter(*args)
-        Projet_dict[proj].before_gen_action(*args,notify=False,force=True)
+        #Projet_dict[proj].before_gen_action(*args,notify=False,force=True)
     else:
         if subtitle_list.proj is None:
             gr.Info("使用多角色合成时，必须指定说话人！")
@@ -280,7 +280,7 @@ def remake(*args):
         except Exception as e:
             # print(e)
             return fp,*show_page(page,subtitle_list)   
-        Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config,notify=False,force=False)
+    Projet_dict[proj].before_gen_action(*args,config=Sava_Utils.config,notify=False,force=False)
     subtitle_list[int(idx)].text=s_txt
     fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.get_abs_dir(),subid=subtitle_list[int(idx)].index)
     if fp is not None:
@@ -474,8 +474,9 @@ if __name__ == "__main__":
                         SETTINGS=Sava_Utils.settings.Settings_UI(componments=componments)
                         SETTINGS.getUI()
                     with gr.Column():
-                        with gr.TabItem("简介和常见错误"):
+                        with gr.TabItem("简介"):
                             gr.Markdown(value=Man.getInfo("readme"))
+                        with gr.TabItem("常见错误"):
                             gr.Markdown(value=Man.getInfo("issues"))
                         with gr.TabItem("使用指南"):
                             gr.Markdown(value=Man.getInfo("help"))       

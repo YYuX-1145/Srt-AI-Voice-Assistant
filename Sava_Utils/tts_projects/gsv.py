@@ -329,7 +329,8 @@ class GSV(TTSProjet):
 
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
         if not force and sovits_path==self.current_sovits_model and gpt_path==self.current_gpt_model:
-            gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
+            if notify:
+                gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
             return True
         if sovits_path=="" or gpt_path=="":
             if force and notify:

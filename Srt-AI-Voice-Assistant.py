@@ -80,7 +80,7 @@ def generate(*args,proj="",in_file="",fps=30,offset=0,max_workers=1):
     # subtitle_list.sort()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     subtitle_list.set_proj(proj)
-    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,fore=False)
+    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,force=False)
     abs_dir = subtitle_list.get_abs_dir()
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         file_list = list(

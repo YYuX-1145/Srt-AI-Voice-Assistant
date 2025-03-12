@@ -88,7 +88,7 @@ class GSV(TTSProjet):
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content          
-            else:#cozy2
+            else:#cosy2
                 files=None
                 if kwargs["ref_audio_path"] == '':
                     print("使用预训练音色模式...")
@@ -113,7 +113,7 @@ class GSV(TTSProjet):
                 with wave.open(wav_buffer, "wb") as wav_file:
                     wav_file.setnchannels(1)
                     wav_file.setsampwidth(2)
-                    wav_file.setframerate(24000)#cozy api does not provide sr.
+                    wav_file.setframerate(24000)#cosy api does not provide sr.
                     wav_file.writeframes(response.content) 
                 return wav_buffer.getvalue()
         except Exception as e:
@@ -155,7 +155,7 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CozyVoice"],value="GPT_SoVITS")
+        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS")
         self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")
@@ -169,7 +169,7 @@ class GSV(TTSProjet):
             self.switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
         with gr.Row():
             self.api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
-        self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
+        #self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
         with gr.Accordion("高级合成参数",open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
             self.batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
@@ -191,6 +191,7 @@ class GSV(TTSProjet):
                 self.save_preset,
                 inputs=[
                     self.choose_presets,
+                    self.choose_ar_tts,
                     self.desc_presets,
                     self.refer_audio,
                     self.aux_ref_audio,
@@ -206,7 +207,7 @@ class GSV(TTSProjet):
 
         self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])
         self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[]) 
-        self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
+        self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.choose_ar_tts,self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
         GSV_ARGS = [
             self.choose_ar_tts,
             self.language2,
@@ -250,21 +251,66 @@ class GSV(TTSProjet):
     def before_gen_action(self, *args, **kwargs):
         if args[0]=='GPT_SoVITS':
             force=kwargs.get("force",True)
-            notify=kwargs.get("notify",True)
+            notify=kwargs.get("notify",False)
             self.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[2],force=force,notify=notify)
+
+
+    def save_preset(self,name,artts_name,description,ra,ara,rt,rl,sovits_path,gpt_path):
+        try:
+            if name=="None" or name=="":
+                gr.Info("请输入名称!")
+                return
+            if artts_name =='GPT_SoVITS' and ra is None:
+                gr.Info("请上传参考音频!")
+                return
+            dir=os.path.join(current_path,"SAVAdata","presets",name)
+            os.makedirs(dir,exist_ok=True)
+            idx=1
+            aux_list=[]
+            if ara not in [None,[]]:
+                for i in ara:
+                    try:
+                        with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
+                            f.write(i)             
+                        aux_list.append(f"aux_{idx}.wav")
+                        idx+=1
+                    except Exception as ex:
+                        print(ex)
+                        continue
+            data={"name":name,
+                "description":description,
+                "AR_TTS_Project_name":artts_name,
+                "reference_audio_path":os.path.join(dir,"reference_audio.wav") if ra is not None else None,
+                "reference_audio_text":rt,
+                "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
+                "reference_audio_lang":rl,
+                "sovits_path":sovits_path.strip('"'),
+                "gpt_path":gpt_path.strip('"')
+                }
+            if ra is not None:
+                sr,wav=ra
+                sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
+            with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False) 
+            time.sleep(0.1)
+            gr.Info("预设保存成功")
+        except Exception as e:
+            gr.Warning(f"出错：{e}")
 
 
     def load_preset(self,name,port):
         try:
             if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
-                return gr.update(),gr.update(),gr.update(label="",value="",placeholder="描述信息，可选",interactive=True),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+                return gr.update(),gr.update(),gr.update(),gr.update(label="",value="",placeholder="描述信息，可选",interactive=True),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
             data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
             if "auxiliary_audios" not in list(data.keys()):
                 data["auxiliary_audios"] = None
-            if data["sovits_path"] !="" and data["gpt_path"] != "":
+            if "AR_TTS_Project_name" not in list(data.keys()):
+                data["AR_TTS_Project_name"] = 'GPT_SoVITS'
+            if data["AR_TTS_Project_name"]=='GPT_SoVITS' and data["sovits_path"] !="" and data["gpt_path"] != "":
                 if not self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port,force=False):
                     gr.Warning("模型切换失败")
-            if not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
+            if data["reference_audio_path"] and not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
                 data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
             if data["auxiliary_audios"] is not None:                   
                 aux_audio=[os.path.join(current_path,"SAVAdata","presets",name,i) for i in data["auxiliary_audios"] if os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,i))]
@@ -272,15 +318,14 @@ class GSV(TTSProjet):
                     gr.Warning("辅助参考音频存在丢失！")
                 data["auxiliary_audios"]=aux_audio
             gr.Info("预设加载完毕")
-            return data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"]
+            return gr.update(value=data["AR_TTS_Project_name"]),data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"]
         except Exception as e:
             gr.Warning(f"加载失败:{e}")
-            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
         if not force and sovits_path==self.current_sovits_model and gpt_path==self.current_gpt_model:
-            if notify:
-                gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
+            gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
             return True
         if sovits_path=="" or gpt_path=="":
             if force and notify:
@@ -341,44 +386,3 @@ class GSV(TTSProjet):
         time.sleep(0.1)
         return gr.update(value="None", choices=self.presets_list)
 
-    def save_preset(self,name,description,ra,ara,rt,rl,sovits_path,gpt_path):
-        try:
-            if name=="None" or name=="":
-                gr.Info("请输入名称!")
-                # return "请输入名称"
-            if ra is None:
-                gr.Info("请上传参考音频!")
-                # return "请上传参考音频"
-            dir=os.path.join(current_path,"SAVAdata","presets",name)
-            os.makedirs(dir,exist_ok=True)
-            idx=1
-            aux_list=[]
-            if ara not in [None,[]]:
-                for i in ara:
-                    try:
-                        with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
-                            f.write(i)             
-                        aux_list.append(f"aux_{idx}.wav")
-                        idx+=1
-                    except Exception as ex:
-                        print(ex)
-                        continue
-            data={"name":name,
-                "description":description,
-                "reference_audio_path":os.path.join(dir,"reference_audio.wav"),
-                "reference_audio_text":rt,
-                "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
-                "reference_audio_lang":rl,
-                "sovits_path":sovits_path.strip('"'),
-                "gpt_path":gpt_path.strip('"')
-                }
-            sr,wav=ra
-            sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
-            with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False) 
-            time.sleep(0.1)
-            gr.Info("预设保存成功")
-            # return "预设保存成功"
-        except Exception as e:
-            gr.Warning(f"出错：{e}")
-            # return f"出错：{e}"

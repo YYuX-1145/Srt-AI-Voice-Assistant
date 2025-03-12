@@ -62,7 +62,7 @@ def resample(
 def load_audio(filepath, sr):
     y,sr_native=sf.read(filepath)
     y = to_mono(y)
-    if sr !=sr_native and sr is not None:
+    if sr !=sr_native and sr not in [None,0]:
         y = resample(y, orig_sr=sr_native, target_sr=sr,)
         return y,sr
     else:

@@ -106,7 +106,7 @@ class BV2(TTSProjet):
         return BV2_ARGS
 
     def arg_filter(self,*args):
-        in_file,fps,offset,max_workers,sr,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
+        in_file,fps,offset,max_workers,language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text=args
         pargs=(language,port,mid,spkid,speaker_name,sdp_ratio,noise_scale,noise_scale_w,length_scale,emo_text)
         kwargs={'in_file':in_file,'fps':fps,'offset':offset,'proj':"bv2",'max_workers':max_workers}
         return pargs,kwargs

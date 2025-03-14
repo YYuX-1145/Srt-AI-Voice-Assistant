@@ -15,7 +15,14 @@
 - ✅ 扩展功能：音视频字幕转录
 - ◻️ 界面多语言支持
 
+## 仅下载本体（打包版）
+* 当依赖冲突或无法正常安装时使用此版本
+* https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/releases
 
+## 下载配合GPT-SoVITS的整合包（HF）
+* 整合包内预装打包版本体，内置模型不删减，代码和官方仓库一致
+* 注意：包内自带的程序现在已经不是最新版本了，覆盖掉以完成更新  
+* https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main
 
 ## 重大的更新历史
 

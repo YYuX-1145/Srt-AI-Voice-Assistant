@@ -98,6 +98,7 @@ class Subtitle(Base_subtitle):
         self.copy_count+=1
         x.copy_count=0
         x.index=f"{self.index}-{self.copy_count}"
+        x.is_success=None
         return x
 
     def __str__(self) -> str:

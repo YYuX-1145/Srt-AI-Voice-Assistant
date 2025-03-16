@@ -483,7 +483,7 @@ if __name__ == "__main__":
         start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
         start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
 
-    app.queue().launch(
+    app.queue(concurrency_count=6).launch(
             share=args.share,
             server_port=server_port if server_port>0 else None,
             inbrowser=True,

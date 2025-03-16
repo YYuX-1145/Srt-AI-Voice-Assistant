@@ -59,8 +59,8 @@ class GSV(TTSProjet):
     def __init__(self):
         self.gsv_fallback=False
         self.presets_list=['None']
-        self.current_sovits_model=""
-        self.current_gpt_model=""
+        self.current_sovits_model=dict()
+        self.current_gpt_model=dict()
         super().__init__("gsv")
 
 
@@ -192,25 +192,21 @@ class GSV(TTSProjet):
                 self.del_preset_btn = gr.Button(value="🗑️", variant="stop", min_width=60)
                 self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])        
                 self.del_preset_btn.click(self.del_preset,inputs=[self.choose_presets],outputs=[self.choose_presets]) 
-            self.save_presets_btn.click(
-                self.save_preset,
-                inputs=[
-                    self.choose_presets,
+            preset_args=[self.choose_presets,
                     self.choose_ar_tts,
                     self.desc_presets,
-                    self.refer_audio,
-                    self.aux_ref_audio,
+                    self.api_port2,
+                    self.refer_audio,                    
                     self.refer_text,
                     self.refer_lang,
+                    self.aux_ref_audio,
                     self.sovits_path,
-                    self.gpt_path,
-                ],
-                outputs=[self.choose_presets],
-            )
+                    self.gpt_path]            
+            self.save_presets_btn.click(self.save_preset,inputs=preset_args,outputs=[self.choose_presets])
         with gr.Row():
             self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)    
         self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[])
-        self.choose_presets.change(self.load_preset,inputs=[self.choose_presets,self.api_port2],outputs=[self.choose_ar_tts,self.sovits_path,self.gpt_path,self.desc_presets,self.refer_audio,self.aux_ref_audio,self.refer_text,self.refer_lang])
+        self.choose_presets.change(self.load_preset,inputs=[self.choose_presets],outputs=preset_args[1:])
         GSV_ARGS = [
             self.choose_ar_tts,
             self.language2,
@@ -258,43 +254,16 @@ class GSV(TTSProjet):
             self.switch_gsvmodel(gpt_path=args[-2],sovits_path=args[-1],port=args[2],force=force,notify=notify)
 
 
-    def save_preset(self,name,artts_name,description,ra,ara,rt,rl,sovits_path,gpt_path):
+    def save_preset(self,name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path):
         try:
-            if name=="None" or name=="":
+            if name in ["None",None,"",[]]:
                 gr.Info("请输入名称!")
                 return
             if artts_name =='GPT_SoVITS' and ra is None:
                 gr.Info("请上传参考音频!")
                 return
-            dir=os.path.join(current_path,"SAVAdata","presets",name)
-            os.makedirs(dir,exist_ok=True)
-            idx=1
-            aux_list=[]
-            if ara not in [None,[]]:
-                for i in ara:
-                    try:
-                        with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
-                            f.write(i)             
-                        aux_list.append(f"aux_{idx}.wav")
-                        idx+=1
-                    except Exception as ex:
-                        print(ex)
-                        continue
-            data={"name":name,
-                "description":description,
-                "AR_TTS_Project_name":artts_name,
-                "reference_audio_path":os.path.join(dir,"reference_audio.wav") if ra is not None else None,
-                "reference_audio_text":rt,
-                "auxiliary_audios":aux_list if len(aux_list)!=0 else None,
-                "reference_audio_lang":rl,
-                "sovits_path":sovits_path.strip('"'),
-                "gpt_path":gpt_path.strip('"')
-                }
-            if ra is not None:
-                sr,wav=ra
-                sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
-            with open(os.path.join(dir,"info.json"), 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False) 
+            preset=ARPreset(name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path) 
+            preset.save()
             time.sleep(0.1)
             gr.Info(f"预设保存成功:{name}")
         except Exception as e:
@@ -302,33 +271,30 @@ class GSV(TTSProjet):
         return self.refresh_presets_list(reset=False)
 
 
-    def load_preset(self,name,port):
+    def load_preset(self,name):
         try:
-            if name=='None'or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
-                return gr.update(),gr.update(),gr.update(),gr.update(label="",value="",placeholder="描述信息，可选",interactive=True),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
-            data=json.load(open(os.path.join(current_path,"SAVAdata","presets",name,"info.json"), encoding="utf-8"))
-            if "auxiliary_audios" not in list(data.keys()):
-                data["auxiliary_audios"] = None
-            if "AR_TTS_Project_name" not in list(data.keys()):
-                data["AR_TTS_Project_name"] = 'GPT_SoVITS'
-            if data["AR_TTS_Project_name"]=='GPT_SoVITS' and data["sovits_path"] !="" and data["gpt_path"] != "":
-                if not self.switch_gsvmodel(sovits_path=data["sovits_path"],gpt_path=data["gpt_path"],port=port,force=False):
+            if name in ['None',None,"",[]] or not os.path.exists(os.path.join(current_path,"SAVAdata","presets",name)):
+                return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(label="",value="",placeholder="描述信息，可选",interactive=True),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+
+            dir=os.path.join(current_path,"SAVAdata","presets",name)
+            preset = ARPreset.from_dict(json.load(open(os.path.join(dir,"info.json"), encoding="utf-8")))
+
+            if preset.AR_TTS_Project_name=='GPT_SoVITS' and preset.sovits_path !="" and preset.gpt_path != "":
+                if not self.switch_gsvmodel(sovits_path=preset.sovits_path,gpt_path=preset.gpt_path,port=preset.port,force=False):
                     gr.Warning("模型切换失败")
-            if data["reference_audio_path"] and not os.path.exists(data["reference_audio_path"]) and os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")):
-                data["reference_audio_path"]=os.path.join(current_path,"SAVAdata","presets",name,"reference_audio.wav")
-            if data["auxiliary_audios"] is not None:                   
-                aux_audio=[os.path.join(current_path,"SAVAdata","presets",name,i) for i in data["auxiliary_audios"] if os.path.exists(os.path.join(current_path,"SAVAdata","presets",name,i))]
-                if len(aux_audio)!=len(data["auxiliary_audios"]):
-                    gr.Warning("辅助参考音频存在丢失！")
-                data["auxiliary_audios"]=aux_audio
+
             gr.Info("预设加载完毕")
-            return gr.update(value=data["AR_TTS_Project_name"]),data["sovits_path"],data["gpt_path"],data["description"],data["reference_audio_path"],data["auxiliary_audios"],data["reference_audio_text"],data["reference_audio_lang"]
+            return preset.to_list()[1:]
         except Exception as e:
             gr.Warning(f"加载失败:{e}")
-            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
+            return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
-        if not force and sovits_path==self.current_sovits_model and gpt_path==self.current_gpt_model:
+        if port not in list(self.current_sovits_model.keys()):
+            self.current_sovits_model[port]=None
+        if port not in list(self.current_gpt_model.keys()):
+            self.current_gpt_model[port]=None
+        if not force and sovits_path==self.current_sovits_model[port] and gpt_path==self.current_gpt_model[port]:
             if notify:
                 gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
             return True
@@ -360,8 +326,8 @@ class GSV(TTSProjet):
                 API_URL = f'http://127.0.0.1:{port}/set_sovits_weights'
                 response = requests.get(url=API_URL, params={"weights_path":data_json["sovits_model_path"]})
                 response.raise_for_status()
-            self.current_sovits_model = sovits_path
-            self.current_gpt_model = gpt_path
+            self.current_sovits_model[port] = sovits_path
+            self.current_gpt_model[port] = gpt_path
             gr.Info("模型已切换")
             logger.info(f"模型已切换：{data_json}")
             return True
@@ -405,3 +371,71 @@ class GSV(TTSProjet):
         else:
             return gr.update(choices=self.presets_list)
 
+class ARPreset:
+    def __init__(
+        self,
+        name:str="",
+        AR_TTS_Project_name:str='GPT_SoVITS',
+        description:str="",
+        port:int=9880,
+        reference_audio_path:tuple=None,        
+        reference_audio_text:str="",
+        reference_audio_lang:str="",
+        auxiliary_audios:list=[],
+        sovits_path:str="",
+        gpt_path:str=""
+    ):
+        self.name=name
+        self.AR_TTS_Project_name=AR_TTS_Project_name
+        self.description=description
+        self.port=int(port)
+        self.reference_audio_path=reference_audio_path
+        self.reference_audio_text=reference_audio_text
+        self.reference_audio_lang=reference_audio_lang
+        self.auxiliary_audios=auxiliary_audios
+        self.sovits_path=sovits_path.strip('"')
+        self.gpt_path=gpt_path.strip('"')
+
+
+    def to_list(self):
+        val=self.to_dict()
+        return [val[x] for x in list(val.keys())]
+
+    def to_dict(self):
+        return self.__dict__
+
+    def save(self):
+        dir=os.path.join(current_path,"SAVAdata","presets",self.name)
+        os.makedirs(dir, exist_ok=True)
+        if self.reference_audio_path is not None:
+            sr,wav=self.reference_audio_path
+            sf.write(os.path.join(dir,"reference_audio.wav"), wav, sr)
+            self.reference_audio_path="reference_audio.wav"
+        idx=1
+        aux_list=[]
+        if self.auxiliary_audios not in [None,[]]:
+            for i in self.auxiliary_audios:
+                try:
+                    with open(os.path.join(dir, f"aux_{idx}.wav"), "wb") as f:
+                        f.write(i)             
+                    aux_list.append(f"aux_{idx}.wav")
+                    idx+=1
+                except Exception as ex:
+                    print(ex)
+                    continue
+        self.auxiliary_audios=aux_list
+        dic = self.to_dict()
+        with open(os.path.join(current_path, "SAVAdata","presets",self.name,"info.json"), "w", encoding="utf-8") as f:
+            json.dump(dic, f, indent=2, ensure_ascii=False)
+
+    @classmethod
+    def from_dict(cls, dict):
+        x = cls(**dict)        
+        if x.reference_audio_path and os.path.exists(os.path.join(current_path,"SAVAdata","presets",x.name,"reference_audio.wav")):
+            x.reference_audio_path=os.path.join(current_path,"SAVAdata","presets",x.name,"reference_audio.wav")
+        if x.auxiliary_audios not in [None,[]]:                   
+            aux_audio=[os.path.join(current_path,"SAVAdata","presets",x.name,i) for i in x.auxiliary_audios if os.path.exists(os.path.join(current_path,"SAVAdata","presets",x.name,i))]
+            if len(aux_audio)!=len(x.auxiliary_audios):
+                gr.Warning("辅助参考音频存在丢失！")
+            x.auxiliary_audios=aux_audio
+        return x

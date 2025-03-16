@@ -42,7 +42,7 @@ class Ollama(Traducteur):
         response.raise_for_status()
         return re.sub(r'<think>.*?</think>','',json.loads(response.content)["response"],flags=re.DOTALL).strip()
 
-    def _UI(self,*inputs,output_info):
+    def _UI(self,*inputs,output_info,output_files):
         from ..subtitle_translation import start_translation
         with gr.Column():
             gr.Markdown("⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️")
@@ -55,4 +55,4 @@ class Ollama(Traducteur):
                 self.refresh_model_btn=gr.Button(value="刷新模型")
                 self.refresh_model_btn.click(self.get_models,inputs=[self.api_url],outputs=[self.select_model])
             self.translate_btn=gr.Button(value="开始翻译",variant="primary")
-            self.translate_btn.click(lambda *args:start_translation(*args,translator="ollama"),inputs=[*inputs,self.select_model,self.api_url],outputs=[output_info])
+            self.translate_btn.click(lambda *args:start_translation(*args,translator="ollama"),inputs=[*inputs,self.select_model,self.api_url],outputs=[output_info,output_files])

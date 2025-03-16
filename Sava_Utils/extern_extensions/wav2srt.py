@@ -34,7 +34,7 @@ class WAV2SRT():
                                 self.wav2srt_args=gr.Textbox(value="",label="其他参数",interactive=True)
                                 self.wav2srt_run=gr.Button(value="开始",variant="primary",interactive=True)
                                 self.wav2srt_send2main=gr.Button(value="发送到主页面",variant="secondary",interactive=True)
-                                self.wav2srt_send2main.click(send,inputs=[self.wav2srt_last_output],outputs=[file_main])
+                                self.wav2srt_send2main.click(lambda x:send(x,list=True),inputs=[self.wav2srt_last_output],outputs=[file_main])
                                 self.wav2srt_send2tr=gr.Button(value="发送到翻译",variant="secondary",interactive=True)
                                 self.wav2srt_send2tr.click(lambda x:send(x,list=True),inputs=[self.wav2srt_last_output],outputs=[file_tr])
                                 self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_last_output])

@@ -247,7 +247,7 @@ class GSV(TTSProjet):
             refer_audio_path=''
         aux_ref_audio_path=[temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []      
         pargs=(artts_proj,dict_language[language],port,refer_audio_path,aux_ref_audio_path,refer_text,dict_language[refer_lang],batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,cut_method[text_split_method],gpt_path,sovits_path)
-        kwargs={'in_file':in_file,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
+        kwargs={'in_files':in_file,'fps':fps,'offset':offset,'proj':"gsv",'max_workers':max_workers}
         return pargs,kwargs
 
 

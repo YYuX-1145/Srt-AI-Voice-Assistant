@@ -5,9 +5,10 @@ readme = """
 如遇到bug或者有什么建议，可以在 https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues 上反馈  
 
 ## 特性
-- ✅ 界面友好，本地运行，可局域网访问
-- ✅ 支持多个TTS项目：BV2,GSV,AzureTTS，以及可以自定义API!
+- ✅ 代码开源，界面友好，本地运行，可局域网访问
+- ✅ 支持多个TTS项目：BV2,GSV,CosyVoice2,AzureTTS，以及你可以自定义API!
 - ✅ 保存个性化设置和预设
+- ✅ 批量模式
 - ✅ 字幕编辑
 - ✅ 字幕批量翻译
 - ✅ 单句重新抽卡
@@ -27,6 +28,7 @@ readme = """
 2.字幕批量翻译  
 3.各项细节提升和bug修复  
 4.支持CosyVoice2(复用GSV的面板)
+5.（4.0.1）批量模式
 
 ### 250214更新：<br>
 1.支持读取历史工程  

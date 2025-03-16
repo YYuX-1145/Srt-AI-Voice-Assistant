@@ -39,9 +39,13 @@ def run_command(command, dir=current_path):
     logger.info(f"执行命令:" + command)
     time.sleep(0.1)
 
-def file_show(file):
-    if file is None:
-        return ""
+def file_show(files):
+    if files in [None,[]]:
+        return ""    
+    if len(files)>1:
+        return "<多个文件>"
+    else:
+        file=files[0]
     try:
         with open(file.name, "r", encoding="utf-8") as f:
             text = f.read()
@@ -122,10 +126,11 @@ def read_txt(filename):
     return subtitle_list
 
 
-def create_multi_speaker(in_file, fps, offset):
-    if in_file is None:
-        gr.Info("请上传字幕文件！")
+def create_multi_speaker(in_files, fps, offset):
+    if in_files in [[],None] or len(in_files)>1:
+        gr.Info("创建多角色配音工程只能上传有且只有一个文件！")
         return getworklist(), *load_page(Subtitles()), Subtitles()
+    in_file=in_files[0]
     if in_file.name[-4:].lower()==".csv":
         subtitle_list=read_prcsv(in_file.name,fps,offset)
     elif in_file.name[-4:].lower()==".srt":

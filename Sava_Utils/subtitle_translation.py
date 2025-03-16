@@ -14,6 +14,7 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
     if in_files is None:
         gr.Info("请上传字幕文件！")
         return "请上传字幕文件！"
+    output_list=[]
     for in_file in in_files:
         if in_file.name[-4:].lower() == ".csv":
             subtitle_list = read_prcsv(in_file.name, fps=30, offset=0)
@@ -33,14 +34,17 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
                             )
                         )
             for sub,txt in zip(subtitle_list,x):
-                sub.text=txt                
+                sub.text=txt      
+            output_path=os.path.join(output_dir, f"{os.path.basename(in_file.name)[:-4]}_translated_to_{language}.srt")
+            subtitle_list.export(fp=output_path,open_explorer=False,raw=True)
+            output_list.append(output_path)                          
         except Exception as e:
-            gr.Warning(f"翻译失败：{str(e)}")
-            return f"翻译失败：{str(e)}"
+            gr.Warning(f"{in_file.name}翻译失败：{str(e)}")
+            continue
 
-        subtitle_list.export(fp=os.path.join(output_dir, f"{os.path.basename(in_file.name)[:-4]}_translated_to_{language}.srt"),open_explorer=False,raw=True)
-    os.system(f'explorer {output_dir}')
-    return "ok"
+
+    #os.system(f'explorer {output_dir}')
+    return "ok" if len(output_list)==len(in_files) else "出现错误",output_list
 
 
 class Translation_module:
@@ -48,19 +52,22 @@ class Translation_module:
         self.ui = False
         self.menu = []
 
-    def UI(self):
+    def UI(self,*args):
         if not self.ui:
             self.ui = True
-            self._UI()
+            self._UI(*args)
         else:
             raise "err"
 
-    def _UI(self):
+    def _UI(self,file_main):
         with gr.TabItem("字幕翻译"):
             with gr.Row():
                 with gr.Column():
                     self.translation_upload = gr.File(label="上传字幕(可多个)",file_count="multiple",type="file",file_types=[".srt", ".csv", ".txt"])
                     self.result = gr.Text(interactive=False, value="", label="输出信息")
+                    self.translation_output=gr.File(label="文件输出",file_count="multiple",interactive=False)
+                    self.send_btn=gr.Button(value="发送至主页面",interactive=True)
+                    self.send_btn.click(lambda x:[i.name for i in x],inputs=[self.translation_output],outputs=[file_main])
                 with gr.Column():
                     self.translation_target_language = gr.Dropdown(label="选择目标语言",choices=LANGUAGE,value=LANGUAGE[1],interactive=True)
                     self.output_dir=gr.Text(value=os.path.join(current_path, "SAVAdata", "output"),label="输出路径",interactive=True,max_lines=1)
@@ -71,7 +78,7 @@ class Translation_module:
                         for i in TRANSLATORS.keys():
                             x = gr.Column(i, visible=v)
                             with x:
-                                TRANSLATORS[i].getUI(*Base_args,output_info=self.result)
+                                TRANSLATORS[i].getUI(*Base_args,output_info=self.result,output_files=self.translation_output)
                             v = False
                         self.menu.append(x)
                 self.translation_target_language.change(lambda x: [gr.update(visible= x==i ) for i in TRANSLATORS.keys()],inputs=[self.translator],outputs=self.menu)

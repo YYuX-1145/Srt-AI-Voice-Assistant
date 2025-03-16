@@ -76,7 +76,13 @@ class Settings:
         self.output_sr=int(output_sr)
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
+        self.bv2_pydir=bv2_pydir
+        self.bv2_dir=bv2_dir
+        self.bv2_args=bv2_args
         self.gsv_fallback=gsv_fallback
+        self.gsv_pydir=gsv_pydir    
+        self.gsv_dir=gsv_dir
+        self.gsv_args=gsv_args
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
@@ -107,30 +113,25 @@ class Settings:
             else:
                 self.gsv_pydir = ""
         ###################
-        self.bv2_dir = bv2_dir
-        self.gsv_dir = gsv_dir
-        self.bv2_args = bv2_args
-        self.gsv_args = gsv_args
-        if self.bv2_pydir != "":
-            if bv2_dir == "":
-                self.bv2_dir = os.path.dirname(os.path.dirname(self.bv2_pydir))
-        if self.gsv_pydir != "":
-            if gsv_dir == "":
-                self.gsv_dir = os.path.dirname(os.path.dirname(self.gsv_pydir))
+        if self.bv2_pydir != "" and bv2_dir == "":
+            self.bv2_dir = os.path.dirname(os.path.dirname(self.bv2_pydir))
+        if self.gsv_pydir != "" and gsv_dir == "":
+            self.gsv_dir = os.path.dirname(os.path.dirname(self.gsv_pydir))
 
     def to_list(self):
-        return []
+        val=self.to_dict()
+        return [val[x] for x in list(val.keys())]
 
     def to_dict(self):
         return self.__dict__
 
     def save(self):
-        dict = self.to_dict()
+        dic = self.to_dict()
         os.makedirs(os.path.join(current_path, "SAVAdata"), exist_ok=True)
         with open(
             os.path.join(current_path, "SAVAdata", "config.json"), "w", encoding="utf-8"
         ) as f:
-            json.dump(dict, f, indent=2, ensure_ascii=False)
+            json.dump(dic, f, indent=2, ensure_ascii=False)
 
     @classmethod
     def from_dict(cls, dict):
@@ -190,7 +191,7 @@ class Settings_UI():
             gr.Info("更改字幕栏数需要重启生效")
         logger.info("成功保存设置！")
         gr.Info("成功保存设置！")
-        return args
+        return Sava_Utils.config.to_list()
 
     def getUI(self):
         if not self.ui:
@@ -210,7 +211,7 @@ class Settings_UI():
             self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
             with gr.Row():
                 self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
-                self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',choices=['0','16000','22050','32000','44100','48000'])
+                self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',allow_custom_value=True,choices=['0','16000','22050','24000','32000','44100','48000'])
             self.num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
             self.cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")

@@ -61,22 +61,18 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
         )
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     for in_file in in_files:
-        if in_file.name[-4:].lower() == ".csv":
-            subtitle_list = read_prcsv(in_file.name, fps, offset)
-        elif in_file.name[-4:].lower() == ".srt":
-            subtitle_list = read_srt(in_file.name, offset)
-        elif in_file.name[-4:].lower() == ".txt":
-            subtitle_list = read_txt(in_file.name)
-        else:
-            gr.Warning("未知的格式，请确保扩展名正确！")
+        try:
+            subtitle_list = read_file(in_file.name, fps, offset)
+        except Exception as e:
+            what=str(e)
+            gr.Warning(what)
             return (
                 None,
-                "未知的格式，请确保扩展名正确！",
+                what,
                 getworklist(),
                 *load_page(Subtitles()),
                 Subtitles(),
             )
-        assert len(subtitle_list) != 0, "文件为空？？？"
         # subtitle_list.sort()
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)

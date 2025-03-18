@@ -46,6 +46,9 @@ class Base_subtitle:
             self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
             raise ValueError
+        #5h=5*60*60s=18000s
+        assert self.start_time < 18000,'字幕太长'
+        assert self.end_time < 18000,'字幕太长'
 
     def to_float_prcsv_time(self,time:str,fps:int):
         h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds

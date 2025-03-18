@@ -141,21 +141,30 @@ def read_txt(filename):
         idx+=1
     return subtitle_list
 
+def read_file(file_name, fps, offset):
+    if Sava_Utils.config.server_mode:
+        assert os.stat(file_name).st_size < 65536,"错误：文件过大"    #64KB
+    if file_name[-4:].lower() == ".csv":
+        subtitle_list = read_prcsv(file_name, fps, offset)
+    elif file_name[-4:].lower() == ".srt":
+        subtitle_list = read_srt(file_name, offset)
+    elif file_name[-4:].lower() == ".txt":
+        subtitle_list = read_txt(file_name)
+    else:
+        raise ValueError("未知的格式，请确保扩展名正确！")
+    assert len(subtitle_list) != 0, "文件为空？？？"
+    return subtitle_list
 
 def create_multi_speaker(in_files, fps, offset):
     if in_files in [[],None] or len(in_files)>1:
         gr.Info("创建多角色配音工程只能上传有且只有一个文件！")
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file=in_files[0]
-    if in_file.name[-4:].lower()==".csv":
-        subtitle_list=read_prcsv(in_file.name,fps,offset)
-    elif in_file.name[-4:].lower()==".srt":
-        subtitle_list=read_srt(in_file.name,offset)
-    elif in_file.name[-4:].lower()==".txt":
-        subtitle_list=read_txt(in_file.name)
-    else:
-        gr.Warning("未知的格式，请确保扩展名正确！")
-        return getworklist(),*load_page(Subtitles()),Subtitles()
-    assert len(subtitle_list) != 0, "文件为空？？？"
+    try:
+        subtitle_list = read_file(in_file.name, fps, offset)
+    except Exception as e:
+        what=str(e)
+        gr.Warning(what)
+        return getworklist(),*load_page(Subtitles()),Subtitles()    
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     return getworklist(),*load_page(subtitle_list), subtitle_list

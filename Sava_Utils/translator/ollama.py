@@ -47,7 +47,7 @@ class Ollama(Traducteur):
         with gr.Column():
             gr.Markdown("⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️")
             gr.Markdown("⚠️不建议使用推理模型执行翻译任务！⚠️")
-            self.select_model=gr.Dropdown(label="选择模型",choices=self.models,allow_custom_value=True)
+            self.select_model=gr.Dropdown(label="选择模型",choices=self.models,allow_custom_value=False)
             self.api_url=gr.Text(value="http://localhost:11434",interactive=True,label="请求地址",max_lines=1) 
             with gr.Row():  
                 self.unload_model_btn=gr.Button(value="卸载模型")

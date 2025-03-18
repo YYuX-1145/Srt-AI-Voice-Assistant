@@ -4,11 +4,12 @@ class TTSProjet(ABC):
 
     def __init__(self,name):
         self.name=name
+        self.server_mode=False
         self.args=[]
         self.ui=False        
 
     def update_cfg(self,config):
-        pass
+        self.server_mode=config.server_mode
 
     @abstractmethod
     def api(self,*args,**kwargs):

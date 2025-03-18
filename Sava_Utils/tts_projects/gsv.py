@@ -66,6 +66,7 @@ class GSV(TTSProjet):
 
     def update_cfg(self, config):
         self.gsv_fallback=config.gsv_fallback
+        self.server_mode=config.server_mode
 
 
     def api(self,port,artts_name,**kwargs):
@@ -256,6 +257,8 @@ class GSV(TTSProjet):
 
     def save_preset(self,name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path):
         try:
+            if self.server_mode:
+                raise RuntimeError("当前功能被禁止")
             if name in ["None",None,"",[]]:
                 gr.Info("请输入名称!")
                 return
@@ -290,6 +293,10 @@ class GSV(TTSProjet):
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
+        if self.server_mode:
+            if force and notify:
+                gr.Warning("当前功能被禁止")
+            return True
         if port not in list(self.current_sovits_model.keys()):
             self.current_sovits_model[port]=None
         if port not in list(self.current_gpt_model.keys()):
@@ -343,6 +350,8 @@ class GSV(TTSProjet):
 
     def del_preset(self,name):
         try:
+            if self.server_mode:
+                raise RuntimeError("当前功能被禁止")
             if name not in ['',None,"None"]:
                 shutil.rmtree(os.path.join(current_path,"SAVAdata","presets",name))
                 gr.Info(f"删除成功:{name}")

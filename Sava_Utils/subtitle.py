@@ -248,5 +248,6 @@ class Subtitles:
         os.makedirs(os.path.dirname(file_path),exist_ok=True)
         with open(file_path,"w",encoding="utf-8") as f:
             f.writelines(srt_content)
-        if open_explorer:
+        if open_explorer and not Sava_Utils.config.server_mode:
             os.system(f'explorer /select, {file_path}')
+        return [file_path]

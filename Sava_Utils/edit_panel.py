@@ -197,7 +197,9 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
 
 def del_spk(name):
     try:
-        assert name not in ["", "None", [],None],"不得为空"
+        if Sava_Utils.config.server_mode:
+            raise RuntimeError("当前功能被禁止")
+        assert name not in ["", "None", [],None],"不得为空"        
         os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
         gr.Info(f"删除：{name}")
     except Exception as e:

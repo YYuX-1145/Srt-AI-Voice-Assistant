@@ -53,6 +53,8 @@ class Settings:
         LAN_access:bool = False,        
         overwrite_workspace:bool = False,
         clear_tmp: bool = False,
+        concurrency_count: int = 2,
+        server_mode: bool = False,
         min_interval:float=0.3,
         output_sr:int=0,
         num_edit_rows: int = 7,
@@ -71,7 +73,9 @@ class Settings:
         self.server_port = int(server_port)
         self.LAN_access = LAN_access
         self.overwrite_workspace = overwrite_workspace
-        self.clear_tmp = clear_tmp        
+        self.clear_tmp = clear_tmp    
+        self.concurrency_count = int(concurrency_count)
+        self.server_mode = server_mode   
         self.min_interval = min_interval
         self.output_sr=int(output_sr)
         self.num_edit_rows = int(num_edit_rows)
@@ -178,13 +182,17 @@ class Settings_UI():
     def __init__(self,componments:list):
         self.componments=componments
         self.ui=False
+        self._apply_to_componments()
+
+    def _apply_to_componments(self):
+         for i in self.componments:
+            i.update_cfg(config=Sava_Utils.config)
 
     def save_settngs(self,*args):
         current_edit_rows = Sava_Utils.config.num_edit_rows
         Sava_Utils.config = Settings(*args)
         Sava_Utils.config.save()
-        for i in self.componments:
-            i.update_cfg(config=Sava_Utils.config)
+        self._apply_to_componments()
         if Sava_Utils.config.num_edit_rows != current_edit_rows:
             Sava_Utils.config.num_edit_rows = current_edit_rows
             logger.info("更改字幕栏数需要重启生效")
@@ -201,14 +209,21 @@ class Settings_UI():
             raise "ERR"
 
     def _UI(self):
+        if Sava_Utils.config.server_mode:
+            gr.Markdown("设置已被禁用")
+            return []
         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
         with gr.Group():
             gr.Markdown(value="通用设置")
             with gr.Row():
                 self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。0=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=0,scale=3)
                 self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
-            self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
-            self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
+            with gr.Row():
+                self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
+                self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
+            with gr.Row():
+                self.concurrency_count=gr.Number(label="可同时处理多少请求",value=Sava_Utils.config.concurrency_count,minimum=1,interactive=True)
+                self.server_mode=gr.Checkbox(label="服务模式，只能通过修改配置或启动参数开启",value=Sava_Utils.config.server_mode,interactive=False)
             with gr.Row():
                 self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
                 self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',allow_custom_value=True,choices=['0','16000','22050','24000','32000','44100','48000'])
@@ -241,6 +256,8 @@ class Settings_UI():
             self.LAN_access,
             self.overwrite_workspace,
             self.clear_cache,
+            self.concurrency_count,
+            self.server_mode,
             self.min_interval,
             self.output_sr,
             self.num_edit_rows,

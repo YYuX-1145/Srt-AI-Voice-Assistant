@@ -2,6 +2,7 @@ import gradio as gr
 import os
 import concurrent.futures
 from tqdm import tqdm
+import Sava_Utils
 from .utils import read_prcsv, read_srt, read_txt
 from .translator.ollama import Ollama
 
@@ -67,10 +68,10 @@ class Translation_module:
                     self.result = gr.Text(interactive=False, value="", label="输出信息")
                     self.translation_output=gr.File(label="文件输出",file_count="multiple",interactive=False)
                     self.send_btn=gr.Button(value="发送至主页面",interactive=True)
-                    self.send_btn.click(lambda x:[i.name for i in x],inputs=[self.translation_output],outputs=[file_main])
+                    self.send_btn.click(lambda x:[i.name for i in x] if x is not None else x,inputs=[self.translation_output],outputs=[file_main])
                 with gr.Column():
                     self.translation_target_language = gr.Dropdown(label="选择目标语言",choices=LANGUAGE,value=LANGUAGE[1],interactive=True)
-                    self.output_dir=gr.Text(value=os.path.join(current_path, "SAVAdata", "output"),label="输出路径",interactive=True,max_lines=1)
+                    self.output_dir=gr.Text(value=os.path.join(current_path, "SAVAdata", "output"),label="输出路径",interactive=not Sava_Utils.config.server_mode,visible=not Sava_Utils.config.server_mode,max_lines=1)
                     self.translator = gr.Radio(label="选择翻译器",choices=[i for i in TRANSLATORS.keys()],value="ollama")
                     Base_args = [self.translation_upload,self.translation_target_language,self.output_dir]
                     with gr.Column():

@@ -11,10 +11,10 @@ TRANSLATORS = {"ollama": Ollama()}
 current_path = os.environ.get("current_path")
 
 def start_translation(in_files, language, output_dir, *args, translator=None):
+    output_list=[]
     if in_files is None:
         gr.Info("请上传字幕文件！")
-        return "请上传字幕文件！"
-    output_list=[]
+        return "请上传字幕文件！",output_list    
     for in_file in in_files:
         if in_file.name[-4:].lower() == ".csv":
             subtitle_list = read_prcsv(in_file.name, fps=30, offset=0)
@@ -24,7 +24,7 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
             subtitle_list = read_txt(in_file.name)
         else:
             gr.Warning("未知的格式，请确保扩展名正确！")
-            return "未知的格式，请确保扩展名正确！"
+            continue
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 x=list(

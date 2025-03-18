@@ -166,7 +166,7 @@ def restart():
             os.unsetenv("_PYI_APPLICATION_HOME_DIR")
             os.unsetenv("_PYI_ARCHIVE_FILE")
             os.unsetenv("_PYI_PARENT_PROCESS_LEVEL")
-            Sava_Utils.utils.run_command(command=f"{sys.executable}", dir=current_path)
+            Sava_Utils.utils.rc_open_window(command=f"{sys.executable}", dir=current_path)
             os.environ["_PYI_APPLICATION_HOME_DIR"] = a
             os.environ["_PYI_ARCHIVE_FILE"] = b
             os.environ["_PYI_PARENT_PROCESS_LEVEL"] = c

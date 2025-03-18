@@ -3,7 +3,7 @@ import gradio as gr
 import json
 import re
 from . import Traducteur
-from ..utils import run_command
+from ..utils import rc_open_window
 from .. import logger
 
 class Ollama(Traducteur):
@@ -27,7 +27,7 @@ class Ollama(Traducteur):
         if model in [None,[],""]:
             gr.Warning(f"必须指定模型")
             return None
-        run_command(f"ollama stop {model} && exit")        
+        rc_open_window(f"ollama stop {model} && exit")        
 
     def api(self,text,target_lang,model_name,url):
         if model_name in [None,[],""]:

@@ -218,7 +218,7 @@ def start_hiyoriui():
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"    
     command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
-    run_command(command=command, dir=Sava_Utils.config.bv2_dir)
+    rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
     time.sleep(0.1)
     return "HiyoriUI已启动，请确保其配置文件无误"
 
@@ -236,7 +236,7 @@ def start_gsv():
         raise gr.Error("api文件不存在？？？")
 
     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
-    run_command(command=command, dir=Sava_Utils.config.gsv_dir)
+    rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
 

@@ -33,11 +33,27 @@ def cls_cache():
         logger.info("目前没有临时文件！")
         gr.Info("目前没有临时文件！")
 
-def run_command(command, dir=current_path):
+def rc_open_window(command, dir=current_path):
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
-    logger.info(f"执行命令:" + command)
+    logger.info(f"执行命令:{command}")
     time.sleep(0.1)
+
+def rc_bg(command, dir=current_path,get_id=True):
+    process = subprocess.Popen(command, cwd=dir, shell=True)
+    logger.info(f"执行命令:{command}")
+    if get_id:
+        yield process.pid
+    yield process.wait()
+
+def kill_process(pid):
+    if pid<0:
+        gr.Info("没有运行的进程")
+        return None
+    command = f"taskkill /t /f /pid {pid}"
+    subprocess.run(command,shell=True)
+    logger.info(f"执行命令:{command}")
+    gr.Info("已终止进程")
 
 def file_show(files):
     if files in [None,[]]:

@@ -222,7 +222,7 @@ class Settings_UI():
                 self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
                 self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
             with gr.Row():
-                self.concurrency_count=gr.Number(label="可同时处理多少请求",value=Sava_Utils.config.concurrency_count,minimum=1,interactive=True)
+                self.concurrency_count=gr.Number(label="可同时处理多少请求",value=Sava_Utils.config.concurrency_count,minimum=2,interactive=True)
                 self.server_mode=gr.Checkbox(label="服务模式，只能通过修改配置或启动参数开启",value=Sava_Utils.config.server_mode,interactive=False)
             with gr.Row():
                 self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)

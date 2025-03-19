@@ -5,8 +5,8 @@ from ..utils import positive_int
 from .. import logger
 
 class BV2(TTSProjet):
-    def __init__(self):
-        super().__init__("bv2")
+    def __init__(self,config):
+        super().__init__("bv2",config)
 
     def api(
         self,

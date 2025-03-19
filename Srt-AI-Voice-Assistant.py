@@ -36,11 +36,11 @@ import Sava_Utils.tts_projects.mstts
 import Sava_Utils.tts_projects.custom
 from Sava_Utils.subtitle_translation import Translation_module
 
-BV2 = Sava_Utils.tts_projects.bv2.BV2()
-GSV = Sava_Utils.tts_projects.gsv.GSV()
-MSTTS = Sava_Utils.tts_projects.mstts.MSTTS()
-CUSTOM = Sava_Utils.tts_projects.custom.Custom()
-TRANSLATION_MODULE = Translation_module()
+BV2 = Sava_Utils.tts_projects.bv2.BV2(Sava_Utils.config)
+GSV = Sava_Utils.tts_projects.gsv.GSV(Sava_Utils.config)
+MSTTS = Sava_Utils.tts_projects.mstts.MSTTS(Sava_Utils.config)
+CUSTOM = Sava_Utils.tts_projects.custom.Custom(Sava_Utils.config)
+TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
 Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
 componments=[BV2,GSV,MSTTS,CUSTOM]
 
@@ -79,7 +79,7 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
         Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,force=False)
         abs_dir = subtitle_list.get_abs_dir()
         if Sava_Utils.config.server_mode:
-            max_workers=min(max_workers,2)
+            max_workers=1
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(
                 tqdm(
@@ -162,7 +162,7 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
         if Sava_Utils.config.server_mode:
-            max_workers=min(max_workers,2)
+            max_workers=1
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             file_list = list(
                 tqdm(
@@ -321,14 +321,10 @@ def save_spk(name,*args,project):
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
-    GSV.refresh_presets_list()
-    CUSTOM.refresh_custom_api_list()
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
     else:
         server_port=args.server_port
-    MSTTS.update_cfg(config=Sava_Utils.config)
-    MSTTS.ms_refresh()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=Sava_Utils.config.theme) as app:
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
@@ -458,6 +454,7 @@ if __name__ == "__main__":
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows])
             with gr.TabItem("辅助功能"):
                 TRANSLATION_MODULE.UI(input_file)
+                componments.append(TRANSLATION_MODULE)
             with gr.TabItem("外部扩展内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT

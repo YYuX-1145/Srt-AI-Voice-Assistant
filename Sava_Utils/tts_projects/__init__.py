@@ -2,11 +2,12 @@ from abc import ABC, abstractmethod
 class TTSProjet(ABC):
     _instances = {}    
 
-    def __init__(self,name):
+    def __init__(self,name,config):
         self.name=name
         self.server_mode=False
         self.args=[]
         self.ui=False        
+        self.update_cfg(config)
 
     def update_cfg(self,config):
         self.server_mode=config.server_mode
@@ -24,7 +25,7 @@ class TTSProjet(ABC):
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super().__new__(cls, *args, **kwargs)
+            cls._instances[cls] = super().__new__(cls)
         return cls._instances[cls]
     
     def getUI(self):

@@ -10,9 +10,10 @@ import os
 current_path=os.environ.get("current_path")
 
 class Custom(TTSProjet):
-    def __init__(self):
-        super().__init__("bv2")
+    def __init__(self,config):
         self.custom_api_list = []
+        self.refresh_custom_api_list()
+        super().__init__("custom",config)        
 
     def api(self,text):
         return custom_api(text)

@@ -49,9 +49,15 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
 
 
 class Translation_module:
-    def __init__(self):
+    def __init__(self,config):
         self.ui = False
+        self.config=config
         self.menu = []
+
+    def update_cfg(self,config):
+        self.config=config
+        for i in TRANSLATORS.keys():
+            TRANSLATORS[i].update_cfg(config=config)
 
     def UI(self,*args):
         if not self.ui:
@@ -79,6 +85,7 @@ class Translation_module:
                         for i in TRANSLATORS.keys():
                             x = gr.Column(i, visible=v)
                             with x:
+                                TRANSLATORS[i].update_cfg(config=self.config)
                                 TRANSLATORS[i].getUI(*Base_args,output_info=self.result,output_files=self.translation_output)
                             v = False
                         self.menu.append(x)

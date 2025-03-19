@@ -6,10 +6,11 @@ class Traducteur(ABC):
     def __init__(self, name):
         self.name = name
         self.args = []
+        self.server_mode=False
         self.ui = False
 
     def update_cfg(self, config):
-        pass
+        self.server_mode=config.server_mode
 
     @abstractmethod
     def api(self, *args, **kwargs):
@@ -28,5 +29,5 @@ class Traducteur(ABC):
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super().__new__(cls, *args, **kwargs)
+            cls._instances[cls] = super().__new__(cls)
         return cls._instances[cls]

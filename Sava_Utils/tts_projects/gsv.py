@@ -56,12 +56,13 @@ def temp_aux_ra(a:bytes):
 
 
 class GSV(TTSProjet):
-    def __init__(self):
+    def __init__(self,config):
         self.gsv_fallback=False
         self.presets_list=['None']
         self.current_sovits_model=dict()
         self.current_gpt_model=dict()
-        super().__init__("gsv")
+        self.refresh_presets_list()
+        super().__init__("gsv",config)
 
 
     def update_cfg(self, config):
@@ -158,7 +159,7 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS")
+        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
         self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label="主参考音频")
@@ -166,12 +167,12 @@ class GSV(TTSProjet):
         with gr.Row():
             self.refer_text=gr.Textbox(label="参考音频文本",value="",placeholder="参考音频文本|Cosy预训练音色")
             self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
-        with gr.Accordion("模型切换",open=False):
+        with gr.Accordion("模型切换",open=False,visible=not self.server_mode):
             self.sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
             self.gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
             self.switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
         with gr.Row():
-            self.api_port2=gr.Number(label="API Port",value=9880,visible=True,interactive=True)
+            self.api_port2=gr.Number(label="API Port",value=9880,interactive=not self.server_mode,visible=not self.server_mode)
         #self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
         with gr.Accordion("高级合成参数",open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)

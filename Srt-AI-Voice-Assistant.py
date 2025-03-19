@@ -78,6 +78,8 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
         subtitle_list.set_proj(proj)
         Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,force=False)
         abs_dir = subtitle_list.get_abs_dir()
+        if Sava_Utils.config.server_mode:
+            max_workers=min(max_workers,2)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(
                 tqdm(
@@ -159,6 +161,8 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
         project=info["project"]
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
+        if Sava_Utils.config.server_mode:
+            max_workers=min(max_workers,2)
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             file_list = list(
                 tqdm(
@@ -244,6 +248,9 @@ def remake(*args):
         gr.Info("Not available !")
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
+    if Sava_Utils.config.server_mode and len(s_txt)>512:
+        gr.Warning("超长!")
+        return fp,*show_page(page,subtitle_list)     
     if subtitle_list[int(idx)].speaker is not None or (subtitle_list.proj is None and subtitle_list.default_speaker is not None):
         spk = subtitle_list[int(idx)].speaker
         if spk is None:
@@ -363,9 +370,9 @@ if __name__ == "__main__":
                         edit_check_list=[]
                         edit_start_end_time_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2)
-                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
-                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2,visible=not Sava_Utils.config.server_mode)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=4)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
                             recompose_btn = gr.Button(value="重新拼接", scale=1, min_width=60)
@@ -477,9 +484,10 @@ if __name__ == "__main__":
         MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="mstts"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         CUSTOM.gen_btn4.click(lambda *args:generate_preprocess(*args,project="custom"),inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
 
-    app.queue(concurrency_count=Sava_Utils.config.concurrency_count).launch(
+    app.queue(concurrency_count=Sava_Utils.config.concurrency_count,max_size=2*Sava_Utils.config.concurrency_count).launch(
             share=args.share,
             server_port=server_port if server_port>0 else None,
             inbrowser=True,
-            server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1'
+            server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1',
+            show_api=not Sava_Utils.config.server_mode
             )

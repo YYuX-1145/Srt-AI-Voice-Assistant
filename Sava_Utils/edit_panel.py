@@ -60,6 +60,7 @@ def play_audio(idx, subtitle_list):
 
 def getworklist():
     try:
+        assert not Sava_Utils.config.server_mode
         c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))
         return gr.update(choices=c,value=c[-1])
     except:

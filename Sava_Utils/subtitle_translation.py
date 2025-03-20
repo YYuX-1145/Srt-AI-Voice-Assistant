@@ -56,8 +56,8 @@ class Translation_module:
 
     def update_cfg(self,config):
         self.config=config
-        for i in TRANSLATORS.keys():
-            TRANSLATORS[i].update_cfg(config=config)
+        for i in TRANSLATORS.values():
+            i.update_cfg(config=config)
 
     def UI(self,*args):
         if not self.ui:

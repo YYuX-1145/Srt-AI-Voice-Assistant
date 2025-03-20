@@ -2,6 +2,7 @@ import requests
 import gradio as gr
 import json
 import re
+import subprocess
 from . import Traducteur
 from ..utils import rc_open_window
 from .. import logger
@@ -12,7 +13,13 @@ class Ollama(Traducteur):
         super().__init__(name="ollama")
 
     def get_models(self,url):
-        if url in [None,"","Default"] or self.server_mode:
+        if self.server_mode:
+            result = subprocess.run("ollama list",capture_output=True,text=True) #consider use awk
+            lines=result.stdout.strip().split("\n")[1:]
+            self.models=[i.split()[0] for i in lines]
+            #print(self.models)
+            return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else "")
+        if url in [None,"","Default"]:
             url="http://localhost:11434"
         try:
             response = requests.get(f'{url}/api/tags')
@@ -21,8 +28,8 @@ class Ollama(Traducteur):
             for item in json.loads(response.content)["models"]:
                 self.models.append(item["name"])
         except Exception as e:
-            gr.Warning(f"获取模型列表失败：{str(e)}")
-            logger.error(f"获取模型列表失败：{str(e)}")
+            gr.Warning(f"ollama获取模型列表失败：{str(e)}")
+            logger.error(f"ollama获取模型列表失败：{str(e)}")
         return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else "")
 
     def unload_model(self,model):
@@ -48,6 +55,8 @@ class Ollama(Traducteur):
 
     def _UI(self,*inputs,output_info,output_files):
         from ..subtitle_translation import start_translation
+        if self.server_mode:
+            self.get_models("")
         with gr.Column():
             gr.Markdown("⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️")
             gr.Markdown("⚠️不建议使用推理模型执行翻译任务！⚠️")
@@ -56,7 +65,8 @@ class Ollama(Traducteur):
             with gr.Row():  
                 self.unload_model_btn=gr.Button(value="卸载模型",visible=not self.server_mode,interactive=not self.server_mode)
                 self.unload_model_btn.click(self.unload_model,inputs=[self.select_model])
-                self.refresh_model_btn=gr.Button(value="刷新模型")
-                self.refresh_model_btn.click(self.get_models,inputs=[self.api_url],outputs=[self.select_model])
+                if not self.server_mode:
+                    self.refresh_model_btn=gr.Button(value="刷新模型")
+                    self.refresh_model_btn.click(self.get_models,inputs=[self.api_url],outputs=[self.select_model])
             self.translate_btn=gr.Button(value="开始翻译",variant="primary")
             self.translate_btn.click(lambda *args:start_translation(*args,translator="ollama"),inputs=[*inputs,self.select_model,self.api_url],outputs=[output_info,output_files])

@@ -6,6 +6,7 @@ import gradio as gr
 import csv
 import re
 import shutil
+import platform
 import Sava_Utils
 from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
 from .edit_panel import *
@@ -46,11 +47,15 @@ def rc_bg(command, dir=current_path,get_id=True):
         yield process.pid
     yield process.wait()
 
+system=platform.system()
 def kill_process(pid):
     if pid<0:
         gr.Info("没有运行的进程")
         return None
-    command = f"taskkill /t /f /pid {pid}"
+    if(system=="Windows"):
+        command = f"taskkill /t /f /pid {pid}"
+    else:
+        command= f"pkill --parent {pid} && kill {pid} " # not tested on real machine yet!!!
     subprocess.run(command,shell=True)
     logger.info(f"执行命令:{command}")
     gr.Info("已终止进程")

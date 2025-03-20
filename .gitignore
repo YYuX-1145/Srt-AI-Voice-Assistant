@@ -1,4 +1,5 @@
 *.bat
+*.sh
 __pycache__
 SAVAdata
 dist

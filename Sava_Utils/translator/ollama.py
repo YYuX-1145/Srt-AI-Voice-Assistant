@@ -12,15 +12,19 @@ class Ollama(Traducteur):
         self.models=[]
         super().__init__(name="ollama")
 
+    def update_cfg(self, config):
+        self.ollama_url=config.ollama_url
+        return super().update_cfg(config)
+
     def get_models(self,url):
         if self.server_mode:
-            result = subprocess.run("ollama list",capture_output=True,text=True) #consider use awk
+            result = subprocess.run("ollama list",capture_output=True,text=True) #consider using awk
             lines=result.stdout.strip().split("\n")[1:]
             self.models=[i.split()[0] for i in lines]
             #print(self.models)
-            return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else "")
+            return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else None)
         if url in [None,"","Default"]:
-            url="http://localhost:11434"
+            url=self.ollama_url
         try:
             response = requests.get(f'{url}/api/tags')
             response.raise_for_status()
@@ -30,7 +34,7 @@ class Ollama(Traducteur):
         except Exception as e:
             gr.Warning(f"ollama获取模型列表失败：{str(e)}")
             logger.error(f"ollama获取模型列表失败：{str(e)}")
-        return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else "")
+        return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else None)
 
     def unload_model(self,model):
         if model in [None,[],""] or self.server_mode:
@@ -40,7 +44,7 @@ class Ollama(Traducteur):
 
     def api(self,text,target_lang,model_name,url):
         if url in [None,"","Default"] or self.server_mode:
-            url="http://localhost:11434"
+            url=self.ollama_url
         if model_name in [None,[],""]:
             raise ValueError(f"必须指定模型")
         data_json = {

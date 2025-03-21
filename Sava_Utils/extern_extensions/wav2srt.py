@@ -25,8 +25,8 @@ class WAV2SRT():
                             self.wav2srt_pid=gr.State(value=-1)
                             with gr.Column():
                                 self.wav2srt_input=gr.File(label="上传音频文件",type="file",file_count="multiple",interactive=True)
-                                self.wav2srt_out_dir=gr.Textbox(value="Default",label="保存路径，填文件夹名",visible=not self.config.server_mode,interactive=not self.config.server_mode)
-                                self.wav2srt_pydir=gr.Textbox(value='Auto',label="Python解释器路径",visible=not self.config.server_mode,interactive=not self.config.server_mode)
+                                self.wav2srt_out_dir=gr.Textbox(value="Default",label="保存路径，填文件夹名，默认为SAVAdata\\output",visible=not self.config.server_mode,interactive=not self.config.server_mode)
+                                self.wav2srt_pydir=gr.Textbox(value='Auto',label="Python解释器路径,默认和GSV一致",visible=not self.config.server_mode,interactive=not self.config.server_mode)
                                 self.wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label="选择asr模型，funasr只支持中文但更快更准，faster whisper支持多语言",interactive=True)
                                 self.wav2srt_min_length=gr.Slider(label="(ms)每段最小多长，如果第一段太短一直和后面段连起来直到超过这个值",minimum=0,maximum=90000,step=100,value=5000)
                                 self.wav2srt_min_interval=gr.Slider(label="(ms)最短切割间隔",minimum=0,maximum=5000,step=10,value=300)
@@ -50,7 +50,7 @@ class WAV2SRT():
                                 self.wav2srt_send2main.click(send,inputs=[self.wav2srt_output],outputs=[file_main])
                                 self.wav2srt_send2tr=gr.Button(value="发送到翻译",variant="secondary",interactive=True)
                                 self.wav2srt_send2tr.click(send,inputs=[self.wav2srt_output],outputs=[file_tr])
-        self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_pid,self.wav2srt_output_status,self.wav2srt_output])
+        self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_pid,self.wav2srt_output_status,self.wav2srt_output],max_batch_size=2)
         return available
     
 

@@ -68,7 +68,8 @@ class Settings:
         gsv_args: str = "",
         ms_region: str = "eastasia",
         ms_key: str = "",
-        ms_lang_option: str="zh"
+        ms_lang_option: str= "zh",
+        ollama_url: str= "http://localhost:11434"
     ):
         self.server_port = int(server_port)
         self.LAN_access = LAN_access
@@ -90,6 +91,7 @@ class Settings:
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
+        self.ollama_url=ollama_url
         # detect python envs####
         if bv2_pydir != "":
             if os.path.exists(bv2_pydir):
@@ -246,6 +248,9 @@ class Settings_UI():
             self.ms_region=gr.Textbox(label="服务区域",interactive=True,value=Sava_Utils.config.ms_region)
             self.ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key) 
             self.ms_lang_option=gr.Textbox(label="筛选需要的语言，用逗号或空格隔开",interactive=True,value=Sava_Utils.config.ms_lang_option)
+        with gr.Group(): 
+            gr.Markdown(value="翻译模块设置")
+            self.ollama_url=gr.Textbox(label="ollama默认请求地址",interactive=True,value=Sava_Utils.config.ollama_url) 
         self.save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
         self.restart_btn = gr.Button(value="重启UI", variant="stop")
 

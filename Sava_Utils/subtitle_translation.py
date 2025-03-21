@@ -90,4 +90,3 @@ class Translation_module:
                             v = False
                         self.menu.append(x)
                 self.translation_target_language.change(lambda x: [gr.update(visible= x==i ) for i in TRANSLATORS.keys()],inputs=[self.translator],outputs=self.menu)
-                    

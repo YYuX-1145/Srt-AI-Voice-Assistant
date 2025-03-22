@@ -17,15 +17,15 @@ class Ollama(Traducteur):
         return super().update_cfg(config)
 
     def get_models(self,url):
-        if self.server_mode:
-            result = subprocess.run("ollama list",capture_output=True,text=True) #consider using awk
-            lines=result.stdout.strip().split("\n")[1:]
-            self.models=[i.split()[0] for i in lines]
-            #print(self.models)
-            return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else None)
-        if url in [None,"","Default"]:
-            url=self.ollama_url
         try:
+            if self.server_mode:
+                result = subprocess.run("ollama list",capture_output=True,text=True) #consider using awk
+                lines=result.stdout.strip().split("\n")[1:]
+                self.models=[i.split()[0] for i in lines]
+                #print(self.models)
+                return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else None)
+            if url in [None,"","Default"]:
+                url=self.ollama_url        
             response = requests.get(f'{url}/api/tags')
             response.raise_for_status()
             self.models.clear()

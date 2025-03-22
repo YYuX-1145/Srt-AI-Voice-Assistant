@@ -59,6 +59,9 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
             *load_page(Subtitles()),
             Subtitles(),
         )
+    if Sava_Utils.config.server_mode and len(in_files)>1:
+        gr.Warning("当前不允许批量处理！")
+        return None,"当前不允许批量处理！",getworklist(),*load_page(Subtitles()),Subtitles(),
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     for in_file in in_files:
         try:

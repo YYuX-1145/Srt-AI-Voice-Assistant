@@ -88,7 +88,7 @@ class BV2(TTSProjet):
                     self.length_scale = gr.Slider(minimum=0.1, maximum=2, value=1, step=0.1, label="Length Scale")
                     self.emo_text=gr.Textbox(label="text prompt",interactive=True,value="")
                 with gr.Row():                              
-                    self.api_port1=gr.Number(label="API Port",value=5000,visible=True,interactive=True)
+                    self.api_port1=gr.Number(label="API Port",value=5000,visible=not self.server_mode,interactive=not self.server_mode)
         self.spkchoser.change(self.switch_spk,inputs=[self.spkchoser],outputs=[self.spkid,self.speaker_name])
         self.gen_btn1 = gr.Button("生成", variant="primary", visible=True)
         BV2_ARGS = [

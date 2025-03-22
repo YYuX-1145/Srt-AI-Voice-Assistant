@@ -46,6 +46,9 @@ class Base_subtitle:
             self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
             raise ValueError
+        #5h=5*60*60s=18000s
+        assert self.start_time < 18000,'字幕太长'
+        assert self.end_time < 18000,'字幕太长'
 
     def to_float_prcsv_time(self,time:str,fps:int):
         h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds
@@ -248,5 +251,6 @@ class Subtitles:
         os.makedirs(os.path.dirname(file_path),exist_ok=True)
         with open(file_path,"w",encoding="utf-8") as f:
             f.writelines(srt_content)
-        if open_explorer:
+        if open_explorer and not Sava_Utils.config.server_mode:
             os.system(f'explorer /select, {file_path}')
+        return [file_path]

@@ -10,18 +10,20 @@ from xml.etree import ElementTree
 current_path = os.environ.get("current_path")
 
 class MSTTS(TTSProjet):
-    def __init__(self):
-        super().__init__("mstts")
+    def __init__(self,config):        
         self.ms_access_token=None
         self.ms_speaker_info=None
         self.cfg_ms_region=None
         self.cfg_ms_key = None
         self.ms_lang_option = ""
+        super().__init__("mstts",config)
+        self.ms_refresh()
 
     def update_cfg(self,config):
         self.cfg_ms_region=config.ms_region
         self.cfg_ms_key = config.ms_key
         self.ms_lang_option=config.ms_lang_option
+        self.server_mode=config.server_mode
 
     def getms_speakers(self):
         #if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):

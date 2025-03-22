@@ -13,10 +13,9 @@ os.environ["current_path"] = current_path
 import shutil
 
 import gradio as gr
-import argparse
 
 import json
-import datetime
+#import datetime
 import time
 import soundfile as sf
 import concurrent.futures
@@ -27,7 +26,7 @@ from Sava_Utils.man.manual import Man
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
 from Sava_Utils import logger
-from Sava_Utils.settings import Settings
+from Sava_Utils import args
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
 import Sava_Utils.tts_projects
@@ -37,11 +36,11 @@ import Sava_Utils.tts_projects.mstts
 import Sava_Utils.tts_projects.custom
 from Sava_Utils.subtitle_translation import Translation_module
 
-BV2 = Sava_Utils.tts_projects.bv2.BV2()
-GSV = Sava_Utils.tts_projects.gsv.GSV()
-MSTTS = Sava_Utils.tts_projects.mstts.MSTTS()
-CUSTOM = Sava_Utils.tts_projects.custom.Custom()
-TRANSLATION_MODULE = Translation_module()
+BV2 = Sava_Utils.tts_projects.bv2.BV2(Sava_Utils.config)
+GSV = Sava_Utils.tts_projects.gsv.GSV(Sava_Utils.config)
+MSTTS = Sava_Utils.tts_projects.mstts.MSTTS(Sava_Utils.config)
+CUSTOM = Sava_Utils.tts_projects.custom.Custom(Sava_Utils.config)
+TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
 Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
 componments=[BV2,GSV,MSTTS,CUSTOM]
 
@@ -60,29 +59,30 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
             *load_page(Subtitles()),
             Subtitles(),
         )
+    if Sava_Utils.config.server_mode and len(in_files)>1:
+        gr.Warning("当前不允许批量处理！")
+        return None,"当前不允许批量处理！",getworklist(),*load_page(Subtitles()),Subtitles(),
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     for in_file in in_files:
-        if in_file.name[-4:].lower() == ".csv":
-            subtitle_list = read_prcsv(in_file.name, fps, offset)
-        elif in_file.name[-4:].lower() == ".srt":
-            subtitle_list = read_srt(in_file.name, offset)
-        elif in_file.name[-4:].lower() == ".txt":
-            subtitle_list = read_txt(in_file.name)
-        else:
-            gr.Warning("未知的格式，请确保扩展名正确！")
+        try:
+            subtitle_list = read_file(in_file.name, fps, offset)
+        except Exception as e:
+            what=str(e)
+            gr.Warning(what)
             return (
                 None,
-                "未知的格式，请确保扩展名正确！",
+                what,
                 getworklist(),
                 *load_page(Subtitles()),
                 Subtitles(),
             )
-        assert len(subtitle_list) != 0, "文件为空？？？"
         # subtitle_list.sort()
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)
         Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config,notify=False,force=False)
         abs_dir = subtitle_list.get_abs_dir()
+        if Sava_Utils.config.server_mode:
+            max_workers=1
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(
                 tqdm(
@@ -164,6 +164,8 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
         project=info["project"]
         args, kwargs = Projet_dict[project].arg_filter(*args)
         Projet_dict[project].before_gen_action(*args,config=Sava_Utils.config)   
+        if Sava_Utils.config.server_mode:
+            max_workers=1
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
             file_list = list(
                 tqdm(
@@ -218,7 +220,7 @@ def start_hiyoriui():
         gr.Warning("请前往设置页面指定环境路径并保存!")
         return "请前往设置页面指定环境路径并保存!"    
     command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
-    run_command(command=command, dir=Sava_Utils.config.bv2_dir)
+    rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
     time.sleep(0.1)
     return "HiyoriUI已启动，请确保其配置文件无误"
 
@@ -236,7 +238,7 @@ def start_gsv():
         raise gr.Error("api文件不存在？？？")
 
     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
-    run_command(command=command, dir=Sava_Utils.config.gsv_dir)
+    rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
     time.sleep(0.1)
     return "GSV-API服务已启动，请确保其配置文件无误"
 
@@ -249,6 +251,9 @@ def remake(*args):
         gr.Info("Not available !")
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
+    if Sava_Utils.config.server_mode and len(s_txt)>512:
+        gr.Warning("超长!")
+        return fp,*show_page(page,subtitle_list)     
     if subtitle_list[int(idx)].speaker is not None or (subtitle_list.proj is None and subtitle_list.default_speaker is not None):
         spk = subtitle_list[int(idx)].speaker
         if spk is None:
@@ -296,6 +301,9 @@ def recompose(page,subtitle_list:Subtitles):
     return audio,"OK",*show_page(page,subtitle_list)
 
 def save_spk(name,*args,project):
+    if Sava_Utils.config.server_mode:
+        gr.Warning("当前功能被禁止")
+        return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
     if name in ["",[],None,'None']:
         gr.Info("请输入有效的名称！")
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
@@ -316,19 +324,10 @@ def save_spk(name,*args,project):
 if __name__ == "__main__":
     Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-p", "--server_port",type=int,help="server_port")
-    parser.add_argument('-share', dest='share', action="store_true", default=False, help="set share True")
-    # parser.add_argument('-local', dest='local', action="store_true", default=False, help="access on local network")
-    args, unknown = parser.parse_known_args()
-    GSV.refresh_presets_list()
-    CUSTOM.refresh_custom_api_list()
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
     else:
         server_port=args.server_port
-    MSTTS.update_cfg(config=Sava_Utils.config)
-    MSTTS.ms_refresh()
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=Sava_Utils.config.theme) as app:
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
@@ -354,10 +353,13 @@ if __name__ == "__main__":
                         input_file = gr.File(label="上传文件(批量只支持单个同一说话人)",file_types=['.csv','.srt','.txt'],type="file",file_count='multiple')
                         gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
-                        with gr.Accordion("启动服务"):
-                            gr.Markdown(value="请先在设置中应用项目路径")
-                            start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                            start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                        if not Sava_Utils.config.server_mode:
+                            with gr.Accordion("启动服务"):
+                                gr.Markdown(value="请先在设置中应用项目路径")
+                                start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
+                                start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                                start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
+                                start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
                         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
 
                 with gr.Accordion(label="编辑区域 *Note:请勿在使用本功能时清除临时文件。",open=True):
@@ -367,9 +369,9 @@ if __name__ == "__main__":
                         edit_check_list=[]
                         edit_start_end_time_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2)
-                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60)
-                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2,visible=not Sava_Utils.config.server_mode)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=4)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
                             recompose_btn = gr.Button(value="重新拼接", scale=1, min_width=60)
@@ -408,7 +410,7 @@ if __name__ == "__main__":
                         workloadbtn.click(load_work,inputs=[worklist],outputs=[STATE,page_slider,*edit_rows])
                         workrefbtn.click(getworklist,inputs=[],outputs=[worklist])
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
-                        export_btn.click(lambda x:x.export(),inputs=[STATE])
+                        export_btn.click(lambda x:x.export(),inputs=[STATE],outputs=[input_file])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value="全选",interactive=True,min_width=60)
                             all_selection_btn.click(lambda :[True for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
@@ -430,7 +432,7 @@ if __name__ == "__main__":
                                     speaker_list_choices=["None",*os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
                                 except:
                                     speaker_list_choices=["None"]
-                                speaker_list=gr.Dropdown(label="选定默认/选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=True,scale=4)
+                                speaker_list=gr.Dropdown(label="选定默认/选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=not Sava_Utils.config.server_mode,scale=4)
                                 #speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
                                 select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
@@ -455,6 +457,7 @@ if __name__ == "__main__":
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows])
             with gr.TabItem("辅助功能"):
                 TRANSLATION_MODULE.UI(input_file)
+                componments.append(TRANSLATION_MODULE)
             with gr.TabItem("外部扩展内容"):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
@@ -480,12 +483,11 @@ if __name__ == "__main__":
         GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         MSTTS.gen_btn3.click(lambda *args:generate_preprocess(*args,project="mstts"),inputs=[input_file,fps,offset,workers,*MSTTS_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         CUSTOM.gen_btn4.click(lambda *args:generate_preprocess(*args,project="custom"),inputs=[input_file,fps,offset,workers,CUSTOM.choose_custom_api],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
-        start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
-        start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
 
-    app.queue(concurrency_count=6).launch(
+    app.queue(concurrency_count=Sava_Utils.config.concurrency_count,max_size=2*Sava_Utils.config.concurrency_count).launch(
             share=args.share,
             server_port=server_port if server_port>0 else None,
             inbrowser=True,
-            server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1'
+            server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1',
+            show_api=not Sava_Utils.config.server_mode
             )

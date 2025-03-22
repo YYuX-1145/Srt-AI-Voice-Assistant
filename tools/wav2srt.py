@@ -124,7 +124,7 @@ def transcribe(audio_path):
 
     with open(savepath,"w",encoding="utf-8") as f:
         f.writelines(srt_content)
-    os.system(f'explorer /select, {savepath}')
+    #os.system(f'explorer /select, {savepath}')
 
 def to_time(time_raw:float):
     hours, r = divmod(time_raw,3600)

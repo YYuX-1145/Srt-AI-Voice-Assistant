@@ -10,9 +10,10 @@ import os
 current_path=os.environ.get("current_path")
 
 class Custom(TTSProjet):
-    def __init__(self):
-        super().__init__("bv2")
+    def __init__(self,config):
         self.custom_api_list = []
+        self.refresh_custom_api_list()
+        super().__init__("custom",config)        
 
     def api(self,text):
         return custom_api(text)
@@ -22,7 +23,7 @@ class Custom(TTSProjet):
             man=Man()
             gr.Markdown(value=man.getInfo("custom_warn"))
             gr.Markdown(value=man.getInfo("help_custom"))                            
-            self.choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=True)
+            self.choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=False)
             self.refresh_custom_btn = gr.Button(value="刷新")
             self.gen_btn4 = gr.Button(value="生成", variant="primary", visible=True)
             self.refresh_custom_btn.click(self.refresh_custom_api_list,outputs=[self.choose_custom_api])

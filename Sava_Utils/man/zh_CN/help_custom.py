@@ -1,4 +1,4 @@
-help_custom="""
+help_custom = r"""
 ### 将装有python函数的代码文件放在`SAVAdata/presets`下即可被调用  
 ```
 def custom_api(text):#return: audio content

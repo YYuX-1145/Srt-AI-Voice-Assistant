@@ -3,7 +3,7 @@ import requests
 import gradio as gr
 from ..utils import positive_int
 from .. import logger
-from ..man.manual import Man
+from ..man import Man
 import time
 import os
 

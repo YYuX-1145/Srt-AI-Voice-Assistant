@@ -22,7 +22,7 @@ import concurrent.futures
 from tqdm import tqdm
 
 import Sava_Utils
-from Sava_Utils.man.manual import Man
+from Sava_Utils.man import Man
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
 from Sava_Utils import logger

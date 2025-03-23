@@ -1,5 +1,4 @@
 import logging
-
 log_colors = {
     "DEBUG": "white",
     "INFO": "green",
@@ -41,6 +40,8 @@ args, unknown = parser.parse_known_args()
 from .settings import load_cfg
 from .utils import cls_cache
 config=load_cfg()
+from .i18n import I18n
+i18n=I18n(language=config.language)
 config.server_mode=args.server_mode or config.server_mode
 if config.server_mode:
     logger.warning("服务模式已启用！")

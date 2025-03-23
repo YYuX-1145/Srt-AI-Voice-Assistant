@@ -1,17 +1,15 @@
 import locale
-import os
 
 class I18n():
     def __init__(self, language=None):
         if language in ["Auto", None]:
-            language = locale.getdefaultlocale()[0]  
-        if not os.path.exists(os.path.join('locale', f"{language}.py")):
-            language = "en_US"
+            language = locale.getdefaultlocale()[0]
+        ls=dict()
         try:
-            exec(f"from .locale.{language} import i18n_dict")
+            exec(f"from .translations.{language} import i18n_dict",globals(),ls)
+            self.language_map=ls["i18n_dict"]
         except:
-            i18n_dict=dict()
-        self.language_map=i18n_dict
+            self.language_map=dict()
 
     def __call__(self, key):
         return self.language_map.get(key, key)

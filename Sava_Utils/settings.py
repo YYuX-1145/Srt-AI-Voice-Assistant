@@ -49,6 +49,7 @@ gradio_hf_hub_themes = [
 class Settings:
     def __init__(
         self,
+        language: str = "Auto",
         server_port: int = 0,
         LAN_access:bool = False,        
         overwrite_workspace:bool = False,
@@ -71,6 +72,7 @@ class Settings:
         ms_lang_option: str= "zh",
         ollama_url: str= "http://localhost:11434"
     ):
+        self.language=language
         self.server_port = int(server_port)
         self.LAN_access = LAN_access
         self.overwrite_workspace = overwrite_workspace
@@ -217,6 +219,7 @@ class Settings_UI():
         gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
         with gr.Group():
             gr.Markdown(value="通用设置")
+            self.language=gr.Dropdown(label="Language (Requires a restart)",value=Sava_Utils.config.language,allow_custom_value=False,choices=['Auto',"en-US","zh-CN"])
             with gr.Row():
                 self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。0=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=0,scale=3)
                 self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
@@ -257,6 +260,7 @@ class Settings_UI():
         self.cls_cache_btn.click(Sava_Utils.utils.cls_cache,inputs=[],outputs=[])
 
         componments_list=[
+            self.language,
             self.server_port,
             self.LAN_access,
             self.overwrite_workspace,

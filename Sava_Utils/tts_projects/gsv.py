@@ -3,6 +3,7 @@ import requests
 import gradio as gr
 from ..utils import positive_int
 from .. import logger
+from .. import i18n
 import os
 import hashlib
 import soundfile as sf

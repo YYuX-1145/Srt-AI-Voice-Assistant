@@ -1,15 +1,13 @@
 import os
 import time
 import subprocess
-from . import logger
+from . import logger,i18n
 import gradio as gr
 import csv
 import re
 import shutil
 import platform
 import Sava_Utils
-from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
-from .edit_panel import *
 
 current_path=os.environ.get("current_path")
 
@@ -24,25 +22,25 @@ def positive_int(*a):
         r.append(int(x))
     return r
 
-def cls_cache():
+def clear_cache():
     dir = os.path.join(current_path, "SAVAdata", "temp")
     if os.path.exists(dir):
         shutil.rmtree(dir)
-        logger.info("成功清除临时文件！")
-        gr.Info("成功清除临时文件！")
+        logger.info(i18n("Temporary files cleared successfully!"))
+        gr.Info(i18n("Temporary files cleared successfully!"))
     else:
-        logger.info("目前没有临时文件！")
-        gr.Info("目前没有临时文件！")
+        logger.info(i18n("There are no temporary files."))
+        gr.Info(i18n("There are no temporary files."))
 
 def rc_open_window(command, dir=current_path):
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
-    logger.info(f"执行命令:{command}")
+    logger.info(f"{i18n("Execute command")}:{command}")
     time.sleep(0.1)
 
 def rc_bg(command, dir=current_path,get_id=True):
     process = subprocess.Popen(command, cwd=dir, shell=True)
-    logger.info(f"执行命令:{command}")
+    logger.info(f"{i18n("Execute command")}:{command}")
     if get_id:
         yield process.pid
     yield process.wait()
@@ -50,21 +48,21 @@ def rc_bg(command, dir=current_path,get_id=True):
 system=platform.system()
 def kill_process(pid):
     if pid<0:
-        gr.Info("没有运行的进程")
+        gr.Info(i18n("No running processes"))
         return None
     if(system=="Windows"):
         command = f"taskkill /t /f /pid {pid}"
     else:
         command= f"pkill --parent {pid} && kill {pid} " # not tested on real machine yet!!!
     subprocess.run(command,shell=True)
-    logger.info(f"执行命令:{command}")
-    gr.Info("已终止进程")
+    logger.info(f"{i18n("Execute command")}:{command}")
+    gr.Info(i18n("Process terminated."))
 
 def file_show(files):
     if files in [None,[]]:
         return ""    
     if len(files)>1:
-        return "<多个文件>"
+        return i18n("<Multiple Files>")
     else:
         file=files[0]
     try:
@@ -73,6 +71,10 @@ def file_show(files):
         return text
     except Exception as error:
         return error
+
+
+from .subtitle import Base_subtitle, Subtitle, Subtitles,to_time
+from .edit_panel import *
 
 def read_srt(filename, offset):
     with open(filename, "r", encoding="utf-8") as f:
@@ -126,9 +128,8 @@ def read_prcsv(filename, fps, offset):
                 subtitle_list.append(st)
                 stid += 1
             return subtitle_list
-        #
     except Exception as e:
-        err = f"读取字幕文件出错：{str(e)}"
+        err = f"{i18n("Failed to read file")}{str(e)}"
         logger.error(err)
         gr.Warning(err)
 
@@ -148,7 +149,7 @@ def read_txt(filename):
 
 def read_file(file_name, fps, offset):
     if Sava_Utils.config.server_mode:
-        assert os.stat(file_name).st_size < 65536,"错误：文件过大"    #64KB
+        assert os.stat(file_name).st_size < 65536,i18n("Error: File too large")    #64KB
     if file_name[-4:].lower() == ".csv":
         subtitle_list = read_prcsv(file_name, fps, offset)
     elif file_name[-4:].lower() == ".srt":
@@ -156,13 +157,13 @@ def read_file(file_name, fps, offset):
     elif file_name[-4:].lower() == ".txt":
         subtitle_list = read_txt(file_name)
     else:
-        raise ValueError("未知的格式，请确保扩展名正确！")
-    assert len(subtitle_list) != 0, "文件为空？？？"
+        raise ValueError(i18n("Unknown format. Please ensure the extension name is correct!"))
+    assert len(subtitle_list) != 0, "Empty file???"
     return subtitle_list
 
 def create_multi_speaker(in_files, fps, offset):
     if in_files in [[],None] or len(in_files)>1:
-        gr.Info("创建多角色配音工程只能上传有且只有一个文件！")
+        gr.Info(i18n("Creating a multi-speaker project can only upload one file at a time!"))
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file=in_files[0]
     try:

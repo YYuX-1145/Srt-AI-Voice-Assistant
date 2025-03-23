@@ -7,7 +7,7 @@ import pickle
 import shutil
 import Sava_Utils
 import copy
-from . import logger
+from . import logger,i18n
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
 
@@ -47,8 +47,8 @@ class Base_subtitle:
         else:
             raise ValueError
         #5h=5*60*60s=18000s
-        assert self.start_time < 18000,'字幕太长'
-        assert self.end_time < 18000,'字幕太长'
+        assert self.start_time < 18000,'too long'
+        assert self.end_time < 18000,'too long'
 
     def to_float_prcsv_time(self,time:str,fps:int):
         h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds
@@ -69,7 +69,7 @@ class Base_subtitle:
             self.end_time_raw=et
             self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
-            raise ValueError(f"输入的格式不匹配！{st} --> {et}")
+            raise ValueError(f"{i18n("Input format mismatch.")} {st} --> {et}")
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"
@@ -148,7 +148,7 @@ class Subtitles:
         failed_list = []
         fl = [i for i in os.listdir(abs_path) if i.endswith(".wav")]
         if len(fl) == 0:
-            gr.Warning("还未合成任何字幕！")
+            gr.Warning(i18n("Subtitles have not been synthesized yet!"))
             return None
         if sr in [None,0]:
             wav, sr = load_audio(os.path.join(abs_path, fl[0]),sr=sr) 
@@ -180,13 +180,11 @@ class Subtitles:
             else:
                 failed_list.append(self.subtitles[id].index)
         if delayed_list != []:
-            logger.warning(
-                f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟"
-            )
-            gr.Warning(f"序号合集为 {delayed_list} 的字幕由于之前的音频过长而被延迟")
+            logger.warning(f"{"The following subtitles are delayed due to the previous audio being too long"}:{delayed_list}")
+            gr.Warning(f"{"The following subtitles are delayed due to the previous audio being too long"}:{delayed_list}")
         if failed_list != []:
-            logger.warning(f"序号合集为 {delayed_list} 的字幕合成失败或未合成！")
-            gr.Warning(f"序号合集为 {failed_list} 的字幕合成失败或未合成！")
+            logger.warning(f"{i18n("Failed to synthesize the following subtitles or they were not synthesized")}:{delayed_list}")
+            gr.Warning(f"{i18n("Failed to synthesize the following subtitles or they were not synthesized")}:{delayed_list}")
         audio_content = np.concatenate(audiolist)
         self.dump()
         return sr, audio_content
@@ -223,7 +221,7 @@ class Subtitles:
 
     def export(self,fp=None,open_explorer=True,raw=False):
         if len(self.subtitles)==0:
-            gr.Info("当前没有字幕")
+            gr.Info(i18n("There are no subtitles in the current workspace"))
             return None
         idx=0
         srt_content = []

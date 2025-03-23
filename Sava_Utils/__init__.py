@@ -1,4 +1,7 @@
 import logging
+import os
+import json
+current_path = os.environ.get("current_path")
 log_colors = {
     "DEBUG": "white",
     "INFO": "green",
@@ -28,7 +31,12 @@ except ImportError:
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.info("彩色提示信息不可用，可选择安装依赖：colorlog")
+
+from .i18nAuto import I18n
+try:
+    i18n=I18n(language=json.load(open(os.path.join(current_path, "SAVAdata", "config.json"), encoding="utf-8")).get("language"))
+except:
+    i18n=I18n()
 
 import argparse
 parser = argparse.ArgumentParser(add_help=False)
@@ -38,12 +46,12 @@ parser.add_argument('-server_mode', dest='server_mode', action="store_true", def
 args, unknown = parser.parse_known_args()
 
 from .settings import load_cfg
-from .utils import cls_cache
 config=load_cfg()
-from .i18n import I18n
-i18n=I18n(language=config.language)
+
 config.server_mode=args.server_mode or config.server_mode
 if config.server_mode:
-    logger.warning("服务模式已启用！")
+    logger.warning(i18nAuto("Server Mode has been enabled!"))
+
+from .utils import clear_cache
 if config.clear_tmp:
-    cls_cache()
+    clear_cache()

@@ -23,11 +23,9 @@ from tqdm import tqdm
 
 import Sava_Utils
 from Sava_Utils.man import Man
-from Sava_Utils import i18n
+from Sava_Utils import logger,i18n,args
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
-from Sava_Utils import logger
-from Sava_Utils import args
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
 import Sava_Utils.tts_projects
@@ -342,9 +340,9 @@ if __name__ == "__main__":
                             GSV_ARGS=GSV.getUI()                             
                         with gr.TabItem("Bert-VITS2-HiyoriUI"):
                             BV2_ARGS=BV2.getUI() 
-                        with gr.TabItem("Azure-TTS"):
+                        with gr.TabItem("Azure-TTS(Microsoft)"):
                             MSTTS_ARGS=MSTTS.getUI()  
-                        with gr.TabItem("Custom API"):
+                        with gr.TabItem(i18n("Custom API")):
                             CUSTOM.getUI()
                     with gr.Column():                  
                         fps=gr.Number(label=i18n("Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr"),value=30,visible=True,interactive=True,minimum=1)
@@ -374,7 +372,7 @@ if __name__ == "__main__":
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=4)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
                             recompose_btn = gr.Button(value=i18n("Reassemble Audio"), scale=1, min_width=60)
-                            export_btn = gr.Button(value=i18n("Export subtitles"), scale=1, min_width=60)
+                            export_btn = gr.Button(value=i18n("Export Subtitles"), scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index=gr.Number(show_label=False,visible=False,value=-1,interactive=False)#real index                         
                             with gr.Row():

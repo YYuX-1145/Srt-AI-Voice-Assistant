@@ -27,7 +27,7 @@ i18n_dict={
     "Saved successfully!":"保存成功!",
 
     #UI in main
-    "Subtitle dubbing":"字幕配音",
+    "Subtitle Dubbing":"字幕配音",
     "File content":"文件内容展示",
     "Create multi-speaker voice project":"创建多角色项目",
     "Custom API":"自定义API",
@@ -85,6 +85,9 @@ i18n_dict={
     "Failed to synthesize the following subtitles or they were not synthesized":"以下字幕合成失败或未合成",
 
     #Settings
+    "Failed to load settings, reset to default":"设置加载失败，恢复默认",
+    "Error, Invalid Path":"错误，无效的路径",
+    "Env detected":"已检测到环境",
     "Restarting...":"正在重启...",
     "An error occurred. Please restart manually!":"出现错误，请手动重启！",
     "Settings saved successfully!":"成功保存设置！",
@@ -127,18 +130,18 @@ i18n_dict={
     #GSV(AR)
     "Returned Message":"返回信息",
     "Select TTS Project":"选择TTS项目",
-    "Main Refer Audio":"主参考音频",
-    "Auxiliary Refer Audios":"辅参考音频",
-    "Transcription of Main Refer Audio":"主参考音频文本",
+    "Main Reference Audio":"主参考音频",
+    "Auxiliary Reference Audios":"辅参考音频",
+    "Transcription of Main Reference Audio":"主参考音频文本",
     "Transcription | Pretrained Speaker (Cosy)":"参考音频文本|Cosy预训练音色",
-    "Language of Main Refer Audio":"参考音频语言",
+    "Language of Main Reference Audio":"参考音频语言",
     "Model Path":"模型路径",
     "Switch Models":"模型切换",
     "Fragment Interval(sec)":"分段间隔(秒)",
     "How to cut":"怎么切",
     "(Optional) Description":"描述信息，可选",
     "Presets":"预设",
-    "You must upload Main Refer Audio":"你必须指定主参考音频",
+    "You must upload Main Reference Audio":"你必须指定主参考音频",
     "Preset saved successfully":"预设保存成功",
     "Failed to switch model":"模型切换失败",
     "Preset loaded successfully.":"预设加载完毕",

@@ -163,11 +163,11 @@ class GSV(TTSProjet):
         self.choose_ar_tts=gr.Radio(label=i18n("Select TTS Project"),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
         self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
         with gr.Row():
-            self.refer_audio=gr.Audio(label=i18n("Main Refer Audio"))
-            self.aux_ref_audio = gr.File(label=i18n("Auxiliary Refer Audios"),file_count="multiple",type="binary")
+            self.refer_audio=gr.Audio(label=i18n("Main Reference Audio"))
+            self.aux_ref_audio = gr.File(label=i18n("Auxiliary Reference Audios"),file_count="multiple",type="binary")
         with gr.Row():
-            self.refer_text=gr.Textbox(label=i18n("Transcription of Main Refer Audio"),value="",placeholder=i18n("Transcription | Pretrained Speaker (Cosy)"))
-            self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label=i18n("Language of Main Refer Audio"),interactive=True,allow_custom_value=False)
+            self.refer_text=gr.Textbox(label=i18n("Transcription of Main Reference Audio"),value="",placeholder=i18n("Transcription | Pretrained Speaker (Cosy)"))
+            self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label=i18n("Language of Main Reference Audio"),interactive=True,allow_custom_value=False)
         with gr.Accordion(i18n("Switch Models"),open=False,visible=not self.server_mode):
             self.sovits_path=gr.Textbox(value="",label=f"Sovits {i18n("Model Path")}",interactive=True)
             self.gpt_path=gr.Textbox(value="",label=f"GPT {i18n("Model Path")}",interactive=True)
@@ -238,8 +238,8 @@ class GSV(TTSProjet):
         in_file,fps,offset,max_workers,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         if artts_proj=="GPT_SoVITS":
             if refer_audio is None:
-                gr.Warning(i18n("You must upload Main Refer Audio"))
-                raise Exception(i18n("You must upload Main Refer Audio"))
+                gr.Warning(i18n("You must upload Main Reference Audio"))
+                raise Exception(i18n("You must upload Main Reference Audio"))
         if refer_audio is not None:
             refer_audio_path=temp_ra(refer_audio)
         else:

@@ -330,7 +330,7 @@ if __name__ == "__main__":
         STATE=gr.State(value=Subtitles())
         gr.Markdown(value=Man.getInfo("title"))
         with gr.Tabs():            
-            with gr.TabItem(i18n("Subtitle dubbing")):
+            with gr.TabItem(i18n("Subtitle Dubbing")):
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n("File content"), value="",interactive=False)

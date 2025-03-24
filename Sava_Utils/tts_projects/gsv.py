@@ -15,27 +15,10 @@ import io
 
 current_path=os.environ.get("current_path")
 
-dict_language = {
-    "中文": "all_zh",
-    "粤语": "all_yue",
-    "英文": "en",
-    "日文": "all_ja",
-    "韩文": "all_ko",
-    "中英混合": "zh",
-    "粤英混合": "yue",
-    "日英混合": "ja",
-    "韩英混合": "ko",
-    "多语种混合": "auto",  # 多语种启动切分识别语种
-    "多语种混合(粤语)": "auto_yue",
-}
-cut_method = {
-    "不切": "cut0",
-    "凑四句一切": "cut1",
-    "凑50字一切": "cut2",
-    "按中文句号。切": "cut3",
-    "按英文句号.切": "cut4",
-    "按标点符号切": "cut5",
-}
+dict_language:dict = i18n("DICT_LANGUAGE")
+cut_method:dict = i18n("CUT_METHOD")
+dict_language_rev={val:key for key,val in dict_language.items()}
+#cut_method_rev={val:key for key,val in cut_method.items()}
 
 def temp_ra(a: tuple):
     sr, wav = a
@@ -161,13 +144,13 @@ class GSV(TTSProjet):
 
     def _UI(self):
         self.choose_ar_tts=gr.Radio(label=i18n("Select TTS Project"),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
-        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
+        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Inference text language"),interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label=i18n("Main Reference Audio"))
             self.aux_ref_audio = gr.File(label=i18n("Auxiliary Reference Audios"),file_count="multiple",type="binary")
         with gr.Row():
             self.refer_text=gr.Textbox(label=i18n("Transcription of Main Reference Audio"),value="",placeholder=i18n("Transcription | Pretrained Speaker (Cosy)"))
-            self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label=i18n("Language of Main Reference Audio"),interactive=True,allow_custom_value=False)
+            self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Language of Main Reference Audio"),interactive=True,allow_custom_value=False)
         with gr.Accordion(i18n("Switch Models"),open=False,visible=not self.server_mode):
             self.sovits_path=gr.Textbox(value="",label=f"Sovits {i18n("Model Path")}",interactive=True)
             self.gpt_path=gr.Textbox(value="",label=f"GPT {i18n("Model Path")}",interactive=True)
@@ -284,7 +267,7 @@ class GSV(TTSProjet):
             if preset.AR_TTS_Project_name=='GPT_SoVITS' and preset.sovits_path !="" and preset.gpt_path != "":
                 if not self.switch_gsvmodel(sovits_path=preset.sovits_path,gpt_path=preset.gpt_path,port=preset.port,force=False):
                     gr.Warning(i18n("Failed to switch model"))
-            gr.Info(i18n("Preset loaded successfully."))
+            gr.Info(i18n("Preset has been loaded."))
             return preset.to_list()[1:]
         except Exception as e:
             gr.Warning(f"Error: {e}")
@@ -317,7 +300,7 @@ class GSV(TTSProjet):
                 if not os.path.isfile(x):
                     gr.Warning(i18n("Model Paths seem to be invalid, which could lead to errors!"))
                 if os.path.isdir(x):
-                    raise gr.Error(i18n("You incorrectly entered a folder path!"))
+                    raise gr.Error(i18n("You have incorrectly entered a folder path!"))
             # print(data_json)
             port=int(port)
             if self.gsv_fallback:
@@ -399,7 +382,7 @@ class ARPreset:
         self.port=int(port)
         self.reference_audio_path=reference_audio_path
         self.reference_audio_text=reference_audio_text
-        self.reference_audio_lang=reference_audio_lang
+        self.reference_audio_lang=dict_language[reference_audio_lang] if reference_audio_lang not in list(dict_language_rev.keys()) else reference_audio_lang
         self.auxiliary_audios=auxiliary_audios
         self.sovits_path=sovits_path.strip('"')
         self.gpt_path=gpt_path.strip('"')
@@ -407,6 +390,7 @@ class ARPreset:
 
     def to_list(self):
         val=self.to_dict()
+        val["reference_audio_lang"]=dict_language_rev[val["reference_audio_lang"]]
         return [val[x] for x in list(val.keys())]
 
     def to_dict(self):

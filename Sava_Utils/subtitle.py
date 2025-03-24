@@ -221,7 +221,7 @@ class Subtitles:
 
     def export(self,fp=None,open_explorer=True,raw=False):
         if len(self.subtitles)==0:
-            gr.Info(i18n("There are no subtitles in the current workspace"))
+            gr.Info(i18n("There is no subtitle in the current workspace"))
             return None
         idx=0
         srt_content = []

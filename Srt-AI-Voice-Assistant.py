@@ -22,8 +22,7 @@ import concurrent.futures
 from tqdm import tqdm
 
 import Sava_Utils
-from Sava_Utils.man import Man
-from Sava_Utils import logger,i18n,args
+from Sava_Utils import logger,i18n,args,MANUAL
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
@@ -128,12 +127,12 @@ def generate_preprocess(*args,project=None):
     try:
         args, kwargs = Projet_dict[project].arg_filter(*args)
     except Exception as e:
-        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
+        return None, f"{i18n("An error occurred")}: {str(e)}", getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args, **kwargs)
 
 def gen_multispeaker(subtitles:Subtitles,max_workers):
     if len(subtitles)==0 or subtitles is None:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return None, *load_page(Subtitles())
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
@@ -292,8 +291,8 @@ def remake(*args):
 
 def recompose(page,subtitle_list:Subtitles):
     if subtitle_list is None or len(subtitle_list)==0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
-        return None,i18n("There are no subtitles in the current workspace"),*show_page(page,subtitle_list)
+        gr.Info(i18n("There is no subtitle in the current workspace"))
+        return None,i18n("There is no subtitle in the current workspace"),*show_page(page,subtitle_list)
     audio=subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
     gr.Info("Reassemble successfully!")
     return audio,"OK",*show_page(page,subtitle_list)
@@ -320,7 +319,6 @@ def save_spk(name,*args,project):
     return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))],value=name)
 
 if __name__ == "__main__":
-    Man=Man(language=Sava_Utils.config.language)
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
@@ -328,7 +326,7 @@ if __name__ == "__main__":
         server_port=args.server_port
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=Sava_Utils.config.theme) as app:
         STATE=gr.State(value=Subtitles())
-        gr.Markdown(value=Man.getInfo("title"))
+        gr.Markdown(value=MANUAL.getInfo("title"))
         with gr.Tabs():            
             with gr.TabItem(i18n("Subtitle Dubbing")):
                 with gr.Row():
@@ -470,11 +468,11 @@ if __name__ == "__main__":
                         SETTINGS.getUI()
                     with gr.Column():
                         with gr.TabItem(i18n("Readme")):
-                            gr.Markdown(value=Man.getInfo("readme"))
+                            gr.Markdown(value=MANUAL.getInfo("readme"))
                         with gr.TabItem(i18n("Issues")):
-                            gr.Markdown(value=Man.getInfo("issues"))
+                            gr.Markdown(value=MANUAL.getInfo("issues"))
                         with gr.TabItem(i18n("Help & User guide")):
-                            gr.Markdown(value=Man.getInfo("help"))       
+                            gr.Markdown(value=MANUAL.getInfo("help"))       
         create_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(lambda *args:generate_preprocess(*args,project="bv2"),inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])

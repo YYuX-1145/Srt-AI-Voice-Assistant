@@ -1,9 +1,7 @@
 from . import TTSProjet
 import requests
 import gradio as gr
-from ..utils import positive_int
-from .. import logger
-from ..man import Man
+from .. import logger,i18n,MANUAL
 import time
 import os
 
@@ -20,12 +18,10 @@ class Custom(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            man=Man()
-            gr.Markdown(value=man.getInfo("custom_warn"))
-            gr.Markdown(value=man.getInfo("help_custom"))                            
-            self.choose_custom_api=gr.Dropdown(label='选择自定义API代码文件',choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=False)
-            self.refresh_custom_btn = gr.Button(value="刷新")
-            self.gen_btn4 = gr.Button(value="生成", variant="primary", visible=True)
+            gr.Markdown(value=MANUAL.getInfo("help_custom"))                            
+            self.choose_custom_api=gr.Dropdown(label=i18n("Choose Custom API Code File"),choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=False)
+            self.refresh_custom_btn = gr.Button(value="🔄️")
+            self.gen_btn4 = gr.Button(value=i18n("Generate Audio"), variant="primary", visible=True)
             self.refresh_custom_btn.click(self.refresh_custom_api_list,outputs=[self.choose_custom_api])
         return []
     
@@ -47,10 +43,10 @@ class Custom(TTSProjet):
             if os.path.isdir(preset_dir):
                 self.custom_api_list+=[i for i in os.listdir(preset_dir) if i.endswith(".py")]
             else:
-                logger.info("当前没有自定义API预设")
+                logger.info(i18n("No custom API code file found."))
         except Exception as e:
             self.custom_api_list = ['None']
-            err=f"刷新预设失败：{e}"
+            err=f"Error: {e}"
             logger.error(err)
             gr.Warning(err)
         time.sleep(0.1)
@@ -59,7 +55,7 @@ class Custom(TTSProjet):
     def arg_filter(self,*args):
         input_file,fps,offset,workers,custom_api=args
         if custom_api in [None,'None','']:
-            gr.Info("请选择API配置文件！")
-            raise Exception("请选择API配置文件！")
+            gr.Info(i18n("Please select a valid custom API code file!"))
+            raise Exception(i18n("Please select a valid custom API code file!"))
         kwargs={'in_files':input_file,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
         return (custom_api,None), kwargs #

@@ -33,7 +33,6 @@ except ImportError:
     logger.addHandler(handler)
 
 from .i18nAuto import I18n
-
 config_path = os.path.join(current_path, "SAVAdata", "config.json")
 try:
     if os.path.isfile(config_path):
@@ -50,7 +49,8 @@ except Exception as e:
     logger.warning(f'{i18n("Failed to load settings, reset to default")}: {e}')
     from .settings import Settings
     config=Settings()
-
+from .man import Man
+MANUAL=Man(language=config.language)
 
 import argparse
 parser = argparse.ArgumentParser(add_help=False)

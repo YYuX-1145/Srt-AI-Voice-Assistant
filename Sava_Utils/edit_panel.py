@@ -91,7 +91,7 @@ def load_work(dirname):
 def delete_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return  *checklist,*load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -109,7 +109,7 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
 def merge_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -133,7 +133,7 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
 def copy_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -150,7 +150,7 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
 
 def apply_start_end_time(page,subtitles:Subtitles, *args):
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return show_page(page,Subtitles())
     indexlist = [int(i) for i in args[ :Sava_Utils.config.num_edit_rows]]
     timelist = args[Sava_Utils.config.num_edit_rows :]
@@ -169,7 +169,7 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
 def apply_spk(speaker, page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
-        gr.Info(i18n("There are no subtitles in the current workspace"))
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return  *checklist,*show_page(page,Subtitles())
     if speaker in ["","None",[]]:
         speaker=None

@@ -22,30 +22,30 @@ class WAV2SRT():
         if os.path.exists(os.path.join(current_path,"tools","wav2srt.py")):
             available=True
             with gr.TabItem(i18n("Audio/Video Transcribe")):
+                with gr.Row():
+                    self.wav2srt_pid=gr.State(value=-1)
+                    with gr.Column():
+                        self.wav2srt_input=gr.File(label=i18n("Upload File"),type="file",file_count="multiple",interactive=True)
+                        self.wav2srt_out_dir=gr.Textbox(value="Default",label=i18n("Save Path(Folder Path), Default: SAVAdata\\output"),visible=not self.config.server_mode,interactive=not self.config.server_mode)
+                        self.wav2srt_pydir=gr.Textbox(value='Auto',label=i18n("Python Interpreter Path, align with GSV by default"),visible=not self.config.server_mode,interactive=not self.config.server_mode)
+                        self.wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label=i18n("Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support"),interactive=True)
+                        self.wav2srt_min_length=gr.Slider(label=i18n("(ms)Minimum length of each segment"),minimum=0,maximum=90000,step=100,value=5000)
+                        self.wav2srt_min_interval=gr.Slider(label=i18n("(ms)Minium slice interval"),minimum=0,maximum=5000,step=10,value=300)
+                        self.wav2srt_sil=gr.Slider(label=i18n("(ms)Minium silence length"),minimum=0,maximum=2000,step=100,value=1000)
+                        self.wav2srt_args=gr.Textbox(value="",label=i18n("Other Parameters"),interactive=True)                     
+                    with gr.Column():
+                        gr.Markdown(i18n("WAV2SRT_INFO"))
+                        self.wav2srt_output=gr.File(label=i18n("Output File"),type="file",file_count="multiple",interactive=False)
+                        self.wav2srt_output_status=gr.Textbox(label=i18n("Output Info"),value="",interactive=False,)
                         with gr.Row():
-                            self.wav2srt_pid=gr.State(value=-1)
-                            with gr.Column():
-                                self.wav2srt_input=gr.File(label=i18n("Upload File"),type="file",file_count="multiple",interactive=True)
-                                self.wav2srt_out_dir=gr.Textbox(value="Default",label=i18n("Save Path(Folder Path), Default: SAVAdata\\output"),visible=not self.config.server_mode,interactive=not self.config.server_mode)
-                                self.wav2srt_pydir=gr.Textbox(value='Auto',label=i18n("Python Interpreter Path, align with GSV by default"),visible=not self.config.server_mode,interactive=not self.config.server_mode)
-                                self.wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label=i18n("Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support"),interactive=True)
-                                self.wav2srt_min_length=gr.Slider(label=i18n("(ms)Minimum length of each segment"),minimum=0,maximum=90000,step=100,value=5000)
-                                self.wav2srt_min_interval=gr.Slider(label=i18n("(ms)Minium slice interval"),minimum=0,maximum=5000,step=10,value=300)
-                                self.wav2srt_sil=gr.Slider(label=i18n("(ms)Minium silence length"),minimum=0,maximum=2000,step=100,value=1000)
-                                self.wav2srt_args=gr.Textbox(value="",label=i18n("Other Parameters"),interactive=True)                     
-                            with gr.Column():
-                                gr.Markdown(i18n("WAV2SRT_INFO"))
-                                self.wav2srt_output=gr.File(label=i18n("Output File"),type="file",file_count="multiple",interactive=False)
-                                self.wav2srt_output_status=gr.Textbox(label=i18n("Output Info"),value="",interactive=False,)
-                                with gr.Row():
-                                    self.wav2srt_run=gr.Button(value=i18n("Start"),variant="primary",interactive=True)      
-                                    self.wav2srt_terminate=gr.Button(value=i18n("Stop"),variant="secondary",interactive=True)  
-                                    self.wav2srt_terminate.click(kill_process,inputs=[self.wav2srt_pid])                                
-                                self.wav2srt_send2main=gr.Button(value=i18n("Send output files to Main Page"),variant="secondary",interactive=True)
-                                self.wav2srt_send2main.click(send,inputs=[self.wav2srt_output],outputs=[file_main])
-                                self.wav2srt_send2tr=gr.Button(value=i18n("Send output files to Translator"),variant="secondary",interactive=True)
-                                self.wav2srt_send2tr.click(send,inputs=[self.wav2srt_output],outputs=[file_tr])
-        self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_pid,self.wav2srt_output_status,self.wav2srt_output],max_batch_size=2)
+                            self.wav2srt_run=gr.Button(value=i18n("Start"),variant="primary",interactive=True)      
+                            self.wav2srt_terminate=gr.Button(value=i18n("Stop"),variant="secondary",interactive=True)  
+                            self.wav2srt_terminate.click(kill_process,inputs=[self.wav2srt_pid])                                
+                        self.wav2srt_send2main=gr.Button(value=i18n("Send output files to Main Page"),variant="secondary",interactive=True)
+                        self.wav2srt_send2main.click(send,inputs=[self.wav2srt_output],outputs=[file_main])
+                        self.wav2srt_send2tr=gr.Button(value=i18n("Send output files to Translator"),variant="secondary",interactive=True)
+                        self.wav2srt_send2tr.click(send,inputs=[self.wav2srt_output],outputs=[file_tr])
+                    self.wav2srt_run.click(self.run_wav2srt,inputs=[self.wav2srt_input,self.wav2srt_out_dir,self.wav2srt_pydir,self.wav2srt_engine,self.wav2srt_min_length,self.wav2srt_min_interval,self.wav2srt_sil,self.wav2srt_args],outputs=[self.wav2srt_pid,self.wav2srt_output_status,self.wav2srt_output],max_batch_size=2)
         return available
     
 

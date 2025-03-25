@@ -15,8 +15,33 @@ import io
 
 current_path=os.environ.get("current_path")
 
-dict_language:dict = i18n("DICT_LANGUAGE")
-cut_method:dict = i18n("CUT_METHOD")
+try:
+    dict_language:dict = i18n("DICT_LANGUAGE")
+    assert dict_language is dict
+    cut_method:dict = i18n("CUT_METHOD")
+    assert cut_method is dict
+except:
+    dict_language={
+        "Chinese": "all_zh",
+        "Cantonese": "all_yue",
+        "English": "en",
+        "Japanese": "all_ja",
+        "Korean": "all_ko",
+        "Chinese-English Mix": "zh",
+        "Cantonese-English Mix": "yue",
+        "Japanese-English Mix": "ja",
+        "Korean-English Mix": "ko",
+        "Multi-Language Mix": "auto",
+        "Multi-Language Mix (Cantonese)": "auto_yue"
+    }
+    cut_method={
+        "No cutting": "cut0",
+        "Slice once every 4 sentences": "cut1",
+        "Slice per 50 characters": "cut2", 
+        "Slice by Chinese punct": "cut3",
+        "Slice by English punct": "cut4",
+        "Slice by every punct": "cut5"
+    }
 dict_language_rev={val:key for key,val in dict_language.items()}
 #cut_method_rev={val:key for key,val in cut_method.items()}
 

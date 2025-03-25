@@ -9,7 +9,7 @@ class Man():
         for x in ['README', 'changelog', 'title', 'help_custom', 'issues', 'help']:
             try:
                 exec(f"from .{language} import {x}",globals(),ls)
-            except:
+            except ImportError:
                 exec(f"from .en_US import {x}",globals(),ls)
                 logger.info(f"Manual <{x}> does not support {language}.")
         self.Manual_dict = {

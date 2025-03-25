@@ -1,6 +1,5 @@
 import os
 import sys
-# import inspect
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)

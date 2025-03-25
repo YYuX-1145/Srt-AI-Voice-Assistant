@@ -1,5 +1,5 @@
+README = r"""
 # Srt-AI-Voice-Assistant
-**English** | [**简体中文**](./docs/zh_CN/README.md) | [**Other**](./docs/) |**Documents in other languages are translated by AI and they are provided only for reference.**
 ### This project can use multiple AI-TTS to dub for your subtitle or text files.<br>And provides various convenient auxiliary functions including audio/video transcription and subtitle translation.
 If you have encountered problems or want to create a feature request, please go to [Issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues) . 
 ## Features
@@ -21,3 +21,4 @@ If you have encountered problems or want to create a feature request, please go 
 ## [Download the integrated package with GPT-SoVITS (From Hugging Face)](https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main)
 * The GPT-SoVITS integrated package includes the packaged version, without removing any built-in or pretrained models, and its codes are the same with the official repository.
 * Note: Packaged Version included in the GPT-SoVITS integrated package may not be the latest version; overwrite it to update.
+"""

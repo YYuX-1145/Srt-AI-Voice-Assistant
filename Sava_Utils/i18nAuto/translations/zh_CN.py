@@ -29,7 +29,7 @@ i18n_dict={
     #UI in main
     "Subtitle Dubbing":"字幕配音",
     "File content":"文件内容展示",
-    "Create multi-speaker voice project":"创建多角色项目",
+    "Create multi-speaker dubbing project":"创建多角色项目",
     "Custom API":"自定义API",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr":"Pr项目帧速率,仅适用于Pr导出的csv文件",
     "API Launcher":"启动API服务",
@@ -46,7 +46,7 @@ i18n_dict={
     "Select All":"全选",
     "Reverse Selection":"反选",
     "Clear Selection":"清除选择",
-    "Apply timeline modifications":"应用时间",
+    "Apply Timestamp modifications":"应用时间码",
     "Copy":"复制",
     "Merge":"合并",
     "Delete":"删除",

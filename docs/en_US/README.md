@@ -1,5 +1,4 @@
 # Srt-AI-Voice-Assistant
-**English** | [**简体中文**](./docs/zh_CN/README.md) | [**Other**](./docs/) |**Documents in other languages are translated by AI and they are provided only for reference.**
 ### This project can use multiple AI-TTS to dub for your subtitle or text files.<br>And provides various convenient auxiliary functions including audio/video transcription and subtitle translation.
 If you have encountered problems or want to create a feature request, please go to [Issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues) . 
 ## Features

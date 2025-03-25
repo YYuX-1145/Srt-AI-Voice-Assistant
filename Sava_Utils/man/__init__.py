@@ -6,14 +6,15 @@ class Man():
         if language in ["Auto", None]:
             language = locale.getdefaultlocale()[0]  
         ls=dict()
-        for x in ['readme', 'title', 'help_custom', 'issues', 'help']:
+        for x in ['README', 'changelog', 'title', 'help_custom', 'issues', 'help']:
             try:
                 exec(f"from .{language} import {x}",globals(),ls)
             except:
                 exec(f"from .zh_CN import {x}",globals(),ls)
                 logger.info(f"Manual <{x}> does not support {language}.")
         self.Manual_dict = {
-            "readme": ls["readme"].readme,
+            "readme": ls["README"].README,
+            "changelog": ls["changelog"].changelog,
             "title": ls["title"].title,
             "help_custom": ls["help_custom"].help_custom,
             "issues": ls["issues"].issues,

@@ -26,4 +26,4 @@ def custom_api(text):#return: audio content
         data=file.read()
     return data
 ```
-以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！
+以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的二进制内容！

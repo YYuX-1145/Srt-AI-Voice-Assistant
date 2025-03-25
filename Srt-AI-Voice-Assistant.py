@@ -332,7 +332,7 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n("File content"), value="",interactive=False)
-                        create_multispeaker_btn = gr.Button(value=i18n("Create multi-speaker voice project"))
+                        create_multispeaker_btn = gr.Button(value=i18n("Create multi-speaker dubbing project"))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
                             GSV_ARGS=GSV.getUI()                             
@@ -413,7 +413,7 @@ if __name__ == "__main__":
                             reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
                             clear_selection_btn=gr.Button(value=i18n("Clear Selection"),interactive=True,min_width=60)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
-                            apply_se_btn = gr.Button(value=i18n("Apply timeline modifications"), interactive=True,min_width=60)
+                            apply_se_btn = gr.Button(value=i18n("Apply Timestamp modifications"), interactive=True,min_width=60)
                             apply_se_btn.click(apply_start_end_time,inputs=[page_slider,STATE,*edit_real_index_list,*edit_start_end_time_list],outputs=[*edit_rows])
                             copy_btn = gr.Button(value=i18n("Copy"), interactive=True,min_width=60)
                             copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
@@ -469,6 +469,7 @@ if __name__ == "__main__":
                     with gr.Column():
                         with gr.TabItem(i18n("Readme")):
                             gr.Markdown(value=MANUAL.getInfo("readme"))
+                            gr.Markdown(value=MANUAL.getInfo("changelog"))
                         with gr.TabItem(i18n("Issues")):
                             gr.Markdown(value=MANUAL.getInfo("issues"))
                         with gr.TabItem(i18n("Help & User guide")):

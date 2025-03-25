@@ -10,7 +10,7 @@ class Man():
             try:
                 exec(f"from .{language} import {x}",globals(),ls)
             except:
-                exec(f"from .zh_CN import {x}",globals(),ls)
+                exec(f"from .en_US import {x}",globals(),ls)
                 logger.info(f"Manual <{x}> does not support {language}.")
         self.Manual_dict = {
             "readme": ls["README"].README,

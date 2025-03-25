@@ -215,7 +215,7 @@ class Settings_UI():
         gr.Markdown(f"⚠️{i18n("Click Apply & Save for these settings to take effect.")}⚠️")
         with gr.Group():
             gr.Markdown(value=i18n("General"))
-            self.language=gr.Dropdown(label="Language (Requires a restart)",value=Sava_Utils.config.language,allow_custom_value=False,choices=['Auto',"en_US","zh_CN"])
+            self.language=gr.Dropdown(label="Language (Requires a restart)",value=Sava_Utils.config.language,allow_custom_value=False,choices=['Auto',"en_US","zh_CN","ja_JP","ko_KR"])
             with gr.Row():
                 self.server_port=gr.Number(label=i18n("The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port."),value=Sava_Utils.config.server_port,minimum=0,scale=3)
                 self.LAN_access = gr.Checkbox(label=i18n("Enable LAN access. Restart to take effect."),value=Sava_Utils.config.LAN_access,scale=1)

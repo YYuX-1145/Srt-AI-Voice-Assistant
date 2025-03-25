@@ -23,7 +23,7 @@ i18n_dict={
     },
 
     #MSTTS
-    "MSTTS_NOTICE":"""Microsoft TTS needs Internet Connection. You should fill in your key and specify the server region before gengerating audios.""",
+    "MSTTS_NOTICE":"""Microsoft TTS needs Internet Connection. You should fill in your key and specify the server region before gengerating audios. Please pay attention to the monthly free quota.<br>[【To Get Your Key】](https://learn.microsoft.com/en-US/azure/ai-services/speech-service/get-started-text-to-speech)""",
 
     #Subtitle Translation
     "OLLAMA_NOTICE":"⚠️LLMs use much VRAM while they're running and Don't forget to select and unload the corresponding model after usage in order to free up VRAM.",

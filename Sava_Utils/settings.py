@@ -6,8 +6,7 @@ import time
 import os
 import sys
 
-import Sava_Utils.utils
-from . import logger
+from . import logger,i18n
 
 current_path = os.environ.get("current_path")
 
@@ -49,6 +48,7 @@ gradio_hf_hub_themes = [
 class Settings:
     def __init__(
         self,
+        language: str = "Auto",
         server_port: int = 0,
         LAN_access:bool = False,        
         overwrite_workspace:bool = False,
@@ -71,6 +71,7 @@ class Settings:
         ms_lang_option: str= "zh",
         ollama_url: str= "http://localhost:11434"
     ):
+        self.language=language
         self.server_port = int(server_port)
         self.LAN_access = LAN_access
         self.overwrite_workspace = overwrite_workspace
@@ -96,26 +97,26 @@ class Settings:
         if bv2_pydir != "":
             if os.path.exists(bv2_pydir):
                 self.bv2_pydir = os.path.abspath(bv2_pydir)
-            else:
+            else:                
+                gr.Warning(f"{i18n("Error, Invalid Path")}:{self.bv2_pydir }")
                 self.bv2_pydir = ""
-                gr.Warning("错误：填写的路径不存在！")
         else:
             if (os.path.exists(os.path.join(current_path, "venv\\python.exe"))and "VITS2" in current_path.upper()):
                 self.bv2_pydir = os.path.join(current_path, "venv\\python.exe")
-                logger.info("已检测到Bert-VITS2环境")
+                logger.info(f"{i18n("Env detected")}: Bert-VITS2")
             else:
                 self.bv2_pydir = ""
         
         if gsv_pydir != "":
             if os.path.exists(gsv_pydir):
                 self.gsv_pydir = os.path.abspath(gsv_pydir)
-            else:
+            else:                
+                gr.Warning(f"{i18n("Error, Invalid Path")}:{self.gsv_pydir }")
                 self.gsv_pydir = ""
-                gr.Warning("错误：填写的路径不存在！")
         else:
             if (os.path.exists(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper()):
                 self.gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
-                logger.info("已检测到GPT-SoVITS环境")
+                logger.info(f"{i18n("Env detected")}: GPT-SoVITS")
             else:
                 self.gsv_pydir = ""
         ###################
@@ -149,17 +150,16 @@ def load_cfg():
     if os.path.exists(config_path):
         try:
             config = Settings.from_dict(json.load(open(config_path, encoding="utf-8")))
-            logger.info("成功加载自定义设置")
         except Exception as e:
             config = Settings()
-            logger.warning(f"用户设置加载失败，恢复默认设置！{e}")
+            logger.warning(f"Failed to load settings, reset to default: {e}")
     else:
         config = Settings()
-        logger.info("当前没有自定义设置")
     return config
 
+
 def restart():
-    gr.Warning("正在重启，如果更改了主题或端口，请关闭当前页面！")
+    gr.Warning(i18n("Restarting..."))
     time.sleep(0.5)
     os.system("cls")
     if os.environ.get('exe')!='True':
@@ -177,7 +177,7 @@ def restart():
             os.environ["_PYI_ARCHIVE_FILE"] = b
             os.environ["_PYI_PARENT_PROCESS_LEVEL"] = c
         except Exception as e:
-            gr.Warning(f"出现错误{str(e)}，请手动重启！")
+            gr.Warning(f"{i18n("An error occurred. Please restart manually!")} {str(e)}")
         os.system(f"taskkill /PID {os.getpid()} /F")
 
 class Settings_UI():
@@ -197,10 +197,8 @@ class Settings_UI():
         self._apply_to_componments()
         if Sava_Utils.config.num_edit_rows != current_edit_rows:
             Sava_Utils.config.num_edit_rows = current_edit_rows
-            logger.info("更改字幕栏数需要重启生效")
-            gr.Info("更改字幕栏数需要重启生效")
-        logger.info("成功保存设置！")
-        gr.Info("成功保存设置！")
+        logger.info(i18n("Settings saved successfully!"))
+        gr.Info(i18n("Settings saved successfully!"))
         return Sava_Utils.config.to_list()
 
     def getUI(self):
@@ -212,51 +210,53 @@ class Settings_UI():
 
     def _UI(self):
         if Sava_Utils.config.server_mode:
-            gr.Markdown("设置已被禁用")
+            gr.Markdown(i18n("Settings have been disabled!"))
             return []
-        gr.Markdown("⚠️点击应用后，这些设置才会生效。⚠️")
+        gr.Markdown(f"⚠️{i18n("Click Apply & Save for these settings to take effect.")}⚠️")
         with gr.Group():
-            gr.Markdown(value="通用设置")
+            gr.Markdown(value=i18n("General"))
+            self.language=gr.Dropdown(label="Language (Requires a restart)",value=Sava_Utils.config.language,allow_custom_value=False,choices=['Auto',"en_US","zh_CN","ja_JP","ko_KR"])
             with gr.Row():
-                self.server_port=gr.Number(label="本程序所使用的默认端口，重启生效。0=自动。当冲突无法启动时，使用参数-p来指定启动端口",value=Sava_Utils.config.server_port,minimum=0,scale=3)
-                self.LAN_access = gr.Checkbox(label="开启局域网访问,重启生效",value=Sava_Utils.config.LAN_access,scale=1)
+                self.server_port=gr.Number(label=i18n("The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port."),value=Sava_Utils.config.server_port,minimum=0,scale=3)
+                self.LAN_access = gr.Checkbox(label=i18n("Enable LAN access. Restart to take effect."),value=Sava_Utils.config.LAN_access,scale=1)
             with gr.Row():
-                self.overwrite_workspace=gr.Checkbox(label="覆盖历史记录而不是新建工程",value=Sava_Utils.config.overwrite_workspace,interactive=True)
-                self.clear_cache=gr.Checkbox(label="每次启动时清除临时文件（会一并清除合成历史）",value=Sava_Utils.config.clear_tmp,interactive=True)
+                self.overwrite_workspace=gr.Checkbox(label=i18n("Overwrite history records with files of the same name instead of creating a new project."),value=Sava_Utils.config.overwrite_workspace,interactive=True)
+                self.clear_cache=gr.Checkbox(label=i18n("Clear temporary files on each startup (which will also erase history records)."),value=Sava_Utils.config.clear_tmp,interactive=True)
             with gr.Row():
-                self.concurrency_count=gr.Number(label="可同时处理多少请求",value=Sava_Utils.config.concurrency_count,minimum=2,interactive=True)
-                self.server_mode=gr.Checkbox(label="服务模式，只能通过修改配置或启动参数开启",value=Sava_Utils.config.server_mode,interactive=False)
+                self.concurrency_count=gr.Number(label=i18n("Concurrency Count"),value=Sava_Utils.config.concurrency_count,minimum=2,interactive=True)
+                self.server_mode=gr.Checkbox(label=i18n("Server Mode can only be enabled by modifying configuration file or startup parameters."),value=Sava_Utils.config.server_mode,interactive=False)
             with gr.Row():
-                self.min_interval=gr.Slider(label="语音最小间隔(秒)",minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
-                self.output_sr=gr.Dropdown(label="输出音频采样率，0=自动",value='0',allow_custom_value=True,choices=['0','16000','22050','24000','32000','44100','48000'])
-            self.num_edit_rows=gr.Number(label="重新抽卡页面同时展示的字幕数",minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
-            self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label="选择主题，重启后生效，部分主题可能需要科学上网",interactive=True)
-            self.cls_cache_btn=gr.Button(value="立即清除临时文件",variant="primary")
+                self.min_interval=gr.Slider(label=i18n("Minimum voice interval (seconds)"),minimum=0,maximum=3,value=Sava_Utils.config.min_interval,step=0.1)
+                self.output_sr=gr.Dropdown(label=i18n("Sampling rate of output audio, 0=Auto"),value='0',allow_custom_value=True,choices=['0','16000','22050','24000','32000','44100','48000'])
+            self.num_edit_rows=gr.Number(label=i18n("Edit Panel Row Count (Requires a restart)"),minimum=1,maximum=20,value=Sava_Utils.config.num_edit_rows)                        
+            self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n("Theme (Requires a restart)"),interactive=True)
+            self.clear_cache_btn=gr.Button(value=i18n("Clear temporary files"),variant="primary")
         with gr.Group():
             gr.Markdown(value="BV2")
-            self.bv2_pydir_input=gr.Textbox(label="设置BV2环境路径",interactive=True,value=Sava_Utils.config.bv2_pydir)
-            self.bv2_dir_input=gr.Textbox(label="设置BV2项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.bv2_dir)
-            self.bv2_args=gr.Textbox(label="设置BV2启动参数",interactive=True,value=Sava_Utils.config.bv2_args)
+            self.bv2_pydir_input=gr.Textbox(label=i18n("Python Interpreter Path for BV2"),interactive=True,value=Sava_Utils.config.bv2_pydir)
+            self.bv2_dir_input=gr.Textbox(label=i18n("Root Path of BV2"),interactive=True,value=Sava_Utils.config.bv2_dir)
+            self.bv2_args=gr.Textbox(label=i18n("Start Parameters"),interactive=True,value=Sava_Utils.config.bv2_args)
         with gr.Group():
             gr.Markdown(value="GSV")
-            self.gsv_fallback=gr.Checkbox(value=False,label="使用api_v1而不是v2",interactive=True)
-            self.gsv_pydir_input=gr.Textbox(label="设置GSV环境路径",interactive=True,value=Sava_Utils.config.gsv_pydir)
-            self.gsv_dir_input=gr.Textbox(label="设置GSV项目路径,使用整合包可不填",interactive=True,value=Sava_Utils.config.gsv_dir)
-            self.gsv_args=gr.Textbox(label="设置GSV-API启动参数",interactive=True,value=Sava_Utils.config.gsv_args)
+            self.gsv_fallback=gr.Checkbox(value=False,label=i18n("Downgrade API version to v1"),interactive=True)
+            self.gsv_pydir_input=gr.Textbox(label=i18n("Python Interpreter Path for GSV"),interactive=True,value=Sava_Utils.config.gsv_pydir)
+            self.gsv_dir_input=gr.Textbox(label=i18n("Root Path of GSV"),interactive=True,value=Sava_Utils.config.gsv_dir)
+            self.gsv_args=gr.Textbox(label=i18n("Start Parameters"),interactive=True,value=Sava_Utils.config.gsv_args)
         with gr.Group(): 
-            gr.Markdown(value="微软TTS")
-            self.ms_region=gr.Textbox(label="服务区域",interactive=True,value=Sava_Utils.config.ms_region)
-            self.ms_key=gr.Textbox(label="密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",interactive=True,value=Sava_Utils.config.ms_key) 
-            self.ms_lang_option=gr.Textbox(label="筛选需要的语言，用逗号或空格隔开",interactive=True,value=Sava_Utils.config.ms_lang_option)
+            gr.Markdown(value="Azure-TTS(Microsoft)")
+            self.ms_region=gr.Textbox(label="Server Region",interactive=True,value=Sava_Utils.config.ms_region)
+            self.ms_key=gr.Textbox(label=i18n("KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!"),interactive=True,value=Sava_Utils.config.ms_key) 
+            self.ms_lang_option=gr.Textbox(label=i18n("Select required languages, separated by commas or spaces."),interactive=True,value=Sava_Utils.config.ms_lang_option)
         with gr.Group(): 
-            gr.Markdown(value="翻译模块设置")
-            self.ollama_url=gr.Textbox(label="ollama默认请求地址",interactive=True,value=Sava_Utils.config.ollama_url) 
-        self.save_settings_btn=gr.Button(value="应用并保存当前设置",variant="primary")
-        self.restart_btn = gr.Button(value="重启UI", variant="stop")
+            gr.Markdown(value=i18n("Translation Module"))
+            self.ollama_url=gr.Textbox(label=i18n("Default Request Address for Ollama"),interactive=True,value=Sava_Utils.config.ollama_url) 
+        self.save_settings_btn=gr.Button(value=i18n("Apply & Save"),variant="primary")
+        self.restart_btn = gr.Button(value=i18n("Restart UI"), variant="stop")
 
-        self.cls_cache_btn.click(Sava_Utils.utils.cls_cache,inputs=[],outputs=[])
+        self.clear_cache_btn.click(Sava_Utils.utils.clear_cache,inputs=[],outputs=[])
 
         componments_list=[
+            self.language,
             self.server_port,
             self.LAN_access,
             self.overwrite_workspace,

@@ -3,6 +3,7 @@ import os
 import concurrent.futures
 from tqdm import tqdm
 import Sava_Utils
+from .import i18n
 from .utils import read_prcsv, read_srt, read_txt
 from .translator.ollama import Ollama
 
@@ -14,8 +15,8 @@ current_path = os.environ.get("current_path")
 def start_translation(in_files, language, output_dir, *args, translator=None):
     output_list=[]
     if in_files is None:
-        gr.Info("请上传字幕文件！")
-        return "请上传字幕文件！",output_list    
+        gr.Info(i18n("Please upload the subtitle file!"))
+        return i18n("Please upload the subtitle file!"),output_list    
     for in_file in in_files:
         if in_file.name[-4:].lower() == ".csv":
             subtitle_list = read_prcsv(in_file.name, fps=30, offset=0)
@@ -24,14 +25,14 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
         elif in_file.name[-4:].lower() == ".txt":
             subtitle_list = read_txt(in_file.name)
         else:
-            gr.Warning("未知的格式，请确保扩展名正确！")
+            gr.Warning(i18n("Unknown format. Please ensure the extension name is correct!"))
             continue
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 x=list(
                         tqdm(executor.map(lambda x:TRANSLATORS[translator].api(*x),[(i.text,language,*args) for i in subtitle_list]),
                             total=len(subtitle_list), 
-                            desc=f"正在翻译{os.path.basename(in_file.name)}"
+                            desc=f"{i18n("Translating")}: {os.path.basename(in_file.name)}"
                             )
                         )
             for sub,txt in zip(subtitle_list,x):
@@ -40,12 +41,12 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
             subtitle_list.export(fp=output_path,open_explorer=False,raw=True)
             output_list.append(output_path)                          
         except Exception as e:
-            gr.Warning(f"{in_file.name}翻译失败：{str(e)}")
+            gr.Warning(f"{i18n("Failed to translate")} {in_file.name} :{str(e)}")
             continue
 
 
     #os.system(f'explorer {output_dir}')
-    return "ok" if len(output_list)==len(in_files) else "出现错误",output_list
+    return "OK" if len(output_list)==len(in_files) else i18n("An error occurred"),output_list
 
 
 class Translation_module:
@@ -67,18 +68,18 @@ class Translation_module:
             raise "err"
 
     def _UI(self,file_main):
-        with gr.TabItem("字幕翻译"):
+        with gr.TabItem(i18n("Subtitle Translation")):
             with gr.Row():
                 with gr.Column():
-                    self.translation_upload = gr.File(label="上传字幕(可多个)",file_count="multiple",type="file",file_types=[".srt", ".csv", ".txt"])
-                    self.result = gr.Text(interactive=False, value="", label="输出信息")
-                    self.translation_output=gr.File(label="文件输出",file_count="multiple",interactive=False)
-                    self.send_btn=gr.Button(value="发送至主页面",interactive=True)
+                    self.translation_upload = gr.File(label=i18n("Upload your subtitle files (multiple allowed)."),file_count="multiple",type="file",file_types=[".srt", ".csv", ".txt"])
+                    self.result = gr.Text(interactive=False, value="", label=i18n("Output Info"))
+                    self.translation_output=gr.File(label=i18n("Output File"),file_count="multiple",interactive=False)
+                    self.send_btn=gr.Button(value=i18n("Send output files to Main Page"),interactive=True)
                     self.send_btn.click(lambda x:[i.name for i in x] if x is not None else x,inputs=[self.translation_output],outputs=[file_main])
                 with gr.Column():
-                    self.translation_target_language = gr.Dropdown(label="选择目标语言",choices=LANGUAGE,value=LANGUAGE[1],interactive=True)
-                    self.output_dir=gr.Text(value=os.path.join(current_path, "SAVAdata", "output"),label="输出路径",interactive=not Sava_Utils.config.server_mode,visible=not Sava_Utils.config.server_mode,max_lines=1)
-                    self.translator = gr.Radio(label="选择翻译器",choices=[i for i in TRANSLATORS.keys()],value="ollama")
+                    self.translation_target_language = gr.Dropdown(label=i18n("Specify Target Language"),choices=LANGUAGE,value=LANGUAGE[1],interactive=True)
+                    self.output_dir=gr.Text(value=os.path.join(current_path, "SAVAdata", "output"),label=i18n("File Output Path"),interactive=not Sava_Utils.config.server_mode,visible=not Sava_Utils.config.server_mode,max_lines=1)
+                    self.translator = gr.Radio(label=i18n("Select Translator"),choices=[i for i in TRANSLATORS.keys()],value="ollama")
                     Base_args = [self.translation_upload,self.translation_target_language,self.output_dir]
                     with gr.Column():
                         v = True

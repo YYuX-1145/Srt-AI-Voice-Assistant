@@ -22,11 +22,9 @@ import concurrent.futures
 from tqdm import tqdm
 
 import Sava_Utils
-from Sava_Utils.man.manual import Man
+from Sava_Utils import logger,i18n,args,MANUAL
 from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
-from Sava_Utils import logger
-from Sava_Utils import args
 from Sava_Utils.subtitle import Base_subtitle,Subtitle,Subtitles
 
 import Sava_Utils.tts_projects
@@ -45,23 +43,23 @@ Projet_dict={"bv2":BV2,"gsv":GSV,"mstts":MSTTS,"custom":CUSTOM}
 componments=[BV2,GSV,MSTTS,CUSTOM]
 
 def custom_api(text):
-    raise "需要加载自定义API函数！"
+    raise i18n("You need to load custom API functions!")
 
 def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
     t1 = time.time()
     fps = positive_int(fps)[0]
     if in_files in [None,[]]:
-        gr.Info("请上传字幕文件！")
+        gr.Info(i18n("Please upload the subtitle file!"))
         return (
             None,
-            "请上传字幕文件！",
+            i18n("Please upload the subtitle file!"),
             getworklist(),
             *load_page(Subtitles()),
             Subtitles(),
         )
     if Sava_Utils.config.server_mode and len(in_files)>1:
-        gr.Warning("当前不允许批量处理！")
-        return None,"当前不允许批量处理！",getworklist(),*load_page(Subtitles()),Subtitles(),
+        gr.Warning(i18n("The current mode does not allow batch processing!"))
+        return None,i18n("The current mode does not allow batch processing!"),getworklist(),*load_page(Subtitles()),Subtitles(),
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     for in_file in in_files:
         try:
@@ -102,14 +100,14 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
                         ],
                     ),
                     total=len(subtitle_list),
-                    desc="正在合成单说话人任务"
+                    desc=i18n("Synthesizing single-speaker task")
                 )
             )
         file_list = [i for i in file_list if i is not None]
         if len(file_list) == 0:
             shutil.rmtree(abs_dir)
             if len(in_files)==1:
-                raise gr.Error("所有的字幕合成都出错了，请检查API服务！")
+                raise gr.Error(i18n("All subtitle syntheses have failed, please check the API service!"))
             else:
                 continue
         sr, audio = subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)        
@@ -119,7 +117,7 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
     use_time = "%02d:%02d" % (m, s)
     return (
         (sr, audio),
-        f"完成！所用时间:{use_time}",
+        f"{i18n("Completed! Time used")}:{use_time}",
         getworklist(),
         *load_page(subtitle_list),
         subtitle_list,
@@ -129,18 +127,18 @@ def generate_preprocess(*args,project=None):
     try:
         args, kwargs = Projet_dict[project].arg_filter(*args)
     except Exception as e:
-        return None, str(e), getworklist(), *load_page(Subtitles()), Subtitles()
+        return None, f"{i18n("An error occurred")}: {str(e)}", getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args, **kwargs)
 
 def gen_multispeaker(subtitles:Subtitles,max_workers):
     if len(subtitles)==0 or subtitles is None:
-        gr.Info("当前没有字幕")
+        gr.Info(i18n("There is no subtitle in the current workspace"))
         return None, *load_page(Subtitles())
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key]<=0:
             subtitles.speakers.pop(key)
     if len(list(subtitles.speakers.keys()))==0 and subtitles.default_speaker is None:
-        gr.Warning("警告：没有指派任何说话人")
+        gr.Warning(i18n("Warning: No speaker has been assigned"))
     abs_dir=subtitles.get_abs_dir()
     progress=0
     tasks = {key: [] for key in [*subtitles.speakers.keys(),None]}
@@ -149,16 +147,16 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
     for key in tasks.keys():
         if key is None:
             if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None])>0:
-                print(f"当前使用选定的默认说话人：{subtitles.default_speaker}")
+                print(f"{i18n("Using default speaker")}:{subtitles.default_speaker}")
             else:
                 continue
         spk = key if key is not None else subtitles.default_speaker
         try:
             with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
-                info = pickle.load(f) 
+                info = pickle.load(f)
         except FileNotFoundError:
-            logger.error(f"找不到说话人存档{spk}")
-            gr.Warning(f"找不到说话人存档{spk}")
+            logger.error(f"{i18n("Speaker archive not found")}: {spk}")
+            gr.Warning(f"{i18n("Speaker archive not found")}: {spk}")
             continue
         args=info["raw_data"]
         project=info["project"]
@@ -186,15 +184,15 @@ def gen_multispeaker(subtitles:Subtitles,max_workers):
                     ),
                     total=len(subtitles),
                     initial=progress,
-                    desc=f"正在合成多说话人任务，当前说话人为 {spk}",
+                    desc=f"{i18n("Synthesizing multi-speaker task, the current speaker is")} :{spk}",
                 )
             )
         file_list=[i for i in file_list if i is not None]
         progress+=len(file_list)
         if len(file_list)==0:
-            raise gr.Error("单一说话人的全部语音合成失败了！")
+            gr.Warning(f"{i18n("Synthesis for the single speaker has failed !")} {spk}")
     audio=subtitles.audio_join(sr=Sava_Utils.config.output_sr)
-    gr.Info("合成完毕！")
+    gr.Info(i18n("Done!"))
     return audio,*load_page(subtitles)
 
 
@@ -209,38 +207,37 @@ def save(args,proj:str=None,text:str=None,dir:str=None,subid:int=None):
                 return filepath            
         else:
             data=json.loads(audio)
-            logger.error(f"出错字幕id：{subid},接收报错数据为：{str(data)}")
+            logger.error(f"{i18n("Failed subtitle id")}:{subid},{i18n("error message received")}:{str(data)}")
             return None
     else:
-        logger.error(f"出错字幕id：{subid}")
+        logger.error(f"{i18n("Failed subtitle id")}:{subid}")
         return None
 
 def start_hiyoriui():
     if Sava_Utils.config.bv2_pydir == "":
-        gr.Warning("请前往设置页面指定环境路径并保存!")
-        return "请前往设置页面指定环境路径并保存!"    
+        gr.Warning(i18n("Please go to the settings page to specify the corresponding environment path and don't forget to save it!"))
+        return i18n("Please go to the settings page to specify the corresponding environment path and don't forget to save it!")   
     command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
     rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
     time.sleep(0.1)
-    return "HiyoriUI已启动，请确保其配置文件无误"
+    return f"HiyoriUI{i18n(" has been launched, please ensure the configuration is correct.")}"
 
 def start_gsv():
     if Sava_Utils.config.gsv_pydir == "":
-        gr.Warning("请前往设置页面指定GSV环境路径并保存!")
-        return "请前往设置页面指定GSV环境路径并保存!"
+        gr.Warning(i18n("Please go to the settings page to specify the corresponding environment path and don't forget to save it!"))
+        return i18n("Please go to the settings page to specify the corresponding environment path and don't forget to save it!")
     if Sava_Utils.config.gsv_fallback:
         apath="api.py"    
-        gr.Info("api降级至v1，功能受限。")
-        logger.warning("api降级至v1，功能受限。")
+        gr.Info(i18n("API downgraded to v1, functionality is limited."))
+        logger.warning(i18n("API downgraded to v1, functionality is limited."))
     else:
         apath="api_v2.py"
     if not os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, apath)):
-        raise gr.Error("api文件不存在？？？")
-
+        raise FileNotFoundError(os.path.join(Sava_Utils.config.gsv_dir, apath))
     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
     rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
     time.sleep(0.1)
-    return "GSV-API服务已启动，请确保其配置文件无误"
+    return f"GSV-API{i18n(" has been launched, please ensure the configuration is correct.")}"
 
 def remake(*args):
     fp=None
@@ -262,8 +259,8 @@ def remake(*args):
             with open(os.path.join(current_path, "SAVAdata", "speakers",spk), 'rb') as f:
                 info = pickle.load(f)
         except FileNotFoundError:
-            logger.error(f"找不到说话人存档{spk}")
-            gr.Warning(f"找不到说话人存档{spk}")
+            logger.error(f"{i18n("Speaker archive not found")}: {spk}")
+            gr.Warning(f"{i18n("Speaker archive not found")}: {spk}")
             return fp, *show_page(page, subtitle_list)
         args=info["raw_data"]
         proj=info["project"]
@@ -271,7 +268,7 @@ def remake(*args):
         #Projet_dict[proj].before_gen_action(*args,notify=False,force=True)
     else:
         if subtitle_list.proj is None:
-            gr.Info("使用多角色合成时，必须指定说话人！")
+            gr.Info(i18n("You must specify the speakers while using multi-speaker dubbing!"))
             return fp,*show_page(page,subtitle_list)
         args=[None,*args]#fill data
         try:
@@ -285,27 +282,27 @@ def remake(*args):
     fp=save(args,proj=proj,text=s_txt,dir=subtitle_list.get_abs_dir(),subid=subtitle_list[int(idx)].index)
     if fp is not None:
         subtitle_list[int(idx)].is_success=True
-        gr.Info("重新合成成功！点击重新拼接内容。")
+        gr.Info(i18n("Audio re-generation was successful! Click the <Reassemble Audio> button."))
     else:
         subtitle_list[int(idx)].is_success=False
-        gr.Warning("重新合成失败！")
+        gr.Warning("Audio re-generation failed!")
     subtitle_list.dump()
     return fp,*show_page(page,subtitle_list)
 
 def recompose(page,subtitle_list:Subtitles):
     if subtitle_list is None or len(subtitle_list)==0:
-        gr.Info("上次生成未成功，请先完成生成流程！")
-        return None,"上次生成未成功，请先完成生成流程！",*show_page(page,subtitle_list)
+        gr.Info(i18n("There is no subtitle in the current workspace"))
+        return None,i18n("There is no subtitle in the current workspace"),*show_page(page,subtitle_list)
     audio=subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
-    gr.Info("重新合成完毕！")
+    gr.Info("Reassemble successfully!")
     return audio,"OK",*show_page(page,subtitle_list)
 
 def save_spk(name,*args,project):
     if Sava_Utils.config.server_mode:
-        gr.Warning("当前功能被禁止")
+        gr.Warning(i18n("This function has been disabled!"))
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
     if name in ["",[],None,'None']:
-        gr.Info("请输入有效的名称！")
+        gr.Info(i18n("Please enter a valid name!"))
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
     args=[None, None, None, None,*args]
     # catch all arguments
@@ -315,14 +312,13 @@ def save_spk(name,*args,project):
         os.makedirs(os.path.join(current_path, "SAVAdata", "speakers"), exist_ok=True)
         with open(os.path.join(current_path, "SAVAdata", "speakers", name), "wb") as f:
             pickle.dump({"project": project, "raw_data":args},f)
-        gr.Info(f"保存成功：{name}")
+        gr.Info(f"{i18n("Saved successfully!")}:{name}")
     except Exception as e:
         gr.Warning(str(e))
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
     return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))],value=name)
 
 if __name__ == "__main__":
-    Man=Man()
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path,"SAVAdata","temp","gradio")
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
@@ -330,52 +326,51 @@ if __name__ == "__main__":
         server_port=args.server_port
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI",theme=Sava_Utils.config.theme) as app:
         STATE=gr.State(value=Subtitles())
-        gr.Markdown(value=Man.getInfo("title"))
+        gr.Markdown(value=MANUAL.getInfo("title"))
         with gr.Tabs():            
-            with gr.TabItem("字幕音频合成"):
+            with gr.TabItem(i18n("Subtitle Dubbing")):
                 with gr.Row():
                     with gr.Column():
-                        textbox_intput_text = gr.TextArea(label="文件内容展示", value="",interactive=False)
-                        create_multispeaker_btn = gr.Button(value="创建多角色项目")
+                        textbox_intput_text = gr.TextArea(label=i18n("File content"), value="",interactive=False)
+                        create_multispeaker_btn = gr.Button(value=i18n("Create multi-speaker dubbing project"))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
                             GSV_ARGS=GSV.getUI()                             
                         with gr.TabItem("Bert-VITS2-HiyoriUI"):
                             BV2_ARGS=BV2.getUI() 
-                        with gr.TabItem("微软TTS"):
+                        with gr.TabItem("Azure-TTS(Microsoft)"):
                             MSTTS_ARGS=MSTTS.getUI()  
-                        with gr.TabItem("自定义API"):
+                        with gr.TabItem(i18n("Custom API")):
                             CUSTOM.getUI()
                     with gr.Column():                  
-                        fps=gr.Number(label="Pr项目帧速率,仅适用于Pr导出的csv文件",value=30,visible=True,interactive=True,minimum=1)
-                        workers=gr.Number(label="调取合成线程数(高于1时请增加api的workers数量,否则不会提速)",value=2,visible=True,interactive=True,minimum=1)
-                        offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label="语音时间偏移(秒) 延后或提前所有语音的时间")
-                        input_file = gr.File(label="上传文件(批量只支持单个同一说话人)",file_types=['.csv','.srt','.txt'],type="file",file_count='multiple')
-                        gen_textbox_output_text=gr.Textbox(label="输出信息", placeholder="点击处理按钮",interactive=False)
+                        fps=gr.Number(label=i18n("Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr"),value=30,visible=True,interactive=True,minimum=1)
+                        workers=gr.Number(label=i18n("Number of threads for sending requests"),value=2,visible=True,interactive=True,minimum=1)
+                        offset=gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label=i18n("Voice time offset (seconds)"))
+                        input_file = gr.File(label=i18n("Upload file (Batch mode only supports one speaker at a time)"),file_types=['.csv','.srt','.txt'],type="file",file_count='multiple')
+                        gen_textbox_output_text=gr.Textbox(label=i18n("Output Info"),interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
                         if not Sava_Utils.config.server_mode:
-                            with gr.Accordion("启动服务"):
-                                gr.Markdown(value="请先在设置中应用项目路径")
-                                start_hiyoriui_btn=gr.Button(value="启动HiyoriUI")
-                                start_gsv_btn=gr.Button(value="启动GPT-SoVITS")
+                            with gr.Accordion(i18n("API Launcher")):
+                                start_hiyoriui_btn=gr.Button(value="HiyoriUI")
+                                start_gsv_btn=gr.Button(value="GPT-SoVITS")
                                 start_hiyoriui_btn.click(start_hiyoriui,outputs=[gen_textbox_output_text])
                                 start_gsv_btn.click(start_gsv,outputs=[gen_textbox_output_text])
                         input_file.change(file_show,inputs=[input_file],outputs=[textbox_intput_text])
 
-                with gr.Accordion(label="编辑区域 *Note:请勿在使用本功能时清除临时文件。",open=True):
+                with gr.Accordion(label=i18n("Editing area *Note: DO NOT clear temporary files while using this function."),open=True):
                     with gr.Column():
                         edit_rows=[]
                         edit_real_index_list=[]
                         edit_check_list=[]
                         edit_start_end_time_list=[]
                         with gr.Row():
-                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label="合成历史", scale=2,visible=not Sava_Utils.config.server_mode)
+                            worklist=gr.Dropdown(choices=os.listdir(os.path.join(current_path,"SAVAdata","temp","work")) if os.path.exists(os.path.join(current_path,"SAVAdata","temp","work")) else [""],label=i18n("History"), scale=2,visible=not Sava_Utils.config.server_mode)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
-                            workloadbtn = gr.Button(value="加载", scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value=i18n("Load"), scale=1, min_width=60,visible=not Sava_Utils.config.server_mode)
                             page_slider=gr.Slider(minimum=1,maximum=1,value=1,label="",step=Sava_Utils.config.num_edit_rows,scale=4)
                             audio_player=gr.Audio(label="",value=None,interactive=False,autoplay=True,scale=4)
-                            recompose_btn = gr.Button(value="重新拼接", scale=1, min_width=60)
-                            export_btn = gr.Button(value="导出字幕", scale=1, min_width=60)
+                            recompose_btn = gr.Button(value=i18n("Reassemble Audio"), scale=1, min_width=60)
+                            export_btn = gr.Button(value=i18n("Export Subtitles"), scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index=gr.Number(show_label=False,visible=False,value=-1,interactive=False)#real index                         
                             with gr.Row():
@@ -412,29 +407,29 @@ if __name__ == "__main__":
                         recompose_btn.click(recompose,inputs=[page_slider,STATE],outputs=[audio_output,gen_textbox_output_text,*edit_rows])
                         export_btn.click(lambda x:x.export(),inputs=[STATE],outputs=[input_file])
                         with gr.Row(equal_height=True):
-                            all_selection_btn = gr.Button(value="全选",interactive=True,min_width=60)
+                            all_selection_btn = gr.Button(value=i18n("Select All"),interactive=True,min_width=60)
                             all_selection_btn.click(lambda :[True for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
-                            reverse_selection_btn = gr.Button(value="反选",interactive=True,min_width=60)
+                            reverse_selection_btn = gr.Button(value=i18n("Reverse Selection"),interactive=True,min_width=60)
                             reverse_selection_btn.click(lambda *args:[not i for i in args],inputs=edit_check_list,outputs=edit_check_list)
-                            clear_selection_btn=gr.Button(value="清除选择",interactive=True,min_width=60)
+                            clear_selection_btn=gr.Button(value=i18n("Clear Selection"),interactive=True,min_width=60)
                             clear_selection_btn.click(lambda :[False for i in range(Sava_Utils.config.num_edit_rows)],inputs=[],outputs=edit_check_list)
-                            apply_se_btn = gr.Button(value="应用时间", interactive=True,min_width=60)
+                            apply_se_btn = gr.Button(value=i18n("Apply Timestamp modifications"), interactive=True,min_width=60)
                             apply_se_btn.click(apply_start_end_time,inputs=[page_slider,STATE,*edit_real_index_list,*edit_start_end_time_list],outputs=[*edit_rows])
-                            copy_btn = gr.Button(value="复制", interactive=True,min_width=60)
+                            copy_btn = gr.Button(value=i18n("Copy"), interactive=True,min_width=60)
                             copy_btn.click(copy_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
-                            merge_btn = gr.Button(value="合并", interactive=True,min_width=60)
+                            merge_btn = gr.Button(value=i18n("Merge"), interactive=True,min_width=60)
                             merge_btn.click(merge_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
-                            delete_btn = gr.Button(value="删除", interactive=True,min_width=60)
+                            delete_btn = gr.Button(value=i18n("Delete"), interactive=True,min_width=60)
                             delete_btn.click(delete_subtitle,inputs=[page_slider,STATE,*edit_check_list,*edit_real_index_list],outputs=[*edit_check_list,page_slider,*edit_rows])
-                        with gr.Accordion(label="多角色配音"):
+                        with gr.Accordion(label=i18n("Multi-speaker dubbing")):
                             with gr.Row(equal_height=True):
                                 try:
                                     speaker_list_choices=["None",*os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
                                 except:
                                     speaker_list_choices=["None"]
-                                speaker_list=gr.Dropdown(label="选定默认/选择/创建说话人",value="None",choices=speaker_list_choices,allow_custom_value=not Sava_Utils.config.server_mode,scale=4)
+                                speaker_list=gr.Dropdown(label=i18n("Select/Create Speaker"),value="None",choices=speaker_list_choices,allow_custom_value=not Sava_Utils.config.server_mode,scale=4)
                                 #speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
-                                select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label="说话人项目")
+                                select_spk_projet=gr.Dropdown(choices=['bv2','gsv','mstts','custom'],value='gsv',interactive=True,label=i18n("TTS Project"))
                                 refresh_spk_list_btn=gr.Button(value="🔄️",min_width=60, scale=0)
                                 refresh_spk_list_btn.click(getspklist,inputs=[],outputs=[speaker_list])
                                 apply_btn = gr.Button(value="✅", min_width=60, scale=0)
@@ -453,31 +448,32 @@ if __name__ == "__main__":
 
                                 del_spk_list_btn=gr.Button(value="🗑️", min_width=60, scale=0)
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
-                                start_gen_multispeaker_btn=gr.Button(value="生成多角色配音",variant="primary")
+                                start_gen_multispeaker_btn=gr.Button(value=i18n("Start Multi-speaker Synthesizing"),variant="primary")
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows])
-            with gr.TabItem("辅助功能"):
+            with gr.TabItem(i18n("Tools")):
                 TRANSLATION_MODULE.UI(input_file)
                 componments.append(TRANSLATION_MODULE)
-            with gr.TabItem("外部扩展内容"):
+            with gr.TabItem(i18n("Extended Contents")):
                 available=False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
                 WAV2SRT = WAV2SRT(config=Sava_Utils.config)
                 componments.append(WAV2SRT)
                 available=WAV2SRT.UI(input_file,TRANSLATION_MODULE.translation_upload)
                 if not available:
-                    gr.Markdown("没有任何扩展，安装后重启生效<br>[获取外部扩展内容](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
-            with gr.TabItem("设置"):
+                    gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
+            with gr.TabItem(i18n("Settings")):
                 with gr.Row():
                     with gr.Column():
                         SETTINGS=Sava_Utils.settings.Settings_UI(componments=componments)
                         SETTINGS.getUI()
                     with gr.Column():
-                        with gr.TabItem("简介"):
-                            gr.Markdown(value=Man.getInfo("readme"))
-                        with gr.TabItem("常见错误"):
-                            gr.Markdown(value=Man.getInfo("issues"))
-                        with gr.TabItem("使用指南"):
-                            gr.Markdown(value=Man.getInfo("help"))       
+                        with gr.TabItem(i18n("Readme")):
+                            gr.Markdown(value=MANUAL.getInfo("readme"))
+                            gr.Markdown(value=MANUAL.getInfo("changelog"))
+                        with gr.TabItem(i18n("Issues")):
+                            gr.Markdown(value=MANUAL.getInfo("issues"))
+                        with gr.TabItem(i18n("Help & User guide")):
+                            gr.Markdown(value=MANUAL.getInfo("help"))       
         create_multispeaker_btn.click(create_multi_speaker,inputs=[input_file,fps,offset],outputs=[worklist,page_slider,*edit_rows,STATE])
         BV2.gen_btn1.click(lambda *args:generate_preprocess(*args,project="bv2"),inputs=[input_file,fps,offset,workers,*BV2_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])
         GSV.gen_btn2.click(lambda *args:generate_preprocess(*args,project="gsv"),inputs=[input_file,fps,offset,workers,*GSV_ARGS],outputs=[audio_output,gen_textbox_output_text,worklist,page_slider,*edit_rows,STATE])

@@ -1,7 +1,12 @@
-help_custom="""
-### 将装有python函数的代码文件放在`SAVAdata/presets`下即可被调用  
+help_custom = r"""
+## Security Warning: This feature will execute external code!
+### Please inspect the code content before running it; executing untrusted code may put your computer at risk!
+### The author bear no responsibility for any consequences!
+
+### Place code files containing Python functions in the SAVAdata/presets directory, and they will be callable.
+* Here is an example code for Gradio API.
 ```
-def custom_api(text):#return: audio content
+def custom_api(text): #return: audio content
     from gradio_client import Client
     client = Client("http://127.0.0.1:7860/")
     result = client.predict(
@@ -23,6 +28,5 @@ def custom_api(text):#return: audio content
         data=file.read()
     return data
 ```
-以上是接入Gradio的一个示例代码，请注意：函数的输入值必须是要合成的文本`text`,返回值是音频文件的内容！
-
+**Please note: The input value `text` of the function must be the text to be synthesized, and the return value is the binary content of the audio file!**
 """

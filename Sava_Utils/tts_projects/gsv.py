@@ -3,6 +3,7 @@ import requests
 import gradio as gr
 from ..utils import positive_int
 from .. import logger
+from .. import i18n
 import os
 import hashlib
 import soundfile as sf
@@ -14,27 +15,10 @@ import io
 
 current_path=os.environ.get("current_path")
 
-dict_language = {
-    "中文": "all_zh",
-    "粤语": "all_yue",
-    "英文": "en",
-    "日文": "all_ja",
-    "韩文": "all_ko",
-    "中英混合": "zh",
-    "粤英混合": "yue",
-    "日英混合": "ja",
-    "韩英混合": "ko",
-    "多语种混合": "auto",  # 多语种启动切分识别语种
-    "多语种混合(粤语)": "auto_yue",
-}
-cut_method = {
-    "不切": "cut0",
-    "凑四句一切": "cut1",
-    "凑50字一切": "cut2",
-    "按中文句号。切": "cut3",
-    "按英文句号.切": "cut4",
-    "按标点符号切": "cut5",
-}
+dict_language:dict = i18n("DICT_LANGUAGE")
+cut_method:dict = i18n("CUT_METHOD")
+dict_language_rev={val:key for key,val in dict_language.items()}
+#cut_method_rev={val:key for key,val in cut_method.items()}
 
 def temp_ra(a: tuple):
     sr, wav = a
@@ -121,9 +105,9 @@ class GSV(TTSProjet):
                     wav_file.writeframes(response.content) 
                 return wav_buffer.getvalue()
         except Exception as e:
-            err = f"推理发生错误，请检查API服务是否正确运行。报错内容: {e}  "
+            err = f"{i18n("An error has occurred. Please check if the API is running correctly. Details")}: {e}  "
             try:
-                err+=f"返回信息：{response.json()}"
+                err+=f"{i18n("Returned Message")}:{response.json()}"
             except:
                 pass
             logger.error(err)
@@ -159,35 +143,35 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.choose_ar_tts=gr.Radio(label="选择TTS项目",choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
-        self.language2 = gr.Dropdown(choices=dict_language.keys(), value="中英混合", label="要合成的语言",interactive=True,allow_custom_value=False)
+        self.choose_ar_tts=gr.Radio(label=i18n("Select TTS Project"),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
+        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Inference text language"),interactive=True,allow_custom_value=False)
         with gr.Row():
-            self.refer_audio=gr.Audio(label="主参考音频")
-            self.aux_ref_audio = gr.File(label="辅参考音频(可选多个，或不选)",file_count="multiple",type="binary")
+            self.refer_audio=gr.Audio(label=i18n("Main Reference Audio"))
+            self.aux_ref_audio = gr.File(label=i18n("Auxiliary Reference Audios"),file_count="multiple",type="binary")
         with gr.Row():
-            self.refer_text=gr.Textbox(label="参考音频文本",value="",placeholder="参考音频文本|Cosy预训练音色")
-            self.refer_lang = gr.Dropdown(choices=dict_language.keys(), value='中文', label="参考音频语言",interactive=True,allow_custom_value=False)
-        with gr.Accordion("模型切换",open=False,visible=not self.server_mode):
-            self.sovits_path=gr.Textbox(value="",label="Sovits模型路径",interactive=True)
-            self.gpt_path=gr.Textbox(value="",label="GPT模型路径",interactive=True)
-            self.switch_gsvmodel_btn=gr.Button(value="切换模型",variant="primary")
+            self.refer_text=gr.Textbox(label=i18n("Transcription of Main Reference Audio"),value="",placeholder=i18n("Transcription | Pretrained Speaker (Cosy)"))
+            self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Language of Main Reference Audio"),interactive=True,allow_custom_value=False)
+        with gr.Accordion(i18n("Switch Models"),open=False,visible=not self.server_mode):
+            self.sovits_path=gr.Textbox(value="",label=f"Sovits {i18n("Model Path")}",interactive=True)
+            self.gpt_path=gr.Textbox(value="",label=f"GPT {i18n("Model Path")}",interactive=True)
+            self.switch_gsvmodel_btn=gr.Button(value=i18n("Switch Models"),variant="primary")
         with gr.Row():
             self.api_port2=gr.Number(label="API Port",value=9880,interactive=not self.server_mode,visible=not self.server_mode)
         #self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
-        with gr.Accordion("高级合成参数",open=False):
+        with gr.Accordion(i18n("Advanced Parameters"),open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
             self.batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
-            self.fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label="分段间隔(秒)",value=0.3,interactive=True)
+            self.fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label=i18n("Fragment Interval(sec)"),value=0.3,interactive=True)
             self.speed_factor = gr.Slider(minimum=0.25,maximum=4,step=0.05,label="speed_factor",value=1.0,interactive=True)
             self.top_k = gr.Slider(minimum=1,maximum=100,step=1,label="top_k",value=5,interactive=True)
             self.top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label="top_p",value=1,interactive=True)
             self.temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label="temperature",value=1,interactive=True)
             self.repetition_penalty = gr.Slider(minimum=0,maximum=2,step=0.05,label="repetition_penalty",value=1.35,interactive=True)
-            self.split_bucket = gr.Checkbox(label="数据分桶", value=True, interactive=True, show_label=True)
-            self.how_to_cut = gr.Radio(label="怎么切",choices=["不切","凑四句一切","凑50字一切","按中文句号。切","按英文句号.切","按标点符号切"],value="凑四句一切",interactive=True)
-        with gr.Accordion("预设", open=False):
+            self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)
+            self.how_to_cut = gr.Radio(label=i18n("How to cut"),choices=list(cut_method.keys()),value=list(cut_method.keys())[0],interactive=True)
+        with gr.Accordion(i18n("Presets"), open=False):
             self.choose_presets = gr.Dropdown(label="",value="None",choices=self.presets_list,interactive=True,allow_custom_value=True,)
-            self.desc_presets = gr.Textbox(label="", placeholder="描述信息，可选", interactive=True)
+            self.desc_presets = gr.Textbox(label="", placeholder=i18n("(Optional) Description"), interactive=True)
             with gr.Row():
                 self.save_presets_btn = gr.Button(value="💾", variant="primary", min_width=60)
                 self.refresh_presets_btn = gr.Button(value="🔄️", variant="secondary", min_width=60)
@@ -206,7 +190,7 @@ class GSV(TTSProjet):
                     self.gpt_path]            
             self.save_presets_btn.click(self.save_preset,inputs=preset_args,outputs=[self.choose_presets])
         with gr.Row():
-            self.gen_btn2=gr.Button(value="生成",variant="primary",visible=True)    
+            self.gen_btn2=gr.Button(value=i18n("Generate Audio"),variant="primary",visible=True)    
         self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[])
         self.choose_presets.change(self.load_preset,inputs=[self.choose_presets],outputs=preset_args[1:])
         GSV_ARGS = [
@@ -237,8 +221,8 @@ class GSV(TTSProjet):
         in_file,fps,offset,max_workers,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         if artts_proj=="GPT_SoVITS":
             if refer_audio is None:
-                gr.Warning("你必须指定参考音频")
-                raise Exception("你必须指定参考音频")
+                gr.Warning(i18n("You must upload Main Reference Audio"))
+                raise Exception(i18n("You must upload Main Reference Audio"))
         if refer_audio is not None:
             refer_audio_path=temp_ra(refer_audio)
         else:
@@ -259,19 +243,16 @@ class GSV(TTSProjet):
     def save_preset(self,name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path):
         try:
             if self.server_mode:
-                raise RuntimeError("当前功能被禁止")
+                raise RuntimeError(i18n("This function has been disabled!"))
             if name in ["None",None,"",[]]:
-                gr.Info("请输入名称!")
-                return
-            if artts_name =='GPT_SoVITS' and ra is None:
-                gr.Info("请上传参考音频!")
+                gr.Info(i18n("Please enter a valid name!"))
                 return
             preset=ARPreset(name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path) 
             preset.save()
             time.sleep(0.1)
-            gr.Info(f"预设保存成功:{name}")
+            gr.Info(f"{i18n("Preset saved successfully")}:{name}")
         except Exception as e:
-            gr.Warning(f"出错：{e}")
+            gr.Warning(f"Error: {e}")
         return self.refresh_presets_list(reset=False)
 
 
@@ -285,18 +266,17 @@ class GSV(TTSProjet):
 
             if preset.AR_TTS_Project_name=='GPT_SoVITS' and preset.sovits_path !="" and preset.gpt_path != "":
                 if not self.switch_gsvmodel(sovits_path=preset.sovits_path,gpt_path=preset.gpt_path,port=preset.port,force=False):
-                    gr.Warning("模型切换失败")
-
-            gr.Info("预设加载完毕")
+                    gr.Warning(i18n("Failed to switch model"))
+            gr.Info(i18n("Preset has been loaded."))
             return preset.to_list()[1:]
         except Exception as e:
-            gr.Warning(f"加载失败:{e}")
+            gr.Warning(f"Error: {e}")
             return gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update(),gr.update()
 
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
         if self.server_mode:
             if force and notify:
-                gr.Warning("当前功能被禁止")
+                gr.Warning(i18n("This function has been disabled!"))
             return True
         if port not in list(self.current_sovits_model.keys()):
             self.current_sovits_model[port]=None
@@ -304,13 +284,13 @@ class GSV(TTSProjet):
             self.current_gpt_model[port]=None
         if not force and sovits_path==self.current_sovits_model[port] and gpt_path==self.current_gpt_model[port]:
             if notify:
-                gr.Info("当前未切换模型,若需要强制切换请手动点击按钮")
+                gr.Info(i18n("Models are not switched. If you need to switch, please manually click the button."))
             return True
         if sovits_path=="" or gpt_path=="":
             if force and notify:
-                gr.Info("请指定模型路径！")
+                gr.Info(i18n("Please specify the model path!"))
             return False
-        gr.Info("正在切换模型...")
+        gr.Info(i18n("Switching Models..."))
         try:        
             data_json={
             "sovits_model_path": sovits_path.strip('"'),
@@ -318,9 +298,9 @@ class GSV(TTSProjet):
             } 
             for x in data_json.values(): 
                 if not os.path.isfile(x):
-                    gr.Warning("模型路径可能无效，会导致切换错误！")
+                    gr.Warning(i18n("Model Paths seem to be invalid, which could lead to errors!"))
                 if os.path.isdir(x):
-                    raise gr.Error("你错误地填写了文件夹路径！！！")
+                    raise gr.Error(i18n("You have incorrectly entered a folder path!"))
             # print(data_json)
             port=int(port)
             if self.gsv_fallback:
@@ -336,13 +316,13 @@ class GSV(TTSProjet):
                 response.raise_for_status()
             self.current_sovits_model[port] = sovits_path
             self.current_gpt_model[port] = gpt_path
-            gr.Info("模型已切换")
-            logger.info(f"模型已切换：{data_json}")
+            gr.Info(i18n("Models switched successfully"))
+            logger.info(f"{i18n("Models switched successfully")}:{data_json}")
             return True
         except Exception as e:
-            err=f'GPT-SoVITS切换模型发生错误。报错内容: {e}'
+            err=f'GPT-SoVITS {i18n("Failed to switch model")},{i18n("Error details")}: {e}'
             try:
-                err+=f"返回信息：{response.json()}"
+                err+=f"{i18n("error message received")}:{response.json()}"
             except:
                 pass
             gr.Warning(err)
@@ -352,14 +332,14 @@ class GSV(TTSProjet):
     def del_preset(self,name):
         try:
             if self.server_mode:
-                raise RuntimeError("当前功能被禁止")
+                raise RuntimeError(i18n("This function has been disabled!"))
             if name not in ['',None,"None"]:
                 shutil.rmtree(os.path.join(current_path,"SAVAdata","presets",name))
-                gr.Info(f"删除成功:{name}")
+                gr.Info(f"{i18n("Successfully deleted")}:{name}")
             else:
-                gr.Info(f"请选择一个有效的预设")
+                gr.Info(i18n("Please select a valid preset!"))
         except Exception as e:
-            gr.Warning(f"删除失败:{str(e)}")
+            gr.Warning(f"Error: {str(e)}")
         return self.refresh_presets_list()
 
     def refresh_presets_list(self,reset=True):
@@ -369,10 +349,11 @@ class GSV(TTSProjet):
             if os.path.isdir(preset_dir):
                 self.presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
             else:
-                logger.info("当前没有预设")
+                logger.info(i18n("No preset available"))
+                gr.Info(i18n("No preset available"))
         except Exception as e:
             self.presets_list = ["None"]
-            err=f"刷新预设失败：{e}"
+            err=f"Error: {e}"
             logger.error(err)
             gr.Warning(err)
         time.sleep(0.1)
@@ -401,7 +382,7 @@ class ARPreset:
         self.port=int(port)
         self.reference_audio_path=reference_audio_path
         self.reference_audio_text=reference_audio_text
-        self.reference_audio_lang=reference_audio_lang
+        self.reference_audio_lang=dict_language[reference_audio_lang] if reference_audio_lang not in list(dict_language_rev.keys()) else reference_audio_lang
         self.auxiliary_audios=auxiliary_audios
         self.sovits_path=sovits_path.strip('"')
         self.gpt_path=gpt_path.strip('"')
@@ -409,6 +390,7 @@ class ARPreset:
 
     def to_list(self):
         val=self.to_dict()
+        val["reference_audio_lang"]=dict_language_rev[val["reference_audio_lang"]]
         return [val[x] for x in list(val.keys())]
 
     def to_dict(self):
@@ -446,6 +428,6 @@ class ARPreset:
         if x.auxiliary_audios not in [None,[]]:                   
             aux_audio=[os.path.join(current_path,"SAVAdata","presets",x.name,i) for i in x.auxiliary_audios if os.path.exists(os.path.join(current_path,"SAVAdata","presets",x.name,i))]
             if len(aux_audio)!=len(x.auxiliary_audios):
-                gr.Warning("辅助参考音频存在丢失！")
+                gr.Warning(i18n("Partial auxiliary reference audio is missing!"))
             x.auxiliary_audios=aux_audio
         return x

@@ -1,5 +1,3 @@
-issues=r"""
-
 # 常见的错误
 
 ## 1.GPT-SoVITS错误提示404 NOT FOUND
@@ -48,5 +46,3 @@ GPT-SoVITS输出音频有时长但没有声音
 ```
 * 你的显卡不支持半精度
 * 手动修改`GPT_SoVITS\configs\tts_infer.yaml`中的`is_half`为`false`
-
-"""

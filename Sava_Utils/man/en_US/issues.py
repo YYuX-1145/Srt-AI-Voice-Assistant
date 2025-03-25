@@ -1,5 +1,5 @@
 issues = r"""
-# Common Errors
+# Typical Issues
 ## 1. GPT-SoVITS Error: 404 NOT FOUND
 ```
 /tts 404 NOT FOUND

@@ -26,6 +26,17 @@ i18n_dict={
     "MSTTS_NOTICE":"""Microsoft TTS needs Internet Connection. You should fill in your key and specify the server region before gengerating audios.""",
 
     #Subtitle Translation
-    "OLLAMA_NOTICE":"⚠️LLMs use much VRAM while they're running and Don't forget to select and unload the corresponding model after usage in order to free up VRAM."
+    "OLLAMA_NOTICE":"⚠️LLMs use much VRAM while they're running and Don't forget to select and unload the corresponding model after usage in order to free up VRAM.",
 
+    #EXTENSIONS
+
+        #WAV2SRT
+        "WAV2SRT_INFO":"""
+            This function can be directly used in the GPT-SoVITS integrated package; otherwise, you need to install the corresponding dependencies yourself.  
+
+            # Other Parameters:
+            `--whisper_size` Default:large-v3 | Specifies the model when using faster whisper.  
+            `--threshold` Default:-40 | Volume less than this value is considered as a mute alternative cutting point.  
+            `--hop_size` Default:20 | How to calculate the volume curve; the smaller the value, the higher the precision and computation (Note: Higher precision does not always mean better quality).  
+            """
 }

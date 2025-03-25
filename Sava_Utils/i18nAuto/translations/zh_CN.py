@@ -12,7 +12,7 @@ i18n_dict={
     "Speaker archive not found":"找不到说话人存档",
     "Synthesizing multi-speaker task, the current speaker is":"正在合成多说话人任务，当前说话人为",
     "Synthesis for the single speaker has failed !":"单一说话人的全部语音合成失败了！",
-    "Done!":"合成完毕!",
+    "Done!":"完成!",
     "Failed subtitle id":"出错字幕id",
     "error message received":"接收的报错信息为",
     "Please go to the settings page to specify the corresponding environment path and don't forget to save it!":"请前往设置页面指定环境路径并保存!",
@@ -37,8 +37,9 @@ i18n_dict={
     "Voice time offset (seconds)":"语音时间偏移(秒) 延后或提前所有语音的时间",
     "Upload file (Batch mode only supports one speaker at a time)":"上传文件(批量模式只支持单个同一说话人)",
     "Output Info":"输出信息",
-    "Output File":"文件输出",
+    "Output File":"输出文件",
     "Editing area *Note: DO NOT clear temporary files while using this function.":"编辑区域 *Note:请勿在使用本功能时清除临时文件。",
+    "History":"合成历史",
     "Load":"加载",
     "Reassemble Audio":"重新拼接",
     "Export Subtitles":"导出字幕",
@@ -211,6 +212,7 @@ i18n_dict={
     "Subtitle Translation":"字幕翻译",
     "Upload your subtitle files (multiple allowed).":"上传字幕(可多个)",
     "Send output files to Main Page":"发送至主页面",
+    "Send output files to Translator":"发送至翻译页面",
     "Specify Target Language":"选择目标语言",
     "File Output Path":"文件输出路径",
     "Select Translator":"选择翻译器",
@@ -220,5 +222,33 @@ i18n_dict={
         "You must specify the model!":"你必须指定模型！",
         "Select Your Model":"选择模型",
         "Unload Model":"卸载模型",
-        "OLLAMA_NOTICE":"⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️"
+        "OLLAMA_NOTICE":"⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️",
+    
+    #EXTENSIONS
+
+        #WAV2SRT
+        "Audio/Video Transcribe":"音视频转字幕",
+        "Upload File":"上传文件",
+        "Save Path(Folder Path), Default: SAVAdata\\output":"保存路径，填文件夹名，默认为SAVAdata\\output",
+        "Python Interpreter Path, align with GSV by default":"Python解释器路径,默认和GSV一致",
+        "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support":"选择ASR模型，funasr只支持中文但更快更准，faster whisper支持多语言",
+        "(ms)Minimum length of each segment":"(ms)每段最小多长",
+        "(ms)Minium slice interval":"(ms)最短切割间隔",
+        "(ms)Minium silence length":"(ms)切完后静音最多留多长",
+        "Other Parameters":"其他参数",
+        "Start":"开始",
+        "Stop":"停止",
+        "Please upload audio or video!":"请上传音频文件！",
+        "Please specify Python Interpreter!":"请指定解释器！",
+        "Processing":"正在进行",
+        "Tasks are terminated due to an error in":"任务出错,终止:",
+        "Finished":"任务结束",
+        "WAV2SRT_INFO":"""
+            本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
+            # 其他参数：
+            `--whisper_size` 默认:large-v3 | 使用faster whisper时指定模型<br>
+            `--threshold` 默认:-40 | 音量小于这个值视作静音的备选切割点<br>
+            `--hop_size` 默认:20 | 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）<br>
+            """,
+
 }

@@ -5,7 +5,7 @@ issues = r"""
 /tts 404 NOT FOUND
 ```
 * Typical cause of this error: Using non-official standard code  
-* Please ensure you are using the official integrated package or the latest code from the official repository. 
+* Please ensure that you are using the official integrated package or the latest code from the official repository. 
 
 ### Solution:
 * Manually pull the official repository code.
@@ -26,16 +26,16 @@ You need to check:
 400 Bad Request
 ```
 Check the red error logs in this program's console; usually, the API will return the cause of the error.  
-If no error message is received, please feedback the issue.
+If no error message is received, please report this issue.
 * Typical error cause: Reference audio outside the 3-10 second range; model path does not exist;
 
 ## 4. The following subtitles are delayed due to the previous audio being too long.
 ```
 The following subtitles are delayed due to the previous audio being too long.
 ```
-* Your subtitle timing intervals are unreasonable.
+* Your subtitle timing intervals are not proper.
 * Consider speeding up the speaking rate or manually increasing the subtitle timing intervals.  
-* There is a minimum voice interval setting in the settings (default 0.3 seconds) to prevent voices from overlapping in such cases. If not needed, it can be adjusted to 0.
+* There is a minimum voice interval option in the settings (default 0.3 seconds) to prevent voices from overlapping in such cases. If not needed, it can be set to 0.
 
 ## 5. GPT-SoVITS Output Audio Has Duration But It's Silent
 ```

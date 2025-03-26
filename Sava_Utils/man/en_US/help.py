@@ -80,9 +80,9 @@ help = r"""
 * Delete selected subtitles.
 
 #### 3. Merge
-* Select at least 2 subtitles as start/end points.
+* Select no less than 2 subtitles as start/end points.
 
-* Only the min/max IDs of selected subtitles are merged.
+* Subtitles from the starting point to the ending point will be merged.
 
 ⚠️ Changes aren't auto-saved to drive immediately, therefore you can reload the project to undo.
 

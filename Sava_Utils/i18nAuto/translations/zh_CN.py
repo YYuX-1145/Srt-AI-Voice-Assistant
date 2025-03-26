@@ -54,7 +54,7 @@ i18n_dict={
     "Select/Create Speaker":"选定/创建说话人",
     "TTS Project":"说话人所属项目",
     "Start Multi-speaker Synthesizing":"生成多角色配音",
-    "Tools":"辅助功能",
+    "Auxiliary Functions":"辅助功能",
     "Extended Contents":"外部扩展内容",
     "Settings":"设置",
     "Readme":"简介",

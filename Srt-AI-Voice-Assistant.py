@@ -449,7 +449,7 @@ if __name__ == "__main__":
                                 del_spk_list_btn.click(del_spk,inputs=[speaker_list],outputs=[speaker_list])
                                 start_gen_multispeaker_btn=gr.Button(value=i18n("Start Multi-speaker Synthesizing"),variant="primary")
                                 start_gen_multispeaker_btn.click(gen_multispeaker,inputs=[STATE,workers],outputs=[audio_output,page_slider,*edit_rows])
-            with gr.TabItem(i18n("Tools")):
+            with gr.TabItem(i18n("Auxiliary Functions")):
                 TRANSLATION_MODULE.UI(input_file)
                 componments.append(TRANSLATION_MODULE)
             with gr.TabItem(i18n("Extended Contents")):

@@ -55,7 +55,7 @@ i18n_dict={
     "Select/Create Speaker":"선택/화자 만들기",
     "TTS Project":"화자가 속한 프로젝트",
     "Start Multi-speaker Synthesizing":"다중 역할 대본딩 생성",
-    "Tools":"보조 기능",
+    "Auxiliary Functions":"보조 기능",
     "Extended Contents":"외부 확장 내용",
     "Settings":"설정",
     "Readme":"개요",

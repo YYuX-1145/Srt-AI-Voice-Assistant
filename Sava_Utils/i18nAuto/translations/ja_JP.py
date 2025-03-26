@@ -55,7 +55,7 @@ i18n_dict = {
     "Select/Create Speaker": "話者を選択/作成する",
     "TTS Project": "話者が所属するプロジェクト",
     "Start Multi-speaker Synthesizing": "複数話者のダビングを生成する",
-    "Tools": "ツール",
+    "Auxiliary Functions": "ツール",
     "Extended Contents": "外部拡張コンテンツ",
     "Settings": "設定",
     "Readme": "説明書",
@@ -161,6 +161,7 @@ i18n_dict = {
         "Please select a valid preset!": "有効なプリセットを選択してください！",
         "No preset available": "現在、プリセットはありません",
         "Partial auxiliary reference audio is missing!": "補助参照オーディオが一部欠落しています！",
+        
         "DICT_LANGUAGE": {
             "中国語": "all_zh",
             "広東語": "all_yue",
@@ -226,28 +227,28 @@ i18n_dict = {
 
     #EXTENSIONS
 
-    #WAV2SRT
-    "Audio/Video Transcribe": "音声/ビデオを字幕に変換",
-    "Upload File": "ファイルをアップロード",
-    "Save Path(Folder Path), Default: SAVAdata\\output": "保存パス（フォルダパス）、デフォルト: SAVAdata\\output",
-    "Python Interpreter Path, align with GSV by default": "Pythonインタープリタのパス、デフォルトでGSVと一致",
-    "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support": "ASRモデルを選択。funasrは中国語のみサポートしますが、はるかに高速です。faster whisperは多言語をサポートしています",
-    "(ms)Minimum length of each segment": "(ms)各セグメントの最小長さ",
-    "(ms)Minium slice interval": "(ms)最短のスライス間隔",
-    "(ms)Minium silence length": "(ms)切り取った後の最大無音長",
-    "Other Parameters": "その他のパラメータ",
-    "Start": "開始",
-    "Stop": "停止",
-    "Please upload audio or video!": "音声ファイルをアップロードしてください！",
-    "Please specify Python Interpreter!": "インタープリタを指定してください！",
-    "Processing": "処理中",
-    "Tasks are terminated due to an error in": "タスクがエラーで終了: ",
-    "Finished": "タスク終了",
-    "WAV2SRT_INFO":"""
-        この機能は直接GPT-SoVITS統合パッケージで使用できます。それ以外の場合は、独自に対応する依存関係をインストールする必要があります。<br>
-        # その他のパラメータ：
-        `--whisper_size` デフォルト:large-v3 | faster whisperを使用するときにモデルを指定<br>
-        `--threshold` デフォルト:-40 | 音量がこの値未満の場合、無音の候補切り取り点とみなします<br>
-        `--hop_size` デフォルト:20 | 音量曲線の計算方法。値が小さいほど精度が高くなり、計算量も増えます（精度が高いほど必ずしも良い結果になるとは限りません）<br>
-        """
+        #WAV2SRT
+        "Audio/Video Transcribe": "音声/ビデオを字幕に変換",
+        "Upload File": "ファイルをアップロード",
+        "Save Path(Folder Path), Default: SAVAdata\\output": "保存パス（フォルダパス）、デフォルト: SAVAdata\\output",
+        "Python Interpreter Path, align with GSV by default": "Pythonインタープリタのパス、デフォルトでGSVと一致",
+        "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support": "ASRモデルを選択。funasrは中国語のみサポートしますが、はるかに高速です。faster whisperは多言語をサポートしています",
+        "(ms)Minimum length of each segment": "(ms)各セグメントの最小長さ",
+        "(ms)Minium slice interval": "(ms)最短のスライス間隔",
+        "(ms)Minium silence length": "(ms)切り取った後の最大無音長",
+        "Other Parameters": "その他のパラメータ",
+        "Start": "開始",
+        "Stop": "停止",
+        "Please upload audio or video!": "音声ファイルをアップロードしてください！",
+        "Please specify Python Interpreter!": "インタープリタを指定してください！",
+        "Processing": "処理中",
+        "Tasks are terminated due to an error in": "タスクがエラーで終了: ",
+        "Finished": "タスク終了",
+        "WAV2SRT_INFO":"""
+            この機能は直接GPT-SoVITS統合パッケージで使用できます。それ以外の場合は、独自に対応する依存関係をインストールする必要があります。<br>
+            # その他のパラメータ：
+            `--whisper_size` デフォルト:large-v3 | faster whisperを使用するときにモデルを指定<br>
+            `--threshold` デフォルト:-40 | 音量がこの値未満の場合、無音の候補切り取り点とみなします<br>
+            `--hop_size` デフォルト:20 | 音量曲線の計算方法。値が小さいほど精度が高くなり、計算量も増えます（精度が高いほど必ずしも良い結果になるとは限りません）<br>
+            """
 } 

@@ -17,7 +17,7 @@ changelog = r"""
 
 ### 250123 Update:
 1. Supports re-export SRT subtitle files that match the actual start and end timestamps after synthesis; also supports reading TXT text files for synthesis, in which case paragraphs are split by sentences.
-2. To enhance expandability in the future and simplicity, the design of a single script file, which makes downloads more convenient, had to be abandoned. The code is being refactored begin this version.
+2. To enhance expandability in the future and simplicity, the design of a single script file, which makes downloads more convenient, had to be abandoned. The code will be refactored step by step starting from this version.
 3. Added some documentations.
 
 ### 240811 Update:

@@ -10,7 +10,7 @@
 * Manually pull the official repository code.
 * Download the integrated package provided in README. (stable but updates may be slow)
 
-## 2. Target Computer Actively Refused Connection
+## 2. No connection could be made because the target machine actively refused it.
 ```
 No connection could be made because the target machine actively refused it.
 ```

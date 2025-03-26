@@ -30,7 +30,7 @@ i18n_dict = {
     # UI in main
     "Subtitle Dubbing": "字幕ダビング",
     "File content": "ファイル内容の表示",
-    "Create multi-speaker dubbing project": "複数話者のダビングプロジェクトを作成する",
+    "Create Multi-Speaker Dubbing Project": "複数話者のダビングプロジェクトを作成する",
     "Custom API": "カスタムAPI",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr": "Adobe Premiereプロジェクトのフレームレート。Prからエクスポートされたcsvファイルにのみ適用されます",
     "API Launcher": "APIサービスを起動する",

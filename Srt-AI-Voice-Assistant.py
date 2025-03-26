@@ -331,7 +331,7 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n("File content"), value="",interactive=False)
-                        create_multispeaker_btn = gr.Button(value=i18n("Create multi-speaker dubbing project"))
+                        create_multispeaker_btn = gr.Button(value=i18n("Create Multi-Speaker Dubbing Project"))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
                             GSV_ARGS=GSV.getUI()                             

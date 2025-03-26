@@ -30,7 +30,7 @@ i18n_dict={
     #UI in main
     "Subtitle Dubbing":"자막 대본딩",
     "File content":"파일 내용 보기",
-    "Create multi-speaker dubbing project":"다중 역할 프로젝트 만들기",
+    "Create Multi-Speaker Dubbing Project":"다중 역할 프로젝트 만들기",
     "Custom API":"사용자 지정 API",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr":"Adobe Premiere 프로젝트의 프레임速率, Pr에서 내보낸 csv 파일에만 적용됩니다",
     "API Launcher":"API 서비스 시작",

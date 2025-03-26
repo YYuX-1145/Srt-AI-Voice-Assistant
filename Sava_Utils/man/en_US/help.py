@@ -31,14 +31,14 @@ help = r"""
 
 * **II.** Select your project and adjust parameters in the middle panel.
 
-* **III.** Click Generate at the bottom and wait.
+* **III.** Click `Generate Audio` Button at the bottom and wait.
 
 * **IV.** Download your audio.
 
 ### B. Multi-Speaker Scenario
 * **I.** Upload subtitle/text files in the right panel of `Subtitle Dubbing`.
 
-* **II.** Click Create Multi-Speaker Project below the file display.
+* **II.** Click `Create Multi-Speaker Dubbing Project` below the file display.
 
 * **III.** Create speakers:
     * **a.** Expand the Multi-Speaker Dubbing section at the bottom of the editing page.
@@ -48,7 +48,7 @@ help = r"""
 
 * **IV.** Select a speaker from the dropdown, check corresponding subtitles, then click ✅ to apply. Speaker info will appear in Column 4.
 
-* **V.** The last selected speaker becomes the default speaker (applies to unassigned subtitles in multi-speaker projects).
+* **V.** The last assigned speaker becomes the default speaker (applies to unassigned subtitles in multi-speaker projects).
 
 * **VI.** Click Generate Multi-Speaker Dubbing to start generation.
 * ⚠️ If you are using and creating GSV speakers in a different language, the GSV speakers will not work properly.
@@ -56,14 +56,12 @@ help = r"""
 ### Regenerating Specific Lines
 * **I.** Locate the target subtitle using the slider in the editing page.
 
-* **II.** Modify text if needed. Changes are auto-saved after regeneration.
+* **II.** Modify the text if needed. Changes are auto-saved after regeneration.
 
 * **III.** Click 🔄 to regenerate a single line:
 
     * Uses project parameters if unassigned.
-
     * Uses speaker-specific parameters if assigned.
-
     * Multi-speaker projects must have assigned speakers.
 
 * **IV.** Click `Reassemble Audio` to recompose full audio.
@@ -81,7 +79,6 @@ help = r"""
 
 #### 3. Merge
 * Select no less than 2 subtitles as start/end points.
-
 * Subtitles from the starting point to the ending point will be merged.
 
 ⚠️ Changes aren't auto-saved to drive immediately, therefore you can reload the project to undo.

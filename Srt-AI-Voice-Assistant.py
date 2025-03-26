@@ -116,7 +116,7 @@ def generate(*args,proj="",in_files=[],fps=30,offset=0,max_workers=1):
     use_time = "%02d:%02d" % (m, s)
     return (
         (sr, audio),
-        f"{i18n('Completed! Time used')}:{use_time}",
+        f"{i18n('Done! Time used')}:{use_time}",
         getworklist(),
         *load_page(subtitle_list),
         subtitle_list,

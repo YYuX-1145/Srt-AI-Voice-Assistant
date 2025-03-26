@@ -46,7 +46,7 @@ try:
     del x
 except Exception as e:
     i18n=I18n()
-    logger.warning(f'{i18n("Failed to load settings, reset to default")}: {e}')
+    logger.warning(f"{i18n('Failed to load settings, reset to default')}: {e}")
     from .settings import Settings
     config=Settings()
 from .man import Man

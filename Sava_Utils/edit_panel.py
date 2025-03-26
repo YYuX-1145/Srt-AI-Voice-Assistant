@@ -55,7 +55,7 @@ def show_page(page_start,subtitle_list:Subtitles):
 def play_audio(idx, subtitle_list):
     i = int(idx)
     if i == -1 or not subtitle_list[i].is_success:
-        gr.Info(i18n("Not available !"))
+        gr.Info(i18n('Not available !'))
         return None
     return os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
 
@@ -79,7 +79,7 @@ def getspklist():
 def load_work(dirname):
     try:
         if dirname in ["",[],None]:
-            raise Exception(i18n("Must not be empty!"))
+            raise Exception(i18n('Must not be empty!'))
         with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
         return subtitles,*load_page(subtitles)
@@ -91,7 +91,7 @@ def load_work(dirname):
 def delete_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
-        gr.Info(i18n("There is no subtitle in the current workspace"))
+        gr.Info(i18n('There is no subtitle in the current workspace'))
         return  *checklist,*load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -99,7 +99,7 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
         if checklist[i] and indexlist[i]!=-1:
             targetlist.append(int(indexlist[i]))
     if len(targetlist)==0:
-        gr.Info(i18n("No subtitles selected."))
+        gr.Info(i18n('No subtitles selected.'))
     targetlist.sort(reverse=True)
     for idx in targetlist:
         subtitles.pop(idx)
@@ -109,7 +109,7 @@ def delete_subtitle(page, subtitles: Subtitles, *args):
 def merge_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There is no subtitle in the current workspace"))
+        gr.Info(i18n('There is no subtitle in the current workspace'))
         return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -127,13 +127,13 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
             subtitles[min_i].text += subtitles[min_i+1].text
             subtitles.pop(min_i+1)
     else:
-        gr.Info(i18n("Please select both the start and end points!"))
+        gr.Info(i18n('Please select both the start and end points!'))
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 def copy_subtitle(page,subtitles:Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There is no subtitle in the current workspace"))
+        gr.Info(i18n('There is no subtitle in the current workspace'))
         return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
@@ -141,7 +141,7 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
         if checklist[i] and indexlist[i] != -1:
             targetlist.append(int(indexlist[i]))
     if len(targetlist)==0:
-        gr.Info(i18n("No subtitles selected."))
+        gr.Info(i18n('No subtitles selected.'))
     targetlist.sort(reverse=True)
     for i in targetlist:
         subtitles.insert(i+1+subtitles[i].copy_count,subtitles[i].copy())
@@ -150,7 +150,7 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
 
 def apply_start_end_time(page,subtitles:Subtitles, *args):
     if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n("There is no subtitle in the current workspace"))
+        gr.Info(i18n('There is no subtitle in the current workspace'))
         return show_page(page,Subtitles())
     indexlist = [int(i) for i in args[ :Sava_Utils.config.num_edit_rows]]
     timelist = args[Sava_Utils.config.num_edit_rows :]
@@ -161,7 +161,7 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
                 st, et = timelist[i].split("-->")
                 subtitles[title_index].reset_srt_time(st.strip(),et.strip())
         except ValueError:
-            gr.Info(f"{i18n("Input format mismatch.")}:{timelist[i]}")
+            gr.Info(f"{i18n('Input format mismatch')}: {timelist[i]}")
     subtitles.dump()
     return show_page(page, subtitles)
 
@@ -169,7 +169,7 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
 def apply_spk(speaker, page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles)==0:
-        gr.Info(i18n("There is no subtitle in the current workspace"))
+        gr.Info(i18n('There is no subtitle in the current workspace'))
         return  *checklist,*show_page(page,Subtitles())
     if speaker in ["","None",[]]:
         speaker=None
@@ -200,10 +200,10 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
 def del_spk(name):
     try:
         if Sava_Utils.config.server_mode:
-            raise RuntimeError(i18n("This function has been disabled!"))
-        assert name not in ["", "None", [],None],i18n("Must not be empty!")       
+            raise RuntimeError(i18n('This function has been disabled!'))
+        assert name not in ["", "None", [],None],i18n('Must not be empty!')       
         os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
-        gr.Info(f"{i18n("Delete")}:{name}")
+        gr.Info(f"{i18n('Delete')}:{name}")
     except Exception as e:
         gr.Warning(f"Error：{str(e)}")
     return getspklist()

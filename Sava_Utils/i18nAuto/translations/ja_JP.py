@@ -16,7 +16,7 @@ i18n_dict = {
     "Done!": "完了！",
     "Failed subtitle id": "失敗した字幕のID",
     "error message received": "受け取ったエラーメッセージは",
-    "Please go to the settings page to specify the corresponding environment path and don't forget to save it!": "設定ページに移動して、対応する環境パスを指定し、保存するのを忘れないでください！",
+    "Please go to the settings page to specify the corresponding environment path and do not forget to save it!": "設定ページに移動して、対応する環境パスを指定し、保存するのを忘れないでください！",
     " has been launched, please ensure the configuration is correct.": "が起動しました。設定ファイルが正しいことを確認してください。",
     "API downgraded to v1, functionality is limited.": "APIがv1にダウングレードされました。機能が制限されています。",
     "You must specify the speakers while using multi-speaker dubbing!": "複数話者のダビングを使用する場合は、話者を指定する必要があります！",
@@ -81,7 +81,7 @@ i18n_dict = {
     "Must not be empty!": "空にすることはできません！",
     "No subtitles selected.": "字幕が選択されていません",
     "Please select both the start and end points!": "開始点と終了点の両方を選択してください！",
-    "Input format mismatch.": "入力形式が一致しません。",
+    "Input format mismatch": "入力形式が一致しません。",
 
     # subtitle.py
     "Subtitles have not been synthesized yet!": "まだ字幕が合成されていません！",

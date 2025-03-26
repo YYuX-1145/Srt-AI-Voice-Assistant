@@ -15,7 +15,7 @@ i18n_dict = {
     "Done!": "Terminé !",
     "Failed subtitle id": "ID du sous-titre en erreur",
     "error message received": "Message d'erreur reçu",
-    "Please go to the settings page to specify the corresponding environment path and don't forget to save it!": "Veuillez tourner à la page des paramètres pour spécifier le chemin d'environnement correspondant et n'oubliez pas de l'enregistrer !",
+    "Please go to the settings page to specify the corresponding environment path and do not forget to save it!": "Veuillez tourner à la page des paramètres pour spécifier le chemin d'environnement correspondant et n'oubliez pas de l'enregistrer !",
     " has been launched, please ensure the configuration is correct.": " a été lancé, veuillez vous assurer que la configuration est correcte.",
     "API downgraded to v1, functionality is limited.": "L'API a été dégradée à la version v1, les fonctionnalités sont limitées.",
     "You must specify the speakers while using multi-speaker dubbing!": "Vous devez spécifier les locuteurs lors de l'utilisation de la doublage à plusieurs locuteurs !",
@@ -80,7 +80,7 @@ i18n_dict = {
     "Must not be empty!": "Ne doit pas être vide !",
     "No subtitles selected.": "Aucun sous-titre sélectionné.",
     "Please select both the start and end points!": "Veuillez sélectionner à la fois le point de départ et le point d'arrivée !",
-    "Input format mismatch.": "Format d'entrée non conforme.",
+    "Input format mismatch": "Format d'entrée non conforme.",
 
     # subtitle.py
     "Subtitles have not been synthesized yet!": "Aucun sous-titre n'a été synthétisé encore !",

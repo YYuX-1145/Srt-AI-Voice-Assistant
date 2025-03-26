@@ -29,7 +29,7 @@ class MSTTS(TTSProjet):
         #if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
             if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info_raw.json")):
                 try:
-                    assert self.cfg_ms_key not in [None,""], i18n("Please fill in your key to get MSTTS speaker list.")
+                    assert self.cfg_ms_key not in [None,""], i18n('Please fill in your key to get MSTTS speaker list.')
                     headers = {"Ocp-Apim-Subscription-Key": self.cfg_ms_key}
                     url = f"https://{self.cfg_ms_region}.tts.speech.microsoft.com/cognitiveservices/voices/list"
                     data = requests.get(url=url, headers=headers)
@@ -38,7 +38,7 @@ class MSTTS(TTSProjet):
                     with open(os.path.join(current_path,"SAVAdata", "ms_speaker_info_raw.json"),"w",encoding="utf-8",) as f:
                         json.dump(info, f, indent=2, ensure_ascii=False)
                 except Exception as e:
-                    err = f"{i18n("Can not get speaker list of MSTTS. Details")}: {e}"
+                    err = f"{i18n('Can not get speaker list of MSTTS. Details')}: {e}"
                     gr.Warning(err)
                     logger.error(err)
                     self.ms_speaker_info = {}
@@ -69,7 +69,7 @@ class MSTTS(TTSProjet):
             response.raise_for_status()
             self.ms_access_token = str(response.text)
         except Exception as e:
-            err = f"{i18n("Failed to obtain access token from Microsoft. Check your API key, server status, and network connection. Details")}: {e}"
+            err = f"{i18n('Failed to obtain access token from Microsoft. Check your API key, server status, and network connection. Details')}: {e}"
             gr.Warning(err)
             logger.error(err)
             self.ms_access_token = None
@@ -92,7 +92,7 @@ class MSTTS(TTSProjet):
         try:
             if self.ms_access_token is None:
                 self.getms_token()
-                assert self.ms_access_token is not None, i18n("Failed to obtain access token from Microsoft.")
+                assert self.ms_access_token is not None, i18n('Failed to obtain access token from Microsoft.')
             headers = {
             "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm",
             "Content-Type": "application/ssml+xml",
@@ -113,23 +113,23 @@ class MSTTS(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            self.ms_refresh_btn=gr.Button(value=i18n("Refresh speakers list"),variant="secondary")
+            self.ms_refresh_btn=gr.Button(value=i18n('Refresh speakers list'),variant="secondary")
             if self.ms_speaker_info == {}:
-                self.ms_languages=gr.Dropdown(label=i18n("Choose Language"),value=None,choices=[],allow_custom_value=False,interactive=True)
-                self.ms_speaker=gr.Dropdown(label=i18n("Choose Your Speaker"),value=None,choices=[],allow_custom_value=False,interactive=True)
+                self.ms_languages=gr.Dropdown(label=i18n('Choose Language'),value=None,choices=[],allow_custom_value=False,interactive=True)
+                self.ms_speaker=gr.Dropdown(label=i18n('Choose Your Speaker'),value=None,choices=[],allow_custom_value=False,interactive=True)
             else:
                 choices = list(self.ms_speaker_info.keys())
-                self.ms_languages=gr.Dropdown(label=i18n("Choose Language"),value=choices[0],choices=choices,allow_custom_value=False,interactive=True)
+                self.ms_languages=gr.Dropdown(label=i18n('Choose Language'),value=choices[0],choices=choices,allow_custom_value=False,interactive=True)
                 choices = list(self.ms_speaker_info[choices[0]].keys())
-                self.ms_speaker=gr.Dropdown(label=i18n("Choose Your Speaker"),value=None,choices=choices,allow_custom_value=False,interactive=True)
+                self.ms_speaker=gr.Dropdown(label=i18n('Choose Your Speaker'),value=None,choices=choices,allow_custom_value=False,interactive=True)
                 del choices
             with gr.Row():
-                self.ms_style=gr.Dropdown(label=i18n("Style"),value=None,choices=[],allow_custom_value=False,interactive=True)
-                self.ms_role=gr.Dropdown(label=i18n("Role"),value=None,choices=[],allow_custom_value=False,interactive=True)
-            self.ms_speed = gr.Slider(minimum=0.2,maximum=2,step=0.01,label=i18n("Speed"),value=1,interactive=True)
-            self.ms_pitch = gr.Slider(minimum=0.5,maximum=1.5,step=0.01,label=i18n("Pitch"),value=1,interactive=True)
-            gr.Markdown(value=i18n("MSTTS_NOTICE"))                           
-            self.gen_btn3=gr.Button(value=i18n("Generate Audio"),variant="primary",visible=True)
+                self.ms_style=gr.Dropdown(label=i18n('Style'),value=None,choices=[],allow_custom_value=False,interactive=True)
+                self.ms_role=gr.Dropdown(label=i18n('Role'),value=None,choices=[],allow_custom_value=False,interactive=True)
+            self.ms_speed = gr.Slider(minimum=0.2,maximum=2,step=0.01,label=i18n('Speed'),value=1,interactive=True)
+            self.ms_pitch = gr.Slider(minimum=0.5,maximum=1.5,step=0.01,label=i18n('Pitch'),value=1,interactive=True)
+            gr.Markdown(value=i18n('MSTTS_NOTICE'))                           
+            self.gen_btn3=gr.Button(value=i18n('Generate Audio'),variant="primary",visible=True)
             self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
             self.ms_languages.change(self.display_ms_spk,inputs=[self.ms_languages],outputs=[self.ms_speaker])
             self.ms_speaker.change(self.display_style_role,inputs=[self.ms_languages,self.ms_speaker],outputs=[self.ms_style,self.ms_role])  
@@ -145,16 +145,16 @@ class MSTTS(TTSProjet):
         self.update_cfg(kwargs.get("config"))
         if self.ms_access_token is None:
             self.getms_token()
-            assert self.ms_access_token is not None,i18n("Failed to obtain access token from Microsoft.")
+            assert self.ms_access_token is not None,i18n('Failed to obtain access token from Microsoft.')
 
     def arg_filter(self,*args):
         input_file,fps,offset,workers,ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch=args        
         if ms_speaker in [None,"",[]]:
-            gr.Info()
-            raise Exception(i18n("Please Select Your Speaker!"))
+            gr.Info(i18n('Please Select Your Speaker!'))
+            raise Exception(i18n('Please Select Your Speaker!'))
         if self.cfg_ms_key=="": 
-            gr.Warning(i18n("Please fill in your key!"))
-            raise Exception(i18n("Please fill in your key!"))
+            gr.Warning(i18n('Please fill in your key!'))
+            raise Exception(i18n('Please fill in your key!'))
         pargs=(ms_language,ms_speaker,ms_style,ms_role,ms_speed,ms_pitch)
         kwargs={'in_files':input_file,'fps':fps,'offset':offset,'proj':"mstts",'max_workers':workers}
         return pargs,kwargs

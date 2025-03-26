@@ -15,7 +15,7 @@ i18n_dict={
     "Done!":"完成!",
     "Failed subtitle id":"出错字幕id",
     "error message received":"接收的报错信息为",
-    "Please go to the settings page to specify the corresponding environment path and don't forget to save it!":"请前往设置页面指定环境路径并保存!",
+    "Please go to the settings page to specify the corresponding environment path and do not forget to save it!":"请前往设置页面指定环境路径并保存!",
     " has been launched, please ensure the configuration is correct.":"已启动，请确保其配置文件无误。",
     "API downgraded to v1, functionality is limited.":"API降级至v1，功能受限。",
     "You must specify the speakers while using multi-speaker dubbing!":"使用多角色配音时，必须指定说话人！",
@@ -80,7 +80,7 @@ i18n_dict={
     "Must not be empty!":"不得为空！",
     "No subtitles selected.":"未选中任何字幕",
     "Please select both the start and end points!":"请选择起点和终点！",
-    "Input format mismatch.":"输入格式不匹配",
+    "Input format mismatch":"输入格式不匹配",
 
     #subtitle.py
     "Subtitles have not been synthesized yet!":"还未合成任何字幕！",

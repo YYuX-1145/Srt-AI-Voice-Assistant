@@ -69,7 +69,7 @@ class Base_subtitle:
             self.end_time_raw=et
             self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
-            raise ValueError(f"{i18n("Input format mismatch.")} {st} --> {et}")
+            raise ValueError#(f"{i18n('Input format mismatch')}: {st} --> {et}")
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"
@@ -148,7 +148,7 @@ class Subtitles:
         failed_list = []
         fl = [i for i in os.listdir(abs_path) if i.endswith(".wav")]
         if len(fl) == 0:
-            gr.Warning(i18n("Subtitles have not been synthesized yet!"))
+            gr.Warning(i18n('Subtitles have not been synthesized yet!'))
             return None
         if sr in [None,0]:
             wav, sr = load_audio(os.path.join(abs_path, fl[0]),sr=sr) 
@@ -180,11 +180,11 @@ class Subtitles:
             else:
                 failed_list.append(self.subtitles[id].index)
         if delayed_list != []:
-            logger.warning(f"{"The following subtitles are delayed due to the previous audio being too long"}:{delayed_list}")
-            gr.Warning(f"{"The following subtitles are delayed due to the previous audio being too long"}:{delayed_list}")
+            logger.warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
+            gr.Warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
         if failed_list != []:
-            logger.warning(f"{i18n("Failed to synthesize the following subtitles or they were not synthesized")}:{delayed_list}")
-            gr.Warning(f"{i18n("Failed to synthesize the following subtitles or they were not synthesized")}:{delayed_list}")
+            logger.warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{delayed_list}")
+            gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{delayed_list}")
         audio_content = np.concatenate(audiolist)
         self.dump()
         return sr, audio_content
@@ -221,7 +221,7 @@ class Subtitles:
 
     def export(self,fp=None,open_explorer=True,raw=False):
         if len(self.subtitles)==0:
-            gr.Info(i18n("There is no subtitle in the current workspace"))
+            gr.Info(i18n('There is no subtitle in the current workspace'))
             return None
         idx=0
         srt_content = []

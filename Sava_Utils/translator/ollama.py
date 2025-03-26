@@ -32,13 +32,13 @@ class Ollama(Traducteur):
             for item in json.loads(response.content)["models"]:
                 self.models.append(item["name"])
         except Exception as e:
-            gr.Warning(f"{i18n("Failed to get model list from Ollama")}: {str(e)}")
-            logger.error(f"{i18n("Failed to get model list from Ollama")}: {str(e)}")
+            gr.Warning(f"{i18n('Failed to get model list from Ollama')}: {str(e)}")
+            logger.error(f"{i18n('Failed to get model list from Ollama')}: {str(e)}")
         return gr.update(choices=self.models,value=self.models[0] if len(self.models)!=0 else None)
 
     def unload_model(self,model):
         if model in [None,[],""] or self.server_mode:
-            gr.Warning(i18n("You must specify the model!"))
+            gr.Warning(i18n('You must specify the model!'))
             return None
         rc_open_window(f"ollama stop {model} && exit")        
 
@@ -46,7 +46,7 @@ class Ollama(Traducteur):
         if url in [None,"","Default"] or self.server_mode:
             url=self.ollama_url
         if model_name in [None,[],""]:
-            raise ValueError(i18n("You must specify the model!"))
+            raise ValueError(i18n('You must specify the model!'))
         data_json = {
             "model": model_name,
             "prompt": f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}",
@@ -62,14 +62,14 @@ class Ollama(Traducteur):
         if self.server_mode:
             self.get_models("")
         with gr.Column():
-            gr.Markdown(i18n("OLLAMA_NOTICE"))
-            self.select_model=gr.Dropdown(label=i18n("Select Your Model"),choices=self.models,allow_custom_value=False)
+            gr.Markdown(i18n('OLLAMA_NOTICE'))
+            self.select_model=gr.Dropdown(label=i18n('Select Your Model'),choices=self.models,allow_custom_value=False)
             self.api_url=gr.Text(value="Default",interactive=not self.server_mode,label="URL",max_lines=1) 
             with gr.Row():  
-                self.unload_model_btn=gr.Button(value=i18n("Unload Model"),visible=not self.server_mode,interactive=not self.server_mode)
+                self.unload_model_btn=gr.Button(value=i18n('Unload Model'),visible=not self.server_mode,interactive=not self.server_mode)
                 self.unload_model_btn.click(self.unload_model,inputs=[self.select_model])
                 if not self.server_mode:
                     self.refresh_model_btn=gr.Button(value="🔄️")
                     self.refresh_model_btn.click(self.get_models,inputs=[self.api_url],outputs=[self.select_model])
-            self.translate_btn=gr.Button(value=i18n("Start Translating"),variant="primary")
+            self.translate_btn=gr.Button(value=i18n('Start Translating'),variant="primary")
             self.translate_btn.click(lambda *args:start_translation(*args,translator="ollama"),inputs=[*inputs,self.select_model,self.api_url],outputs=[output_info,output_files])

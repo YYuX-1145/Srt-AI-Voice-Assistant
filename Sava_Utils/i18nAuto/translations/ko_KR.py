@@ -16,7 +16,7 @@ i18n_dict={
     "Done!":"완료!",
     "Failed subtitle id":"실패한 자막 id",
     "error message received":"받은 에러 메시지가",
-    "Please go to the settings page to specify the corresponding environment path and don't forget to save it!":"설정 페이지로 가서 해당 환경 경로를 지정하고 저장하지 마세요!",
+    "Please go to the settings page to specify the corresponding environment path and do not forget to save it!":"설정 페이지로 가서 해당 환경 경로를 지정하고 저장하지 마세요!",
     " has been launched, please ensure the configuration is correct.":"가 시작되었습니다. 구성 파일이 정확한지 확인하세요.",
     "API downgraded to v1, functionality is limited.":"API가 v1로 다운그레이드되어 기능이 제한됩니다.",
     "You must specify the speakers while using multi-speaker dubbing!":"다중 역할 대본딩을 사용할 때는 반드시 화자를 지정해야 합니다!",
@@ -81,7 +81,7 @@ i18n_dict={
     "Must not be empty!":"빈 칸일 수 없습니다!",
     "No subtitles selected.":"어떤 자막도 선택되지 않았습니다",
     "Please select both the start and end points!":"시작점과 종료점을 모두 선택하세요!",
-    "Input format mismatch.":"입력 형식 불일치",
+    "Input format mismatch":"입력 형식 불일치",
 
     #subtitle.py
     "Subtitles have not been synthesized yet!":"아직 어떤 자막도 합성되지 않았습니다!",

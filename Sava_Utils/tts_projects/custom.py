@@ -19,9 +19,9 @@ class Custom(TTSProjet):
     def _UI(self):
         with gr.Column():
             gr.Markdown(value=MANUAL.getInfo("help_custom"))                            
-            self.choose_custom_api=gr.Dropdown(label=i18n("Choose Custom API Code File"),choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=False)
+            self.choose_custom_api=gr.Dropdown(label=i18n('Choose Custom API Code File'),choices=self.custom_api_list,value=self.custom_api_list[0] if self.custom_api_list!=[] else '',allow_custom_value=False)
             self.refresh_custom_btn = gr.Button(value="🔄️")
-            self.gen_btn4 = gr.Button(value=i18n("Generate Audio"), variant="primary", visible=True)
+            self.gen_btn4 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
             self.refresh_custom_btn.click(self.refresh_custom_api_list,outputs=[self.choose_custom_api])
         return []
     
@@ -43,7 +43,7 @@ class Custom(TTSProjet):
             if os.path.isdir(preset_dir):
                 self.custom_api_list+=[i for i in os.listdir(preset_dir) if i.endswith(".py")]
             else:
-                logger.info(i18n("No custom API code file found."))
+                logger.info(i18n('No custom API code file found.'))
         except Exception as e:
             self.custom_api_list = ['None']
             err=f"Error: {e}"
@@ -55,7 +55,7 @@ class Custom(TTSProjet):
     def arg_filter(self,*args):
         input_file,fps,offset,workers,custom_api=args
         if custom_api in [None,'None','']:
-            gr.Info(i18n("Please select a valid custom API code file!"))
-            raise Exception(i18n("Please select a valid custom API code file!"))
+            gr.Info(i18n('Please select a valid custom API code file!'))
+            raise Exception(i18n('Please select a valid custom API code file!'))
         kwargs={'in_files':input_file,'fps':fps,'offset':offset,'proj':"custom",'max_workers':workers}
         return (custom_api,None), kwargs #

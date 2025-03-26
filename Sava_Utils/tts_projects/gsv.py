@@ -16,9 +16,9 @@ import io
 current_path=os.environ.get("current_path")
 
 try:
-    dict_language:dict = i18n("DICT_LANGUAGE")
+    dict_language:dict = i18n('DICT_LANGUAGE')
     assert type(dict_language) is dict
-    cut_method:dict = i18n("CUT_METHOD")
+    cut_method:dict = i18n('CUT_METHOD')
     assert type(cut_method) is dict
 except:
     dict_language={
@@ -130,9 +130,9 @@ class GSV(TTSProjet):
                     wav_file.writeframes(response.content) 
                 return wav_buffer.getvalue()
         except Exception as e:
-            err = f"{i18n("An error has occurred. Please check if the API is running correctly. Details")}: {e}  "
+            err = f"{i18n('An error has occurred. Please check if the API is running correctly. Details')}: {e}  "
             try:
-                err+=f"{i18n("Returned Message")}:{response.json()}"
+                err+=f"{i18n('Returned Message')}:{response.json()}"
             except:
                 pass
             logger.error(err)
@@ -168,35 +168,35 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        self.choose_ar_tts=gr.Radio(label=i18n("Select TTS Project"),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
-        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Inference text language"),interactive=True,allow_custom_value=False)
+        self.choose_ar_tts=gr.Radio(label=i18n('Select TTS Project'),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
+        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n('Inference text language'),interactive=True,allow_custom_value=False)
         with gr.Row():
-            self.refer_audio=gr.Audio(label=i18n("Main Reference Audio"))
-            self.aux_ref_audio = gr.File(label=i18n("Auxiliary Reference Audios"),file_count="multiple",type="binary")
+            self.refer_audio=gr.Audio(label=i18n('Main Reference Audio'))
+            self.aux_ref_audio = gr.File(label=i18n('Auxiliary Reference Audios'),file_count="multiple",type="binary")
         with gr.Row():
-            self.refer_text=gr.Textbox(label=i18n("Transcription of Main Reference Audio"),value="",placeholder=i18n("Transcription | Pretrained Speaker (Cosy)"))
-            self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n("Language of Main Reference Audio"),interactive=True,allow_custom_value=False)
-        with gr.Accordion(i18n("Switch Models"),open=False,visible=not self.server_mode):
-            self.sovits_path=gr.Textbox(value="",label=f"Sovits {i18n("Model Path")}",interactive=True)
-            self.gpt_path=gr.Textbox(value="",label=f"GPT {i18n("Model Path")}",interactive=True)
-            self.switch_gsvmodel_btn=gr.Button(value=i18n("Switch Models"),variant="primary")
+            self.refer_text=gr.Textbox(label=i18n('Transcription of Main Reference Audio'),value="",placeholder=i18n('Transcription | Pretrained Speaker (Cosy)'))
+            self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n('Language of Main Reference Audio'),interactive=True,allow_custom_value=False)
+        with gr.Accordion(i18n('Switch Models'),open=False,visible=not self.server_mode):
+            self.sovits_path=gr.Textbox(value="",label=f"Sovits {i18n('Model Path')}",interactive=True)
+            self.gpt_path=gr.Textbox(value="",label=f"GPT {i18n('Model Path')}",interactive=True)
+            self.switch_gsvmodel_btn=gr.Button(value=i18n('Switch Models'),variant="primary")
         with gr.Row():
             self.api_port2=gr.Number(label="API Port",value=9880,interactive=not self.server_mode,visible=not self.server_mode)
         #self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
-        with gr.Accordion(i18n("Advanced Parameters"),open=False):
+        with gr.Accordion(i18n('Advanced Parameters'),open=False):
             self.batch_size = gr.Slider(minimum=1,maximum=200,step=1,label="batch_size",value=20,interactive=True)
             self.batch_threshold = gr.Slider(minimum=0,maximum=1,step=0.01,label="batch_threshold",value=0.75,interactive=True)
-            self.fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label=i18n("Fragment Interval(sec)"),value=0.3,interactive=True)
+            self.fragment_interval = gr.Slider(minimum=0.01,maximum=1,step=0.01,label=i18n('Fragment Interval(sec)'),value=0.3,interactive=True)
             self.speed_factor = gr.Slider(minimum=0.25,maximum=4,step=0.05,label="speed_factor",value=1.0,interactive=True)
             self.top_k = gr.Slider(minimum=1,maximum=100,step=1,label="top_k",value=5,interactive=True)
             self.top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label="top_p",value=1,interactive=True)
             self.temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label="temperature",value=1,interactive=True)
             self.repetition_penalty = gr.Slider(minimum=0,maximum=2,step=0.05,label="repetition_penalty",value=1.35,interactive=True)
             self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)
-            self.how_to_cut = gr.Radio(label=i18n("How to cut"),choices=list(cut_method.keys()),value=list(cut_method.keys())[0],interactive=True)
-        with gr.Accordion(i18n("Presets"), open=False):
+            self.how_to_cut = gr.Radio(label=i18n('How to cut'),choices=list(cut_method.keys()),value=list(cut_method.keys())[0],interactive=True)
+        with gr.Accordion(i18n('Presets'), open=False):
             self.choose_presets = gr.Dropdown(label="",value="None",choices=self.presets_list,interactive=True,allow_custom_value=True,)
-            self.desc_presets = gr.Textbox(label="", placeholder=i18n("(Optional) Description"), interactive=True)
+            self.desc_presets = gr.Textbox(label="", placeholder=i18n('(Optional) Description'), interactive=True)
             with gr.Row():
                 self.save_presets_btn = gr.Button(value="💾", variant="primary", min_width=60)
                 self.refresh_presets_btn = gr.Button(value="🔄️", variant="secondary", min_width=60)
@@ -215,7 +215,7 @@ class GSV(TTSProjet):
                     self.gpt_path]            
             self.save_presets_btn.click(self.save_preset,inputs=preset_args,outputs=[self.choose_presets])
         with gr.Row():
-            self.gen_btn2=gr.Button(value=i18n("Generate Audio"),variant="primary",visible=True)    
+            self.gen_btn2=gr.Button(value=i18n('Generate Audio'),variant="primary",visible=True)    
         self.switch_gsvmodel_btn.click(self.switch_gsvmodel,inputs=[self.sovits_path,self.gpt_path,self.api_port2],outputs=[])
         self.choose_presets.change(self.load_preset,inputs=[self.choose_presets],outputs=preset_args[1:])
         GSV_ARGS = [
@@ -246,8 +246,8 @@ class GSV(TTSProjet):
         in_file,fps,offset,max_workers,artts_proj,language,port,refer_audio,aux_ref_audio,refer_text,refer_lang,batch_size,batch_threshold,fragment_interval,speed_factor,top_k,top_p,temperature,repetition_penalty,split_bucket,text_split_method,gpt_path,sovits_path=args
         if artts_proj=="GPT_SoVITS":
             if refer_audio is None:
-                gr.Warning(i18n("You must upload Main Reference Audio"))
-                raise Exception(i18n("You must upload Main Reference Audio"))
+                gr.Warning(i18n('You must upload Main Reference Audio'))
+                raise Exception(i18n('You must upload Main Reference Audio'))
         if refer_audio is not None:
             refer_audio_path=temp_ra(refer_audio)
         else:
@@ -268,14 +268,14 @@ class GSV(TTSProjet):
     def save_preset(self,name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path):
         try:
             if self.server_mode:
-                raise RuntimeError(i18n("This function has been disabled!"))
+                raise RuntimeError(i18n('This function has been disabled!'))
             if name in ["None",None,"",[]]:
-                gr.Info(i18n("Please enter a valid name!"))
+                gr.Info(i18n('Please enter a valid name!'))
                 return
             preset=ARPreset(name,artts_name,description,port,ra,ara,rt,rl,sovits_path,gpt_path) 
             preset.save()
             time.sleep(0.1)
-            gr.Info(f"{i18n("Preset saved successfully")}:{name}")
+            gr.Info(f"{i18n('Preset saved successfully')}:{name}")
         except Exception as e:
             gr.Warning(f"Error: {e}")
         return self.refresh_presets_list(reset=False)
@@ -291,8 +291,8 @@ class GSV(TTSProjet):
 
             if preset.AR_TTS_Project_name=='GPT_SoVITS' and preset.sovits_path !="" and preset.gpt_path != "":
                 if not self.switch_gsvmodel(sovits_path=preset.sovits_path,gpt_path=preset.gpt_path,port=preset.port,force=False):
-                    gr.Warning(i18n("Failed to switch model"))
-            gr.Info(i18n("Preset has been loaded."))
+                    gr.Warning(i18n('Failed to switch model'))
+            gr.Info(i18n('Preset has been loaded.'))
             return preset.to_list()[1:]
         except Exception as e:
             gr.Warning(f"Error: {e}")
@@ -301,7 +301,7 @@ class GSV(TTSProjet):
     def switch_gsvmodel(self,sovits_path,gpt_path,port,force=True,notify=True):
         if self.server_mode:
             if force and notify:
-                gr.Warning(i18n("This function has been disabled!"))
+                gr.Warning(i18n('This function has been disabled!'))
             return True
         if port not in list(self.current_sovits_model.keys()):
             self.current_sovits_model[port]=None
@@ -309,13 +309,13 @@ class GSV(TTSProjet):
             self.current_gpt_model[port]=None
         if not force and sovits_path==self.current_sovits_model[port] and gpt_path==self.current_gpt_model[port]:
             if notify:
-                gr.Info(i18n("Models are not switched. If you need to switch, please manually click the button."))
+                gr.Info(i18n('Models are not switched. If you need to switch, please manually click the button.'))
             return True
         if sovits_path=="" or gpt_path=="":
             if force and notify:
-                gr.Info(i18n("Please specify the model path!"))
+                gr.Info(i18n('Please specify the model path!'))
             return False
-        gr.Info(i18n("Switching Models..."))
+        gr.Info(i18n('Switching Models...'))
         try:        
             data_json={
             "sovits_model_path": sovits_path.strip('"'),
@@ -323,9 +323,9 @@ class GSV(TTSProjet):
             } 
             for x in data_json.values(): 
                 if not os.path.isfile(x):
-                    gr.Warning(i18n("Model Paths seem to be invalid, which could lead to errors!"))
+                    gr.Warning(i18n('Model Paths seem to be invalid, which could lead to errors!'))
                 if os.path.isdir(x):
-                    raise gr.Error(i18n("You have incorrectly entered a folder path!"))
+                    raise gr.Error(i18n('You have incorrectly entered a folder path!'))
             # print(data_json)
             port=int(port)
             if self.gsv_fallback:
@@ -341,13 +341,13 @@ class GSV(TTSProjet):
                 response.raise_for_status()
             self.current_sovits_model[port] = sovits_path
             self.current_gpt_model[port] = gpt_path
-            gr.Info(i18n("Models switched successfully"))
-            logger.info(f"{i18n("Models switched successfully")}:{data_json}")
+            gr.Info(i18n('Models switched successfully'))
+            logger.info(f"{i18n('Models switched successfully')}:{data_json}")
             return True
         except Exception as e:
-            err=f'GPT-SoVITS {i18n("Failed to switch model")},{i18n("Error details")}: {e}'
+            err=f"GPT-SoVITS {i18n('Failed to switch model')},{i18n('Error details')}: {e}"
             try:
-                err+=f"{i18n("error message received")}:{response.json()}"
+                err+=f"{i18n('error message received')}:{response.json()}"
             except:
                 pass
             gr.Warning(err)
@@ -357,12 +357,12 @@ class GSV(TTSProjet):
     def del_preset(self,name):
         try:
             if self.server_mode:
-                raise RuntimeError(i18n("This function has been disabled!"))
+                raise RuntimeError(i18n('This function has been disabled!'))
             if name not in ['',None,"None"]:
                 shutil.rmtree(os.path.join(current_path,"SAVAdata","presets",name))
-                gr.Info(f"{i18n("Successfully deleted")}:{name}")
+                gr.Info(f"{i18n('Successfully deleted')}:{name}")
             else:
-                gr.Info(i18n("Please select a valid preset!"))
+                gr.Info(i18n('Please select a valid preset!'))
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")
         return self.refresh_presets_list()
@@ -374,8 +374,8 @@ class GSV(TTSProjet):
             if os.path.isdir(preset_dir):
                 self.presets_list+=[i for i in os.listdir(preset_dir) if os.path.isdir(os.path.join(preset_dir,i))]
             else:
-                logger.info(i18n("No preset available"))
-                gr.Info(i18n("No preset available"))
+                logger.info(i18n('No preset available'))
+                gr.Info(i18n('No preset available'))
         except Exception as e:
             self.presets_list = ["None"]
             err=f"Error: {e}"
@@ -453,6 +453,6 @@ class ARPreset:
         if x.auxiliary_audios not in [None,[]]:                   
             aux_audio=[os.path.join(current_path,"SAVAdata","presets",x.name,i) for i in x.auxiliary_audios if os.path.exists(os.path.join(current_path,"SAVAdata","presets",x.name,i))]
             if len(aux_audio)!=len(x.auxiliary_audios):
-                gr.Warning(i18n("Partial auxiliary reference audio is missing!"))
+                gr.Warning(i18n('Partial auxiliary reference audio is missing!'))
             x.auxiliary_audios=aux_audio
         return x

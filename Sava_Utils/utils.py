@@ -26,21 +26,21 @@ def clear_cache():
     dir = os.path.join(current_path, "SAVAdata", "temp")
     if os.path.exists(dir):
         shutil.rmtree(dir)
-        logger.info(i18n("Temporary files cleared successfully!"))
-        gr.Info(i18n("Temporary files cleared successfully!"))
+        logger.info(i18n('Temporary files cleared successfully!'))
+        gr.Info(i18n('Temporary files cleared successfully!'))
     else:
-        logger.info(i18n("There are no temporary files."))
-        gr.Info(i18n("There are no temporary files."))
+        logger.info(i18n('There are no temporary files.'))
+        gr.Info(i18n('There are no temporary files.'))
 
 def rc_open_window(command, dir=current_path):
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
-    logger.info(f"{i18n("Execute command")}:{command}")
+    logger.info(f"{i18n('Execute command')}:{command}")
     time.sleep(0.1)
 
 def rc_bg(command, dir=current_path,get_id=True):
     process = subprocess.Popen(command, cwd=dir, shell=True)
-    logger.info(f"{i18n("Execute command")}:{command}")
+    logger.info(f"{i18n('Execute command')}:{command}")
     if get_id:
         yield process.pid
     yield process.wait()
@@ -48,21 +48,21 @@ def rc_bg(command, dir=current_path,get_id=True):
 system=platform.system()
 def kill_process(pid):
     if pid<0:
-        gr.Info(i18n("No running processes"))
+        gr.Info(i18n('No running processes'))
         return None
     if(system=="Windows"):
         command = f"taskkill /t /f /pid {pid}"
     else:
         command= f"pkill --parent {pid} && kill {pid} " # not tested on real machine yet!!!
     subprocess.run(command,shell=True)
-    logger.info(f"{i18n("Execute command")}:{command}")
-    gr.Info(i18n("Process terminated."))
+    logger.info(f"{i18n('Execute command')}:{command}")
+    gr.Info(i18n('Process terminated.'))
 
 def file_show(files):
     if files in [None,[]]:
         return ""    
     if len(files)>1:
-        return i18n("<Multiple Files>")
+        return i18n('<Multiple Files>')
     else:
         file=files[0]
     try:
@@ -129,7 +129,7 @@ def read_prcsv(filename, fps, offset):
                 stid += 1
             return subtitle_list
     except Exception as e:
-        err = f"{i18n("Failed to read file")}{str(e)}"
+        err = f"{i18n('Failed to read file')}{str(e)}"
         logger.error(err)
         gr.Warning(err)
 
@@ -149,7 +149,7 @@ def read_txt(filename):
 
 def read_file(file_name, fps, offset):
     if Sava_Utils.config.server_mode:
-        assert os.stat(file_name).st_size < 65536,i18n("Error: File too large")    #64KB
+        assert os.stat(file_name).st_size < 65536,i18n('Error: File too large')    #64KB
     if file_name[-4:].lower() == ".csv":
         subtitle_list = read_prcsv(file_name, fps, offset)
     elif file_name[-4:].lower() == ".srt":
@@ -157,13 +157,13 @@ def read_file(file_name, fps, offset):
     elif file_name[-4:].lower() == ".txt":
         subtitle_list = read_txt(file_name)
     else:
-        raise ValueError(i18n("Unknown format. Please ensure the extension name is correct!"))
+        raise ValueError(i18n('Unknown format. Please ensure the extension name is correct!'))
     assert len(subtitle_list) != 0, "Empty file???"
     return subtitle_list
 
 def create_multi_speaker(in_files, fps, offset):
     if in_files in [[],None] or len(in_files)>1:
-        gr.Info(i18n("Creating a multi-speaker project can only upload one file at a time!"))
+        gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file=in_files[0]
     try:

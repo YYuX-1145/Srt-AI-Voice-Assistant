@@ -17,9 +17,9 @@ current_path=os.environ.get("current_path")
 
 try:
     dict_language:dict = i18n("DICT_LANGUAGE")
-    assert dict_language is dict
+    assert type(dict_language) is dict
     cut_method:dict = i18n("CUT_METHOD")
-    assert cut_method is dict
+    assert type(cut_method) is dict
 except:
     dict_language={
         "Chinese": "all_zh",

@@ -107,7 +107,7 @@ i18n_dict = {
     "Minimum voice interval (seconds)": "音声の最小間隔（秒）",
     "Sampling rate of output audio, 0=Auto": "出力音声のサンプリングレート、0=自動",
     "Edit Panel Row Count (Requires a restart)": "編集パネルの行数（再起動が必要です）",
-    "Theme (Requires a restart)": "テーマを選択する（再起動後に有効になります。一部のテーマは科学的なインターネット接続が必要な場合があります）",
+    "Theme (Requires a restart)": "テーマを選択する（再起動後に有効になります。）",
     "Clear temporary files": "一時ファイルをすぐに削除する",
     "Python Interpreter Path for BV2": "BV2環境のPythonインタープリターのパスを設定する",
     "Root Path of BV2": "BV2プロジェクトのルートパス",

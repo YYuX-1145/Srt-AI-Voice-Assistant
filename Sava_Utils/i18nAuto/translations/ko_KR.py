@@ -107,7 +107,7 @@ i18n_dict={
     "Minimum voice interval (seconds)":"음성 최소 간격(초)",
     "Sampling rate of output audio, 0=Auto":"출력 음성 샘플링速率, 0=자동",
     "Edit Panel Row Count (Requires a restart)":"편집 창 행 수, 재시작 필요",
-    "Theme (Requires a restart)":"테마 선택, 재시작 후 적용됩니다. 일부 테마는 과학적인 인터넷 연결이 필요할 수 있습니다",
+    "Theme (Requires a restart)":"테마 선택, 재시작 후 적용됩니다.",
     "Clear temporary files":"즉시 임시 파일 지우기",
     "Python Interpreter Path for BV2":"BV2 환경 경로 설정",
     "Root Path of BV2":"BV2 프로젝트 루트 디렉토리",

@@ -244,7 +244,7 @@ def remake(*args):
     args=args[:-1]
     page=args[0]    
     if int(args[1])==-1:
-        gr.Info("Not available !")
+        gr.Info("Not available!")
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
     if Sava_Utils.config.server_mode and len(s_txt)>512:

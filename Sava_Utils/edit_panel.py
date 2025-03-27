@@ -55,7 +55,7 @@ def show_page(page_start,subtitle_list:Subtitles):
 def play_audio(idx, subtitle_list):
     i = int(idx)
     if i == -1 or not subtitle_list[i].is_success:
-        gr.Info(i18n('Not available !'))
+        gr.Info(i18n('Not available!'))
         return None
     return os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
 

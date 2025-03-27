@@ -65,7 +65,7 @@ i18n_dict={
     "An error occurred":"出现错误",
     "Server Mode has been enabled!":"服务模式已启用！",
     "Temporary files cleared successfully!":"成功清除临时文件！",
-    "There are currently no temporary files.":"目前没有临时文件！",
+    "There are no temporary files.":"目前没有临时文件！",
     "Execute command":"执行命令",
     "No running processes":"没有运行的进程",
     "Process terminated.":"已终止进程",

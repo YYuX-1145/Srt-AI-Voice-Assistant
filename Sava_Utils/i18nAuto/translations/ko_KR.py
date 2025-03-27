@@ -66,7 +66,7 @@ i18n_dict={
     "An error occurred":"오류가 발생했습니다",
     "Server Mode has been enabled!":"서비스 모드가 활성화되었습니다!",
     "Temporary files cleared successfully!":"임시 파일이 성공적으로 지워졌습니다!",
-    "There are currently no temporary files.":"현재 임시 파일이 없습니다.",
+    "There are no temporary files.":"현재 임시 파일이 없습니다.",
     "Execute command":"명령 실행",
     "No running processes":"실행 중인 프로세스가 없습니다",
     "Process terminated.":"프로세스가 종료되었습니다.",

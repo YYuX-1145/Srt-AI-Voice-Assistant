@@ -65,7 +65,7 @@ i18n_dict = {
     "An error occurred": "Une erreur s'est produite",
     "Server Mode has been enabled!": "Le mode serveur a été activé !",
     "Temporary files cleared successfully!": "Les fichiers temporaires ont été supprimés avec succès !",
-    "There are currently no temporary files.": "Aucun fichier temporaire.",
+    "There are no temporary files.": "Aucun fichier temporaire.",
     "Execute command": "Exécuter la commande",
     "No running processes": "Aucun processus en cours d'exécution",
     "Process terminated.": "Le processus a été terminé.",

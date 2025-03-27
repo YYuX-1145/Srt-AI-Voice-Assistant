@@ -66,7 +66,7 @@ i18n_dict = {
     "An error occurred": "エラーが発生しました",
     "Server Mode has been enabled!": "サーバーモードが有効になりました！",
     "Temporary files cleared successfully!": "一時ファイルを正常に削除しました！",
-    "There are currently no temporary files.": "現在、一時ファイルはありません。",
+    "There are no temporary files.": "現在、一時ファイルはありません。",
     "Execute command": "コマンドを実行する",
     "No running processes": "実行中のプロセスはありません",
     "Process terminated.": "プロセスが終了しました。",

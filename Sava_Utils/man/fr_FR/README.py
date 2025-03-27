@@ -19,6 +19,6 @@ Si vous rencontrez des problèmes ou souhaitez faire une demande de fonctionnali
 * Utilisez cette version seulement en cas de conflits de dépendances ou de problèmes d'installation.
 
 ## [Télécharger le package intégré avec GPT-SoVITS (Hugging Face)](https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main)
-* Le package intégré GPT-SoVITS inclut la version empaquetée, sans supprimer aucun modèle intégré ou pré-entraîné, et son code est identique à celui du officiel.
+* Le package intégré GPT-SoVITS inclut la version empaquetée, sans supprimer aucun modèle intégré ou pré-entraîné, et son code de entraînement et inférence est identique à celui du officiel.
 * Note : La version empaquetée incluse dans le package intégré GPT-SoVITS peut ne pas être la version la plus récente ; remplacez-la pour la mettre à jour.
 """

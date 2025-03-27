@@ -22,6 +22,6 @@ README = r"""
 
 
 ## [下载配合GPT-SoVITS的整合包(Hugging Face)](https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main)
-* 整合包内预装打包版本体，内置模型不删减，代码和官方仓库一致
+* 整合包内预装打包版本体，内置模型不删减，训练和推理代码和官方仓库一致
 * 注意：包内自带的程序可能不是最新版本，覆盖掉以完成更新  
 """

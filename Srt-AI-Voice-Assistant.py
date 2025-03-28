@@ -293,7 +293,7 @@ def recompose(page,subtitle_list:Subtitles):
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return None,i18n('There is no subtitle in the current workspace'),*show_page(page,subtitle_list)
     audio=subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
-    gr.Info("Reassemble successfully!")
+    gr.Info(i18n("Reassemble successfully!"))
     return audio,"OK",*show_page(page,subtitle_list)
 
 def save_spk(name,*args,project):

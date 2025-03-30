@@ -169,7 +169,7 @@ class GSV(TTSProjet):
 
     def _UI(self):
         self.choose_ar_tts=gr.Radio(label=i18n('Select TTS Project'),choices=["GPT_SoVITS","CosyVoice2"],value="GPT_SoVITS",interactive=not self.server_mode)
-        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n('Inference text language'),interactive=True,allow_custom_value=False)
+        self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[5], label=i18n('Inference text language'),interactive=True,allow_custom_value=False)
         with gr.Row():
             self.refer_audio=gr.Audio(label=i18n('Main Reference Audio'))
             self.aux_ref_audio = gr.File(label=i18n('Auxiliary Reference Audios'),file_count="multiple",type="binary")

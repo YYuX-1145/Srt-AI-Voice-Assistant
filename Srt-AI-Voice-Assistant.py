@@ -248,7 +248,7 @@ def remake(*args):
         return fp,*show_page(page,subtitle_list)
     page,idx,s_txt=args[:3]
     if Sava_Utils.config.server_mode and len(s_txt)>512:
-        gr.Warning("超长!")
+        gr.Warning("too long!")
         return fp,*show_page(page,subtitle_list)     
     if subtitle_list[int(idx)].speaker is not None or (subtitle_list.proj is None and subtitle_list.default_speaker is not None):
         spk = subtitle_list[int(idx)].speaker

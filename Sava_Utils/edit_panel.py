@@ -160,8 +160,8 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
             if title_index!=-1 and timelist[i]!=subtitles[title_index].get_srt_time():
                 st, et = timelist[i].split("-->")
                 subtitles[title_index].reset_srt_time(st.strip(),et.strip())
-        except ValueError:
-            gr.Info(f"{i18n('Input format mismatch')}: {timelist[i]}")
+        except ValueError as e:
+            gr.Info(str(e))
     subtitles.dump()
     return show_page(page, subtitles)
 

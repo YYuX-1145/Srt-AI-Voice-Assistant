@@ -10,8 +10,8 @@ import copy
 from . import logger,i18n
 from .librosa_load import load_audio
 current_path = os.environ.get("current_path")
-
-SRT_TIME_Pattern = re.compile(r"\d{2}:\d{2}:\d{2},\d{3}")
+MAX_TIMESTAMP=18000
+SRT_TIME_Pattern = re.compile(r"\d+:\d+:\d+,\d+")
 
 def compare_index(i1, i2):
     l1 = list(map(int, i1.split(".")))
@@ -47,8 +47,8 @@ class Base_subtitle:
         else:
             raise ValueError
         #5h=5*60*60s=18000s
-        assert self.start_time < 18000,'too long'
-        assert self.end_time < 18000,'too long'
+        assert self.start_time < MAX_TIMESTAMP,'too long'
+        assert self.end_time < MAX_TIMESTAMP,'too long'
 
     def to_float_prcsv_time(self,time:str,fps:int):
         h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds
@@ -58,18 +58,22 @@ class Base_subtitle:
     def to_float_srt_time(self,time:str):
         h, m, s = time.split(":")
         s = s.replace(",", ".")
-        result = int(h) * 3600 + int(m) * 60 + round(float(s), 2)     
+        result = int(h) * 3600 + int(m) * 60 + round(float(s), 2)
         return result
 
-    def reset_srt_time(self,st,et):
-        
+    def reset_srt_time(self,st,et):        
         if SRT_TIME_Pattern.fullmatch(st) and SRT_TIME_Pattern.fullmatch(et):
-            self.start_time_raw=st
-            self.start_time=self.to_float_srt_time(self.start_time_raw)
-            self.end_time_raw=et
-            self.end_time = self.to_float_srt_time(self.end_time_raw)
+            start_time_new = self.to_float_srt_time(st)
+            end_time_new = self.to_float_srt_time(et)
+            if start_time_new < MAX_TIMESTAMP and end_time_new < MAX_TIMESTAMP:
+                self.start_time_raw = st
+                self.start_time = start_time_new
+                self.end_time_raw = et
+                self.end_time = end_time_new
+            else:
+                raise ValueError(f"too long: {st} --> {et}")
         else:
-            raise ValueError#(f"{i18n('Input format mismatch')}: {st} --> {et}")
+            raise ValueError(f"{i18n('Input format mismatch')}: {st} --> {et}")
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"

@@ -1,56 +1,59 @@
 import gradio as gr
 import os
 import pickle
-from .import i18n
-from .subtitle import Subtitles,Subtitle
+from . import i18n
+from .subtitle import Subtitles, Subtitle
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
 
-def load_page(subtitle_list,target_index=1):
-    length=len(subtitle_list)
-    if length==0:
+
+def load_page(subtitle_list, target_index=1):
+    length = len(subtitle_list)
+    if length == 0:
         pass
     if target_index > 1:
-        value=min(target_index,((length-1)//Sava_Utils.config.num_edit_rows)*Sava_Utils.config.num_edit_rows+1)
+        value = min(target_index, ((length - 1) // Sava_Utils.config.num_edit_rows) * Sava_Utils.config.num_edit_rows + 1)
     else:
-        value=target_index
-    return gr.update(minimum=1,maximum=length if length>0 else 1,interactive=True,value=value),*show_page(value,subtitle_list)
+        value = target_index
+    return gr.update(minimum=1, maximum=length if length > 0 else 1, interactive=True, value=value), *show_page(value, subtitle_list)
 
-def show_page(page_start,subtitle_list:Subtitles):
-    ret=[]
-    length=len(subtitle_list)
+
+def show_page(page_start, subtitle_list: Subtitles):
+    ret = []
+    length = len(subtitle_list)
     pageend = page_start + Sava_Utils.config.num_edit_rows
-    if pageend>length:
-        pageend=length+1
+    if pageend > length:
+        pageend = length + 1
     if subtitle_list.proj is not None:
-        if subtitle_list.proj=="bv2":
-            btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]
-        elif subtitle_list.proj=="gsv":
-            btn=[gr.update(visible=False),gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
-        elif subtitle_list.proj=="mstts":  
-            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
+        if subtitle_list.proj == "bv2":
+            btn = [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
+        elif subtitle_list.proj == "gsv":
+            btn = [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)]
+        elif subtitle_list.proj == "mstts":
+            btn = [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
         else:
-            btn=[gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
+            btn = [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)]
     else:
-        btn=[gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]     
-    for i in range(page_start-1,pageend-1):
-        ret.append(gr.update(value=i,visible=False))
-        ret.append(gr.update(value=subtitle_list[i].index,interactive=False,visible=True))
-        ret.append(gr.update(value=subtitle_list[i].get_srt_time(),interactive=True,visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].text}",interactive=True,visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].speaker}",interactive=False,visible=True))
-        ret.append(gr.update(value=subtitle_list.get_state(i),interactive=False,visible=True))
-        ret+=btn
+        btn = [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
+    for i in range(page_start - 1, pageend - 1):
+        ret.append(gr.update(value=i, visible=False))
+        ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].text}", interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].speaker}", interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list.get_state(i), interactive=False, visible=True))
+        ret += btn
     for i in range(Sava_Utils.config.num_edit_rows - pageend + page_start):
-        ret.append(gr.update(value=-1,visible=False))
-        ret.append(gr.update(value=-1,interactive=False,visible=True))
+        ret.append(gr.update(value=-1, visible=False))
+        ret.append(gr.update(value=-1, interactive=False, visible=True))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
-        ret.append(gr.update(value="NO INFO",interactive=False,visible=True))
-        ret.append(gr.update(value="None",interactive=False,visible=True))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
-        ret+=btn        
+        ret.append(gr.update(value="None", interactive=False, visible=True))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
+        ret += btn
     return ret
+
 
 def play_audio(idx, subtitle_list):
     i = int(idx)
@@ -59,11 +62,12 @@ def play_audio(idx, subtitle_list):
         return None
     return os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
 
+
 def getworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        c=os.listdir(os.path.join(current_path,"SAVAdata","temp","work"))
-        return gr.update(choices=c,value=c[-1])
+        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work"))
+        return gr.update(choices=c, value=c[-1])
     except:
         return gr.update(choices=[""])
 
@@ -73,16 +77,16 @@ def getspklist():
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
         return gr.update(choices=c, value="None")
     except:
-        return gr.update(choices=["None"],value="None")
+        return gr.update(choices=["None"], value="None")
 
 
 def load_work(dirname):
     try:
-        if dirname in ["",[],None]:
+        if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
-        with open(os.path.join(current_path, "SAVAdata", "temp", "work",dirname,"st.pkl"), 'rb') as f:
+        with open(os.path.join(current_path, "SAVAdata", "temp", "work", dirname, "st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
-        return subtitles,*load_page(subtitles)
+        return subtitles, *load_page(subtitles)
     except Exception as e:
         gr.Warning(f"Error: {str(e)}")
         return Subtitles(), *load_page(Subtitles())
@@ -90,23 +94,23 @@ def load_work(dirname):
 
 def delete_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
-    if subtitles is None or len(subtitles)==0:
+    if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
-        return  *checklist,*load_page(Subtitles())
+        return *checklist, *load_page(Subtitles())
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     targetlist = []
     for i in range(Sava_Utils.config.num_edit_rows):
-        if checklist[i] and indexlist[i]!=-1:
+        if checklist[i] and indexlist[i] != -1:
             targetlist.append(int(indexlist[i]))
-    if len(targetlist)==0:
+    if len(targetlist) == 0:
         gr.Info(i18n('No subtitles selected.'))
     targetlist.sort(reverse=True)
     for idx in targetlist:
         subtitles.pop(idx)
-    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles,target_index=page)
+    return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 
-def merge_subtitle(page,subtitles:Subtitles, *args):
+def merge_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
@@ -116,21 +120,22 @@ def merge_subtitle(page,subtitles:Subtitles, *args):
     for i in range(Sava_Utils.config.num_edit_rows):
         if checklist[i] and indexlist[i] != -1:
             targetlist.append(int(indexlist[i]))
-    if(len(targetlist))>1:
-        max_i=max(targetlist)
-        min_i=min(targetlist) 
+    if (len(targetlist)) > 1:
+        max_i = max(targetlist)
+        min_i = min(targetlist)
         subtitles[min_i].end_time_raw = subtitles[max_i].end_time_raw
         subtitles[min_i].end_time = subtitles[max_i].end_time
-        for i in range(min_i,max_i):
-            if subtitles[min_i].text[-1] not in [" ", "\n", "!",".","?","。","！","？"]:
-                subtitles[min_i].text+=','
-            subtitles[min_i].text += subtitles[min_i+1].text
-            subtitles.pop(min_i+1)
+        for i in range(min_i, max_i):
+            if subtitles[min_i].text[-1] not in [" ", "\n", "!", ".", "?", "。", "！", "？"]:
+                subtitles[min_i].text += ','
+            subtitles[min_i].text += subtitles[min_i + 1].text
+            subtitles.pop(min_i + 1)
     else:
         gr.Info(i18n('Please select both the start and end points!'))
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
-def copy_subtitle(page,subtitles:Subtitles, *args):
+
+def copy_subtitle(page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
@@ -140,26 +145,26 @@ def copy_subtitle(page,subtitles:Subtitles, *args):
     for i in range(Sava_Utils.config.num_edit_rows):
         if checklist[i] and indexlist[i] != -1:
             targetlist.append(int(indexlist[i]))
-    if len(targetlist)==0:
+    if len(targetlist) == 0:
         gr.Info(i18n('No subtitles selected.'))
     targetlist.sort(reverse=True)
     for i in targetlist:
-        subtitles.insert(i+1+subtitles[i].copy_count,subtitles[i].copy())
+        subtitles.insert(i + 1 + subtitles[i].copy_count, subtitles[i].copy())
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 
-def apply_start_end_time(page,subtitles:Subtitles, *args):
+def apply_start_end_time(page, subtitles: Subtitles, *args):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
-        return show_page(page,Subtitles())
-    indexlist = [int(i) for i in args[ :Sava_Utils.config.num_edit_rows]]
+        return show_page(page, Subtitles())
+    indexlist = [int(i) for i in args[: Sava_Utils.config.num_edit_rows]]
     timelist = args[Sava_Utils.config.num_edit_rows :]
     # for i in range(page-1,min(page+Sava_Utils.config.num_edit_rows-1,len(subtitles)-1)):
-    for i,title_index in enumerate(indexlist):
+    for i, title_index in enumerate(indexlist):
         try:
-            if title_index!=-1 and timelist[i]!=subtitles[title_index].get_srt_time():
+            if title_index != -1 and timelist[i] != subtitles[title_index].get_srt_time():
                 st, et = timelist[i].split("-->")
-                subtitles[title_index].reset_srt_time(st.strip(),et.strip())
+                subtitles[title_index].reset_srt_time(st.strip(), et.strip())
         except ValueError as e:
             gr.Info(str(e))
     subtitles.dump()
@@ -168,25 +173,25 @@ def apply_start_end_time(page,subtitles:Subtitles, *args):
 
 def apply_spk(speaker, page, subtitles: Subtitles, *args):
     checklist = args[: Sava_Utils.config.num_edit_rows]
-    if subtitles is None or len(subtitles)==0:
+    if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
-        return  *checklist,*show_page(page,Subtitles())
-    if speaker in ["","None",[]]:
-        speaker=None
+        return *checklist, *show_page(page, Subtitles())
+    if speaker in ["", "None", []]:
+        speaker = None
     indexlist = args[Sava_Utils.config.num_edit_rows :]
-    assert len(checklist)==len(indexlist)
-    subtitles.default_speaker=speaker
+    assert len(checklist) == len(indexlist)
+    subtitles.default_speaker = speaker
     if speaker is not None and speaker not in subtitles.speakers.keys():
-        subtitles.speakers[speaker]=0
+        subtitles.speakers[speaker] = 0
     for i in range(Sava_Utils.config.num_edit_rows):
-        if checklist[i] and int(indexlist[i])!=-1:
+        if checklist[i] and int(indexlist[i]) != -1:
             if subtitles[int(indexlist[i])].speaker is not None:
                 subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
-            subtitles[int(indexlist[i])].speaker=speaker
+            subtitles[int(indexlist[i])].speaker = speaker
             if speaker is not None:
                 subtitles.speakers[speaker] += 1
     subtitles.dump()
-    return *checklist,*show_page(page,subtitles)
+    return *checklist, *show_page(page, subtitles)
 
 
 # def set_default_speaker(speaker,subtitles:Subtitles):
@@ -201,21 +206,22 @@ def del_spk(name):
     try:
         if Sava_Utils.config.server_mode:
             raise RuntimeError(i18n('This function has been disabled!'))
-        assert name not in ["", "None", [],None],i18n('Must not be empty!')       
-        os.remove(os.path.join(current_path, "SAVAdata", "speakers",name))
+        assert name not in ["", "None", [], None], i18n('Must not be empty!')
+        os.remove(os.path.join(current_path, "SAVAdata", "speakers", name))
         gr.Info(f"{i18n('Delete')}:{name}")
     except Exception as e:
         gr.Warning(f"Error：{str(e)}")
     return getspklist()
 
+
 def switch_spk_proj(name):
-    if name=="bv2":
-        return [gr.update(visible=True),gr.update(visible=False),gr.update(visible=False),gr.update(visible=False)]
-    elif name=="gsv":
-        return [gr.update(visible=False),gr.update(visible=True),gr.update(visible=False),gr.update(visible=False)]
-    elif name=="mstts":  
-        return [gr.update(visible=False),gr.update(visible=False),gr.update(visible=True),gr.update(visible=False)]
-    elif name=="custom":
-        return [gr.update(visible=False),gr.update(visible=False),gr.update(visible=False),gr.update(visible=True)]
+    if name == "bv2":
+        return [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
+    elif name == "gsv":
+        return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)]
+    elif name == "mstts":
+        return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
+    elif name == "custom":
+        return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)]
     else:
         raise ""

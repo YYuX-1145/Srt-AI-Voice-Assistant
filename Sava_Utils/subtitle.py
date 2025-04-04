@@ -7,11 +7,13 @@ import pickle
 import shutil
 import Sava_Utils
 import copy
-from . import logger,i18n
+from . import logger, i18n
 from .librosa_load import load_audio
+
 current_path = os.environ.get("current_path")
-MAX_TIMESTAMP=18000
+MAX_TIMESTAMP = 18000
 SRT_TIME_Pattern = re.compile(r"\d+:\d+:\d+,\d+")
+
 
 def compare_index(i1, i2):
     l1 = list(map(int, i1.split(".")))
@@ -29,39 +31,40 @@ def to_time(time_raw: float):
     seconds, milliseconds = divmod(r, 1)
     return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d},{int(milliseconds*1000):03d}"
 
+
 class Base_subtitle:
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
-        self.index:str = str(index)
-        self.start_time_raw:str = start_time
-        self.end_time_raw:str = end_time
-        self.start_time=0.0
-        self.end_time=0.0
-        self.text:str = text.strip()
+        self.index: str = str(index)
+        self.start_time_raw: str = start_time
+        self.end_time_raw: str = end_time
+        self.start_time = 0.0
+        self.end_time = 0.0
+        self.text: str = text.strip()
         # def normalize(self,ntype:str,fps=30):
         if ntype == "prcsv":
-            self.start_time = self.to_float_prcsv_time(self.start_time_raw,fps)
+            self.start_time = self.to_float_prcsv_time(self.start_time_raw, fps)
             self.end_time = self.to_float_prcsv_time(self.end_time_raw, fps)
         elif ntype == "srt":
             self.start_time = self.to_float_srt_time(self.start_time_raw)
             self.end_time = self.to_float_srt_time(self.end_time_raw)
         else:
             raise ValueError
-        #5h=5*60*60s=18000s
-        assert self.start_time < MAX_TIMESTAMP,'too long'
-        assert self.end_time < MAX_TIMESTAMP,'too long'
+        # 5h=5*60*60s=18000s
+        assert self.start_time < MAX_TIMESTAMP, 'too long'
+        assert self.end_time < MAX_TIMESTAMP, 'too long'
 
-    def to_float_prcsv_time(self,time:str,fps:int):
+    def to_float_prcsv_time(self, time: str, fps: int):
         h, m, s, fs = (time.replace(";", ":")).split(":")  # seconds
         result = int(h) * 3600 + int(m) * 60 + int(s) + round(int(fs) / fps, 2)
         return result
 
-    def to_float_srt_time(self,time:str):
+    def to_float_srt_time(self, time: str):
         h, m, s = time.split(":")
         s = s.replace(",", ".")
         result = int(h) * 3600 + int(m) * 60 + round(float(s), 2)
         return result
 
-    def reset_srt_time(self,st,et):        
+    def reset_srt_time(self, st, et):
         if SRT_TIME_Pattern.fullmatch(st) and SRT_TIME_Pattern.fullmatch(et):
             start_time_new = self.to_float_srt_time(st)
             end_time_new = self.to_float_srt_time(et)
@@ -80,14 +83,14 @@ class Base_subtitle:
 
 
 class Subtitle(Base_subtitle):
-    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30,speaker=None):
+    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30, speaker=None):
         super().__init__(index, start_time, end_time, text, ntype, fps)
         self.is_success = None
         self.is_delayed = False
-        self.real_st=0
-        self.real_et=0 #frames
-        self.speaker=speaker
-        self.copy_count=0
+        self.real_st = 0
+        self.real_et = 0  # frames
+        self.speaker = speaker
+        self.copy_count = 0
 
     def add_offset(self, offset=0):
         self.start_time += offset
@@ -101,11 +104,11 @@ class Subtitle(Base_subtitle):
         return f"{to_time(self.start_time)} --> {to_time(self.end_time)}"
 
     def copy(self):
-        x=copy.deepcopy(self)
-        self.copy_count+=1
-        x.copy_count=0
-        x.index=f"{self.index}-{self.copy_count}"
-        x.is_success=None
+        x = copy.deepcopy(self)
+        self.copy_count += 1
+        x.copy_count = 0
+        x.index = f"{self.index}-{self.copy_count}"
+        x.is_success = None
         return x
 
     def __str__(self) -> str:
@@ -114,38 +117,38 @@ class Subtitle(Base_subtitle):
 
 class Subtitles:
     def __init__(self, proj: str = None, dir: str = None) -> None:
-        self.subtitles:list[Subtitle] = []
+        self.subtitles: list[Subtitle] = []
         self.proj = proj
         self.dir = dir
-        self.sr=32000
-        self.default_speaker=None
-        self.speakers=dict()
+        self.sr = 32000
+        self.default_speaker = None
+        self.speakers = dict()
 
     def dump(self):
         assert self.dir is not None
-        with open(os.path.join(self.get_abs_dir(),"st.pkl"), 'wb') as f:
+        with open(os.path.join(self.get_abs_dir(), "st.pkl"), 'wb') as f:
             pickle.dump(self, f)
 
     def set_proj(self, proj: str):
         self.proj = proj
 
     def set_dir_name(self, dir_name: str):
-        abspath=os.path.join(current_path,"SAVAdata","temp","work",dir_name)
+        abspath = os.path.join(current_path, "SAVAdata", "temp", "work", dir_name)
         while os.path.exists(abspath):
             if Sava_Utils.config.overwrite_workspace:
                 shutil.rmtree(abspath)
                 break
             abspath += "(new)"
-        self.dir = os.path.join("SAVAdata", "temp", "work", dir_name) #relative path
+        self.dir = os.path.join("SAVAdata", "temp", "work", dir_name)  # relative path
         os.makedirs(abspath, exist_ok=True)
         self.dump()
 
     def get_abs_dir(self):
-        return os.path.join(current_path,self.dir)
+        return os.path.join(current_path, self.dir)
 
     def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
-        abs_path=os.path.join(current_path,self.dir)
+        abs_path = os.path.join(current_path, self.dir)
         # print(self.speakers)
         audiolist = []
         delayed_list = []
@@ -154,15 +157,15 @@ class Subtitles:
         if len(fl) == 0:
             gr.Warning(i18n('Subtitles have not been synthesized yet!'))
             return None
-        if sr in [None,0]:
-            wav, sr = load_audio(os.path.join(abs_path, fl[0]),sr=sr) 
-        self.sr=sr
-        interval = int(Sava_Utils.config.min_interval*sr)
-        del fl        
+        if sr in [None, 0]:
+            wav, sr = load_audio(os.path.join(abs_path, fl[0]), sr=sr)
+        self.sr = sr
+        interval = int(Sava_Utils.config.min_interval * sr)
+        del fl
         ptr = 0
         for id, i in enumerate(self.subtitles):
             start_frame = int(i.start_time * sr)
-            if ptr  <= start_frame:
+            if ptr <= start_frame:
                 silence_len = start_frame - ptr
                 audiolist.append(np.zeros(silence_len))
                 ptr += silence_len
@@ -172,13 +175,13 @@ class Subtitles:
                 delayed_list.append(self.subtitles[id].index)
             f_path = os.path.join(abs_path, f"{i.index}.wav")
             if os.path.exists(f_path):
-                wav, sr = load_audio(f_path,sr=sr)
+                wav, sr = load_audio(f_path, sr=sr)
                 dur = wav.shape[-1]  # frames
-                self.subtitles[id].real_st=ptr
+                self.subtitles[id].real_st = ptr
                 ptr += dur
                 audiolist.append(wav)
                 self.subtitles[id].real_et = ptr
-                ptr+=interval
+                ptr += interval
                 audiolist.append(np.zeros(interval))
                 self.subtitles[id].is_success = True
             else:
@@ -214,24 +217,24 @@ class Subtitles:
     def __getitem__(self, index):
         return self.subtitles[index]
 
-    def pop(self,index):
+    def pop(self, index):
         self.subtitles.pop(index)
 
-    def insert(self,index,item):
-        self.subtitles.insert(index,item)
+    def insert(self, index, item):
+        self.subtitles.insert(index, item)
 
     def __len__(self):
         return len(self.subtitles)
 
-    def export(self,fp=None,open_explorer=True,raw=False):
-        if len(self.subtitles)==0:
+    def export(self, fp=None, open_explorer=True, raw=False):
+        if len(self.subtitles) == 0:
             gr.Info(i18n('There is no subtitle in the current workspace'))
             return None
-        idx=0
+        idx = 0
         srt_content = []
         for i in self.subtitles:
-            idx+=1
-            if raw or i.real_st==0 or i.real_et==0:
+            idx += 1
+            if raw or i.real_st == 0 or i.real_et == 0:
                 if SRT_TIME_Pattern.fullmatch(i.start_time_raw) and SRT_TIME_Pattern.fullmatch(i.end_time_raw):
                     start = i.start_time_raw
                     end = i.end_time_raw
@@ -239,19 +242,19 @@ class Subtitles:
                     start = to_time(i.start_time)
                     end = to_time(i.end_time)
             else:
-                start=to_time(i.real_st/self.sr)
-                end=to_time(i.real_et/self.sr)
-            srt_content.append(str(idx)+"\n")
-            srt_content.append(f"{start} --> {end}"+"\n")
+                start = to_time(i.real_st / self.sr)
+                end = to_time(i.real_et / self.sr)
+            srt_content.append(str(idx) + "\n")
+            srt_content.append(f"{start} --> {end}" + "\n")
             srt_content.append(i.text + "\n")
             srt_content.append("\n")
         if fp is None:
-            t=datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            file_path=os.path.join(current_path,"SAVAdata","output",f"{t}.srt")
+            t = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            file_path = os.path.join(current_path, "SAVAdata", "output", f"{t}.srt")
         else:
-            file_path=fp        
-        os.makedirs(os.path.dirname(file_path),exist_ok=True)
-        with open(file_path,"w",encoding="utf-8") as f:
+            file_path = fp
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(srt_content)
         if open_explorer and not Sava_Utils.config.server_mode:
             os.system(f'explorer /select, {file_path}')

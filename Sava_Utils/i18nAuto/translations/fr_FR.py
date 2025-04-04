@@ -12,6 +12,7 @@ i18n_dict = {
     "Speaker archive not found": "Archive du locuteur non trouvée",
     "Synthesizing multi-speaker task, the current speaker is": "En cours de synthèse de la tâche à plusieurs locuteurs, le locuteur actuel est",
     "Synthesis for the single speaker has failed !": "Toute la synthèse vocale pour le locuteur a échoué !",
+    "Failed to execute ffmpeg.": "L'exécution de ffmpeg a échoué.",
     "Done!": "Terminé !",
     "Failed subtitle id": "ID du sous-titre en erreur",
     "error message received": "Message d'erreur reçu",

@@ -224,14 +224,14 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                 target_dur=int(subtitle.end_time-subtitle.start_time)*sr
                 if target_dur > 0 and (audio.shape[-1] - target_dur) > (0.01 * sr):
                     ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
-                    cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio} -y "{filepath}.wav"'
+                    cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio:.2f} -y "{filepath}.wav"'
                     p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     logger.info(f"{i18n('Execute command')}:{cmd}")
                     exit_code=p.wait()
                     if exit_code==0:
                         shutil.move(f"{filepath}.wav",filepath)
                     else:
-                        logger.error("failed to exec ffmpeg")
+                        logger.error("Failed to execute ffmpeg.")
             return filepath
         else:
             data = json.loads(audio)

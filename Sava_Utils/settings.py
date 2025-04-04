@@ -47,7 +47,33 @@ gradio_hf_hub_themes = [
 
 
 class Settings:
-    def __init__(self, language: str = "Auto", server_port: int = 0, LAN_access: bool = False, overwrite_workspace: bool = False, clear_tmp: bool = False, concurrency_count: int = 2, server_mode: bool = False, min_interval: float = 0.3, output_sr: int = 0, num_edit_rows: int = 7, theme: str = "default", bv2_pydir: str = "", bv2_dir: str = "", bv2_args: str = "", gsv_fallback: bool = False, gsv_pydir: str = "", gsv_dir: str = "", gsv_args: str = "", ms_region: str = "eastasia", ms_key: str = "", ms_lang_option: str = "zh", ollama_url: str = "http://localhost:11434"):
+    def __init__(
+        self,
+        language: str = "Auto",
+        server_port: int = 0,
+        LAN_access: bool = False,
+        overwrite_workspace: bool = False,
+        clear_tmp: bool = False,
+        concurrency_count: int = 2,
+        server_mode: bool = False,
+        min_interval: float = 0.3,
+        max_accelerate_ratio: float = 1.0,
+        output_sr: int = 0,
+        remove_silence: bool = False,
+        num_edit_rows: int = 7,
+        theme: str = "default",
+        bv2_pydir: str = "",
+        bv2_dir: str = "",
+        bv2_args: str = "",
+        gsv_fallback: bool = False,
+        gsv_pydir: str = "",
+        gsv_dir: str = "",
+        gsv_args: str = "",
+        ms_region: str = "eastasia",
+        ms_key: str = "",
+        ms_lang_option: str = "zh",
+        ollama_url: str = "http://localhost:11434",
+    ):
         self.language = language
         self.server_port = int(server_port)
         self.LAN_access = LAN_access
@@ -56,7 +82,9 @@ class Settings:
         self.concurrency_count = int(concurrency_count)
         self.server_mode = server_mode
         self.min_interval = min_interval
+        self.max_accelerate_ratio = max_accelerate_ratio
         self.output_sr = int(output_sr)
+        self.remove_silence = remove_silence
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
         self.bv2_pydir = bv2_pydir
@@ -202,8 +230,12 @@ class Settings_UI:
                 self.concurrency_count = gr.Number(label=i18n('Concurrency Count'), value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                 self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
             with gr.Row():
-                self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
-                self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
+                with gr.Group():
+                    self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
+                    self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
+                with gr.Group():
+                    self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
+                    self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
             self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
             self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
@@ -240,7 +272,9 @@ class Settings_UI:
             self.concurrency_count,
             self.server_mode,
             self.min_interval,
+            self.max_accelerate_ratio,
             self.output_sr,
+            self.remove_silence,
             self.num_edit_rows,
             self.theme,
             self.bv2_pydir_input,

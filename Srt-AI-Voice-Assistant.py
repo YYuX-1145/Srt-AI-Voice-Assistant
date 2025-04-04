@@ -1,5 +1,7 @@
 import os
 import sys
+import io
+
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
@@ -99,9 +101,8 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
                                 args,
                                 {
                                     "proj": proj,
-                                    "text": i.text,
                                     "dir": abs_dir,
-                                    "subid": i.index,
+                                    "subtitle": i,
                                 },
                             )
                             for i in subtitle_list
@@ -184,9 +185,8 @@ def gen_multispeaker(subtitles: Subtitles, max_workers):
                                 args,
                                 {
                                     "proj": project,
-                                    "text": i.text,
                                     "dir": abs_dir,
-                                    "subid": i.index,
+                                    "subtitle": i,
                                 },
                             )
                             for i in tasks[key]
@@ -206,21 +206,39 @@ def gen_multispeaker(subtitles: Subtitles, max_workers):
     return audio, *load_page(subtitles)
 
 
-def save(args, proj: str = None, text: str = None, dir: str = None, subid: int = None):
-    audio = Projet_dict[proj].save_action(*args, text=text)
+def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
+    audio = Projet_dict[proj].save_action(*args, text=subtitle.text)
     if audio is not None:
         if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
             # sr=int.from_bytes(audio[24:28],'little')
-            filepath = os.path.join(dir, f"{subid}.wav")
-            with open(filepath, 'wb') as file:
-                file.write(audio)
-                return filepath
+            filepath = os.path.join(dir, f"{subtitle.index}.wav")
+            if Sava_Utils.config.remove_silence:
+                audio, sr = Sava_Utils.librosa_load.load_audio(io.BytesIO(audio))
+                audio = remove_silence(audio, sr)
+                sf.write(filepath, audio, sr)
+            else:
+                with open(filepath, 'wb') as file:
+                    file.write(audio)
+            if Sava_Utils.config.max_accelerate_ratio > 1.0:
+                audio, sr = Sava_Utils.librosa_load.load_audio(filepath)
+                target_dur=int(subtitle.end_time-subtitle.start_time)*sr
+                if target_dur > 0 and (audio.shape[-1] - target_dur) > (0.01 * sr):
+                    ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
+                    cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio} -y "{filepath}.wav"'
+                    p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    logger.info(f"{i18n('Execute command')}:{cmd}")
+                    exit_code=p.wait()
+                    if exit_code==0:
+                        shutil.move(f"{filepath}.wav",filepath)
+                    else:
+                        logger.error("failed to exec ffmpeg")
+            return filepath
         else:
             data = json.loads(audio)
-            logger.error(f"{i18n('Failed subtitle id')}:{subid},{i18n('error message received')}:{str(data)}")
+            logger.error(f"{i18n('Failed subtitle id')}:{subtitle.index},{i18n('error message received')}:{str(data)}")
             return None
     else:
-        logger.error(f"{i18n('Failed subtitle id')}:{subid}")
+        logger.error(f"{i18n('Failed subtitle id')}:{subtitle.index}")
         return None
 
 
@@ -292,7 +310,7 @@ def remake(*args):
             return fp, *show_page(page, subtitle_list)
     Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
     subtitle_list[int(idx)].text = s_txt
-    fp = save(args, proj=proj, text=s_txt, dir=subtitle_list.get_abs_dir(), subid=subtitle_list[int(idx)].index)
+    fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[int(idx)])
     if fp is not None:
         subtitle_list[int(idx)].is_success = True
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))

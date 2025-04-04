@@ -18,7 +18,7 @@ help = r"""
 ### This project supports dubbing for subtitles or plain text.
 * **For subtitles**:
 
-    * Only the start time is effectively used. When a subtitle is too long, subsequent subtitles will be delayed accordingly.And you can set the minimum speech interval in settings.
+    * When a subtitle is too long, subsequent subtitles will be delayed accordingly.And you can set the minimum speech interval in settings.
 
 * **For plain text**:
 

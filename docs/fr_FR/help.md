@@ -17,7 +17,7 @@
 ### Ce projet peut doubler pour les sous-titres et les textes bruts.
 * **Pour les sous-titres** :
 
-    * Seulement l'heure de début est effectivement utilisée. Lorsqu'un sous-titre est trop long, les sous-titres suivants seront retardés en conséquence. Et vous pouvez définir l'intervalle de parole minimum dans les paramètres.
+    * Lorsqu'un sous-titre est trop long, les sous-titres suivants seront retardés en conséquence. Et vous pouvez définir l'intervalle de parole minimum dans les paramètres.
 
 * **Pour le texte brut** :
 

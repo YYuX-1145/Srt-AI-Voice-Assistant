@@ -2,6 +2,7 @@ import os
 import time
 import subprocess
 from . import logger, i18n
+from .librosa_load import get_rms
 import gradio as gr
 import csv
 import re
@@ -81,7 +82,7 @@ def file_show(files):
         return error
 
 
-from .subtitle import Base_subtitle, Subtitle, Subtitles, to_time
+from .subtitle import Base_subtitle, Subtitle, Subtitles
 from .edit_panel import *
 
 
@@ -149,7 +150,7 @@ def read_prcsv(filename, fps, offset):
 
 
 def read_txt(filename):
-    REF_DUR = 2
+    # REF_DUR = 2
     try:
         with open(filename, "r", encoding="utf-8") as f:
             text = f.read()
@@ -158,7 +159,7 @@ def read_txt(filename):
         subtitle_list = Subtitles()
         idx = 1
         for s in sentences:
-            subtitle_list.append(Subtitle(idx, to_time(REF_DUR * idx - REF_DUR), to_time(REF_DUR * idx), s, ntype="srt"))
+            subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", s, ntype="srt"))
             idx += 1
     except Exception as e:
         err = f"{i18n('Failed to read file')}: {str(e)}"
@@ -195,3 +196,23 @@ def create_multi_speaker(in_files, fps, offset):
         return getworklist(), *load_page(Subtitles()), Subtitles()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     return getworklist(), *load_page(subtitle_list), subtitle_list
+
+
+def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):
+    # Padding(sec) is actually margin of safety
+    hop_length = 512
+    rms_list = get_rms(audio, hop_length=hop_length).squeeze(0)
+    threshold = 10 ** (threshold_db / 20.0)
+    for i, rms in enumerate(rms_list):
+        if rms >= threshold:
+            break
+    if i==rms_list.shape[-1]:
+        print("[debug] remove_silence: failed to find the cutting point")
+        return audio
+    for j, rms in enumerate(reversed(rms_list)):
+        if rms >= threshold:
+            break
+    cutting_point1 = max(i * hop_length - int(padding_begin * sr), 0)
+    cutting_point2 = min((rms_list.shape[-1] - j) * hop_length + int(padding_fin * sr), audio.shape[-1])
+    audio = audio[cutting_point1:cutting_point2]
+    return audio

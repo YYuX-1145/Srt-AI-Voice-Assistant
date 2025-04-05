@@ -238,31 +238,31 @@ class Settings_UI:
                     self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
             self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
-            self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
-        with gr.Group():
-            gr.Markdown(value="BV2")
-            self.bv2_pydir_input = gr.Textbox(label=i18n('Python Interpreter Path for BV2'), interactive=True, value=Sava_Utils.config.bv2_pydir)
-            self.bv2_dir_input = gr.Textbox(label=i18n('Root Path of BV2'), interactive=True, value=Sava_Utils.config.bv2_dir)
-            self.bv2_args = gr.Textbox(label=i18n('Start Parameters'), interactive=True, value=Sava_Utils.config.bv2_args)
-        with gr.Group():
-            gr.Markdown(value="GSV")
-            self.gsv_fallback = gr.Checkbox(value=False, label=i18n('Downgrade API version to v1'), interactive=True)
-            self.gsv_pydir_input = gr.Textbox(label=i18n('Python Interpreter Path for GSV'), interactive=True, value=Sava_Utils.config.gsv_pydir)
-            self.gsv_dir_input = gr.Textbox(label=i18n('Root Path of GSV'), interactive=True, value=Sava_Utils.config.gsv_dir)
-            self.gsv_args = gr.Textbox(label=i18n('Start Parameters'), interactive=True, value=Sava_Utils.config.gsv_args)
-        with gr.Group():
-            gr.Markdown(value="Azure-TTS(Microsoft)")
-            self.ms_region = gr.Textbox(label="Server Region", interactive=True, value=Sava_Utils.config.ms_region)
-            self.ms_key = gr.Textbox(label=i18n('KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'), interactive=True, value=Sava_Utils.config.ms_key)
-            self.ms_lang_option = gr.Textbox(label=i18n('Select required languages, separated by commas or spaces.'), interactive=True, value=Sava_Utils.config.ms_lang_option)
-        with gr.Group():
-            gr.Markdown(value=i18n('Translation Module'))
-            self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
+        with gr.Accordion(i18n('Submodule Settings'),open=False):
+            with gr.Group():
+                gr.Markdown(value="BV2")
+                self.bv2_pydir_input = gr.Textbox(label=i18n('Python Interpreter Path for BV2'), interactive=True, value=Sava_Utils.config.bv2_pydir)
+                self.bv2_dir_input = gr.Textbox(label=i18n('Root Path of BV2'), interactive=True, value=Sava_Utils.config.bv2_dir)
+                self.bv2_args = gr.Textbox(label=i18n('Start Parameters'), interactive=True, value=Sava_Utils.config.bv2_args)
+            with gr.Group():
+                gr.Markdown(value="GSV")
+                self.gsv_fallback = gr.Checkbox(value=False, label=i18n('Downgrade API version to v1'), interactive=True)
+                self.gsv_pydir_input = gr.Textbox(label=i18n('Python Interpreter Path for GSV'), interactive=True, value=Sava_Utils.config.gsv_pydir)
+                self.gsv_dir_input = gr.Textbox(label=i18n('Root Path of GSV'), interactive=True, value=Sava_Utils.config.gsv_dir)
+                self.gsv_args = gr.Textbox(label=i18n('Start Parameters'), interactive=True, value=Sava_Utils.config.gsv_args)
+            with gr.Group():
+                gr.Markdown(value="Azure-TTS(Microsoft)")
+                self.ms_region = gr.Textbox(label="Server Region", interactive=True, value=Sava_Utils.config.ms_region)
+                self.ms_key = gr.Textbox(label=i18n('KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'), interactive=True, value=Sava_Utils.config.ms_key)
+                self.ms_lang_option = gr.Textbox(label=i18n('Select required languages, separated by commas or spaces.'), interactive=True, value=Sava_Utils.config.ms_lang_option)
+            with gr.Group():
+                gr.Markdown(value=i18n('Translation Module'))
+                self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
+        self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
+        self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])        
         self.save_settings_btn = gr.Button(value=i18n('Apply & Save'), variant="primary")
         self.restart_btn = gr.Button(value=i18n('Restart UI'), variant="stop")
-
-        self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])
-
+        
         componments_list = [
             self.language,
             self.server_port,

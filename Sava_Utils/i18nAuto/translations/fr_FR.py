@@ -106,6 +106,7 @@ i18n_dict = {
     "Edit Panel Row Count (Requires a restart)": "Nombre de lignes de la barre d'édition, un redémarrage requis",
     "Theme (Requires a restart)": "Choisir un thème, un redémarrage requis.",
     "Clear temporary files": "Supprimer immédiatement les fichiers temporaires",
+    "Submodule Settings": "Paramètres de Sous-Module",
     "Python Interpreter Path for BV2": "Chemin de l'interpréteur Python pour BV2",
     "Root Path of BV2": "Répertoire racine du projet BV2",
     "Start Parameters": "Paramètres de démarrage",

@@ -29,6 +29,9 @@ i18n_dict = {
     # UI in main
     "Subtitle Dubbing": "字幕配音",
     "File content": "文件内容展示",
+    "Speaker Map": "说话人映射表",
+    "Original Speaker": "原始说话人",
+    "Target Speaker": "映射后的目标说话人",
     "Create Multi-Speaker Dubbing Project": "创建多角色项目",
     "Custom API": "自定义API",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr": "Pr项目帧速率,仅适用于Pr导出的csv文件",

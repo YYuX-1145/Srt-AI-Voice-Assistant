@@ -29,6 +29,9 @@ i18n_dict = {
     # UI in main
     "Subtitle Dubbing": "Doublage de sous-titres",
     "File content": "Affichage du contenu du fichier",
+    "Speaker Map": "Tableau de Correspondance des Locuteurs",
+    "Original Speaker": "Locuteur d'Origine",
+    "Target Speaker": "Locuteur Cible après la Correspondance",
     "Create Multi-Speaker Dubbing Project": "Créer un projet de doublage à plusieurs locuteurs",
     "Custom API": "API personnalisée",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr": "Taux d'images du projet Adobe Premiere, uniquement applicable aux fichiers csv exportés depuis Pr",

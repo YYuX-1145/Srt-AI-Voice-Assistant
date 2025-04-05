@@ -168,6 +168,39 @@ def read_txt(filename):
     return subtitle_list
 
 
+def read_labeled_txt(filename: str, spk_dict: dict):
+    try:
+        pattern = re.compile(r'^([^:：]{1,20})[:：](.+)')
+        idx = 1
+        subtitle_list = Subtitles()
+        subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", "", ntype="srt"))
+        with open(filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.startswith("#") or line.strip() == "":
+                    continue
+                match = pattern.match(line.strip())
+                if match:
+                    speaker = match.group(1).strip()
+                    speaker = spk_dict.get(speaker, speaker)
+                    text = match.group(2).strip()
+                    subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", text, ntype="srt", speaker=speaker))
+                    idx += 1
+                    if speaker not in list(subtitle_list.speakers.keys()):
+                        subtitle_list.speakers[speaker] = 0
+                    else:
+                        subtitle_list.speakers[speaker] += 1
+                else:
+                    subtitle_list[-1].text += ',' + line
+            if not subtitle_list[0].text:
+                subtitle_list.pop(0)
+        return subtitle_list
+    except Exception as e:
+        err = f"{i18n('Failed to read file')}: {str(e)}"
+        logger.error(err)
+        gr.Warning(err)
+    return subtitle_list
+
+
 def read_file(file_name, fps, offset):
     if Sava_Utils.config.server_mode:
         assert os.stat(file_name).st_size < 65536, i18n('Error: File too large')  # 64KB
@@ -183,13 +216,18 @@ def read_file(file_name, fps, offset):
     return subtitle_list
 
 
-def create_multi_speaker(in_files, fps, offset):
+def create_multi_speaker(in_files, speaker_map, fps, offset):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file = in_files[0]
     try:
-        subtitle_list = read_file(in_file.name, fps, offset)
+        if speaker_map[0][0] == "":
+            subtitle_list = read_file(in_file.name, fps, offset)
+        else:
+            spk_dict = {i[0]: i[-1] for i in speaker_map}
+            subtitle_list = read_labeled_txt(in_file.name, spk_dict)
+            assert len(subtitle_list) != 0, "Empty???"
     except Exception as e:
         what = str(e)
         gr.Warning(what)
@@ -206,7 +244,7 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-
     for i, rms in enumerate(rms_list):
         if rms >= threshold:
             break
-    if i==rms_list.shape[-1]:
+    if i == rms_list.shape[-1]:
         print("[debug] remove_silence: failed to find the cutting point")
         return audio
     for j, rms in enumerate(reversed(rms_list)):

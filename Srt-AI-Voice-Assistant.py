@@ -221,15 +221,15 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                     file.write(audio)
             if Sava_Utils.config.max_accelerate_ratio > 1.0:
                 audio, sr = Sava_Utils.librosa_load.load_audio(filepath)
-                target_dur=int(subtitle.end_time-subtitle.start_time)*sr
+                target_dur = int(subtitle.end_time - subtitle.start_time) * sr
                 if target_dur > 0 and (audio.shape[-1] - target_dur) > (0.01 * sr):
                     ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
                     cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio:.2f} -y "{filepath}.wav"'
                     p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     logger.info(f"{i18n('Execute command')}:{cmd}")
-                    exit_code=p.wait()
-                    if exit_code==0:
-                        shutil.move(f"{filepath}.wav",filepath)
+                    exit_code = p.wait()
+                    if exit_code == 0:
+                        shutil.move(f"{filepath}.wav", filepath)
                     else:
                         logger.error("Failed to execute ffmpeg.")
             return filepath
@@ -321,7 +321,7 @@ def remake(*args):
     return fp, *show_page(page, subtitle_list)
 
 
-def recompose(page, subtitle_list: Subtitles):
+def recompose(page: int, subtitle_list: Subtitles):
     if subtitle_list is None or len(subtitle_list) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return None, i18n('There is no subtitle in the current workspace'), *show_page(page, subtitle_list)
@@ -330,7 +330,8 @@ def recompose(page, subtitle_list: Subtitles):
     return audio, "OK", *show_page(page, subtitle_list)
 
 
-def save_spk(name, *args, project):
+def save_spk(name: str, *args, project: str):
+    name = name.strip()
     if Sava_Utils.config.server_mode:
         gr.Warning(i18n('This function has been disabled!'))
         return gr.update(choices=["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))])
@@ -366,6 +367,7 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
+                        speaker_map = gr.Dataframe(label=i18n('Speaker Map'), headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
@@ -398,7 +400,12 @@ if __name__ == "__main__":
                         edit_check_list = []
                         edit_start_end_time_list = []
                         with gr.Row():
-                            worklist = gr.Dropdown(choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "work")) else [""], label=i18n('History'), scale=2, visible=not Sava_Utils.config.server_mode)
+                            worklist = gr.Dropdown(
+                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "work")) else [""],
+                                label=i18n('History'),
+                                scale=2,
+                                visible=not Sava_Utils.config.server_mode,
+                            )
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
@@ -509,10 +516,12 @@ if __name__ == "__main__":
                             gr.Markdown(value=MANUAL.getInfo("issues"))
                         with gr.TabItem(i18n('Help & User guide')):
                             gr.Markdown(value=MANUAL.getInfo("help"))
-        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
+        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
         BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         CUSTOM.gen_btn4.click(lambda *args: generate_preprocess(*args, project="custom"), inputs=[input_file, fps, offset, workers, CUSTOM.choose_custom_api], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
 
-    app.queue(concurrency_count=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(share=args.share, server_port=server_port if server_port > 0 else None, inbrowser=True, server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1', show_api=not Sava_Utils.config.server_mode)
+    app.queue(concurrency_count=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
+        share=args.share, server_port=server_port if server_port > 0 else None, inbrowser=True, server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1', show_api=not Sava_Utils.config.server_mode
+    )

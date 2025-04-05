@@ -72,12 +72,12 @@ def getworklist():
         return gr.update(choices=[""])
 
 
-def getspklist():
+def getspklist(value="None"):
     try:
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c, value="None")
+        return gr.update(choices=c, value="None"), gr.update(choices=c, value=value)
     except:
-        return gr.update(choices=["None"], value="None")
+        return gr.update(choices=["None"], value="None"), gr.update(choices=["None"], value="None")
 
 
 def load_work(dirname):
@@ -210,7 +210,7 @@ def del_spk(name):
         os.remove(os.path.join(current_path, "SAVAdata", "speakers", name))
         gr.Info(f"{i18n('Delete')}:{name}")
     except Exception as e:
-        gr.Warning(f"Error：{str(e)}")
+        gr.Warning(f"Error: {str(e)}")
     return getspklist()
 
 

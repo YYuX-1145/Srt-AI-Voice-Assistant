@@ -25,7 +25,7 @@ i18n_dict={
     "Reassemble successfully!":"다시 합성 완료!",
     "This function has been disabled!":"현재 기능이 비활성화되어 있습니다!",
     "Please enter a valid name!":"유효한 이름을 입력하세요!",
-    "Saved successfully!":"성공적으로 저장했습니다!",
+    "Saved successfully":"성공적으로 저장했습니다",
 
     #UI in main
     "Subtitle Dubbing":"자막 대본딩",

@@ -14,6 +14,7 @@ import Sava_Utils
 current_path = os.environ.get("current_path")
 LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
+
 def positive_int(*a):
     r = []
     for x in a:
@@ -182,15 +183,15 @@ def read_labeled_txt(filename: str, spk_dict: dict):
                 if match:
                     speaker = match.group(1).strip()
                     speaker = spk_dict.get(speaker, speaker)
-                    if speaker in ['','None']:
-                        speaker=None
-                    text = match.group(2).strip()
-                    subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", text, ntype="srt", speaker=speaker))
+                    if speaker in ['', 'None']:
+                        speaker = None
+                    subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", match.group(2).strip(), ntype="srt", speaker=speaker))
                     idx += 1
-                    if speaker is not None and speaker not in list(subtitle_list.speakers.keys()):
-                        subtitle_list.speakers[speaker] = 0
-                    else:
-                        subtitle_list.speakers[speaker] += 1
+                    if speaker is not None:
+                        if speaker not in list(subtitle_list.speakers.keys()):
+                            subtitle_list.speakers[speaker] = 0
+                        else:
+                            subtitle_list.speakers[speaker] += 1
                 else:
                     subtitle_list[-1].text += ',' + line
             if not subtitle_list[0].text:
@@ -206,12 +207,12 @@ def read_labeled_txt(filename: str, spk_dict: dict):
 def get_speaker_map(in_files):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
-        return None
+        return None, gr.update(choices=None,value=None)
     filename = in_files[0].name
-    speakers=set()
-    rows=[]
+    speakers = set()
+    rows = []
     with open(filename, 'r', encoding='utf-8') as f:
-        for line in f:        
+        for line in f:
             if line.startswith("#") or line.strip() == "":
                 continue
             match = LABELED_TXT_PATTERN.match(line.strip())
@@ -219,8 +220,19 @@ def get_speaker_map(in_files):
                 speaker = match.group(1).strip()
                 speakers.add(speaker)
         for speaker in speakers:
-            rows.append([speaker,'None'])
-    return np.array(rows, dtype=str)
+            rows.append([speaker, 'None'])
+    return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
+
+
+def modify_spkmap(ori, tar, tab):
+    if ori not in [None, "", []]:
+        if tar in [None, ""]:
+            tar = "None"
+        for i in tab:
+            if i[0] == ori:
+                i[-1] = tar
+                break
+    return tab
 
 
 def read_file(file_name, fps, offset):

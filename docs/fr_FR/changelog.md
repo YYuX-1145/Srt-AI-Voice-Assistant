@@ -7,9 +7,10 @@
 2. Traduction des sous-titres
 3. Amélioration de divers détails et correction de erreurs
 4. Supporter CosyVoice2 (réutilisation du panneau GSV)
-5. (4.0.1) Mode par lots
-6. (4.1) Mode serveur
-7. (4.2) I18n
+5. (4.0.1) Mode par lots  
+6. (4.1) Mode serveur  
+7. (4.2) I18n  
+8. (4.3) Accélération automatique de l'audio et suppression du silence ; Création de projets de doublage à plusieurs locuteurs à partir de textes étiquetés.  
 
 ### Mise à jour du 140225 :
 1. Prise en charge de la lecture de projets historiques

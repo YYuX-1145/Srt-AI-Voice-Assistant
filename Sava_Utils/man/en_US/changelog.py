@@ -9,8 +9,10 @@ changelog = r"""
 3. Various details improved and bugs fixed  
 4. Supports CosyVoice2 (reusing GSV panel)  
 5. (4.0.1) Batch mode  
-6. (4.1) Server mode
-7. (4.2) I18n
+6. (4.1) Server mode  
+7. (4.2) I18n  
+8. (4.3) Automatic audio acceleration & silence removing; Creating multi-speaker dubbing project from labeled texts.  
+
 ### 250214 Update:
 1. Supports reading historical projects  
 2. Supports multi-speaker dubbing 

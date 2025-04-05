@@ -32,6 +32,7 @@ i18n_dict = {
     "Speaker Map": "Tableau de Correspondance des Locuteurs",
     "Original Speaker": "Locuteur d'Origine",
     "Target Speaker": "Locuteur Cible après la Correspondance",
+    "Identify Original Speakers": "Identifier les Locuteurs d'Origine",
     "Create Multi-Speaker Dubbing Project": "Créer un projet de doublage à plusieurs locuteurs",
     "Custom API": "API personnalisée",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr": "Taux d'images du projet Adobe Premiere, uniquement applicable aux fichiers csv exportés depuis Pr",

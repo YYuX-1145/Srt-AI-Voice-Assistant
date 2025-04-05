@@ -4,6 +4,7 @@ import subprocess
 from . import logger, i18n
 from .librosa_load import get_rms
 import gradio as gr
+import numpy as np
 import csv
 import re
 import shutil
@@ -11,7 +12,7 @@ import platform
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
-
+LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 def positive_int(*a):
     r = []
@@ -170,7 +171,6 @@ def read_txt(filename):
 
 def read_labeled_txt(filename: str, spk_dict: dict):
     try:
-        pattern = re.compile(r'^([^:：]{1,20})[:：](.+)')
         idx = 1
         subtitle_list = Subtitles()
         subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", "", ntype="srt"))
@@ -178,14 +178,16 @@ def read_labeled_txt(filename: str, spk_dict: dict):
             for line in f:
                 if line.startswith("#") or line.strip() == "":
                     continue
-                match = pattern.match(line.strip())
+                match = LABELED_TXT_PATTERN.match(line.strip())
                 if match:
                     speaker = match.group(1).strip()
                     speaker = spk_dict.get(speaker, speaker)
+                    if speaker in ['','None']:
+                        speaker=None
                     text = match.group(2).strip()
                     subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", text, ntype="srt", speaker=speaker))
                     idx += 1
-                    if speaker not in list(subtitle_list.speakers.keys()):
+                    if speaker is not None and speaker not in list(subtitle_list.speakers.keys()):
                         subtitle_list.speakers[speaker] = 0
                     else:
                         subtitle_list.speakers[speaker] += 1
@@ -199,6 +201,26 @@ def read_labeled_txt(filename: str, spk_dict: dict):
         logger.error(err)
         gr.Warning(err)
     return subtitle_list
+
+
+def get_speaker_map(in_files):
+    if in_files in [[], None] or len(in_files) > 1:
+        gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
+        return None
+    filename = in_files[0].name
+    speakers=set()
+    rows=[]
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:        
+            if line.startswith("#") or line.strip() == "":
+                continue
+            match = LABELED_TXT_PATTERN.match(line.strip())
+            if match:
+                speaker = match.group(1).strip()
+                speakers.add(speaker)
+        for speaker in speakers:
+            rows.append([speaker,'None'])
+    return np.array(rows, dtype=str)
 
 
 def read_file(file_name, fps, offset):

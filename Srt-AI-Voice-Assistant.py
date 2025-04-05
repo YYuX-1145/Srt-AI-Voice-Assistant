@@ -368,7 +368,9 @@ if __name__ == "__main__":
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
                         speaker_map = gr.Dataframe(label=i18n('Speaker Map'), headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
-                        create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
+                        with gr.Row():
+                            update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
+                            create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
                             GSV_ARGS = GSV.getUI()
@@ -516,6 +518,8 @@ if __name__ == "__main__":
                             gr.Markdown(value=MANUAL.getInfo("issues"))
                         with gr.TabItem(i18n('Help & User guide')):
                             gr.Markdown(value=MANUAL.getInfo("help"))
+
+        update_spkmap_btn.click(get_speaker_map, inputs=[input_file], outputs=[speaker_map])
         create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
         BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])

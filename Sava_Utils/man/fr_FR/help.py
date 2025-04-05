@@ -18,7 +18,7 @@ help = r"""
 ### Ce projet peut doubler pour les sous-titres et les textes bruts.
 * **Pour les sous-titres** :
 
-    * Seulement l'heure de début est effectivement utilisée. Lorsqu'un sous-titre est trop long, les sous-titres suivants seront retardés en conséquence. Et vous pouvez définir l'intervalle de parole minimum dans les paramètres.
+    * Lorsqu'un sous-titre est trop long, les sous-titres suivants seront retardés en conséquence. Et vous pouvez définir l'intervalle de parole minimum dans les paramètres.
 
 * **Pour le texte brut** :
 
@@ -28,6 +28,7 @@ help = r"""
 
 ### A. Scénario avec un seul locuteur
 * **I.** Téléchargez les fichiers de sous-titres ou de texte dans le panneau de droite de la page `Doublage de sous-titres`.
+* Mode de balisage : Le contenu du fichier doit être le suivant : `Locuteur : Contenu`, e.x `Vincent:Bonjour.` Le tableau de correspondance peut convertir le locuteur d'origine dans le fichier de texte en locuteur cible correspondant. Remplir le nom de la clé de la première ligne du tableau de correspondance signifie activer le mode de balisage.
 
 * **II.** Sélectionnez votre projet et ajustez les paramètres dans le panneau central.
 

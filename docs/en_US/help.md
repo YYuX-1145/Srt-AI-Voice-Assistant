@@ -17,7 +17,7 @@
 ### This project supports dubbing for subtitles or plain text.
 * **For subtitles**:
 
-    * Only the start time is effectively used. When a subtitle is too long, subsequent subtitles will be delayed accordingly.And you can set the minimum speech interval in settings.
+    * When a subtitle is too long, subsequent subtitles will be delayed accordingly.And you can set the minimum speech interval in settings.
 
 * **For plain text**:
 
@@ -35,7 +35,8 @@
 * **IV.** Download your audio.
 
 ### B. Multi-Speaker Scenario
-* **I.** Upload subtitle/text files in the right panel of `Subtitle Dubbing`.
+* **I.** Upload subtitle/text files in the right panel of `Subtitle Dubbing`. 
+* Marking mode: The content of the file should be as follows: `Speaker:Content`, e.x. `Jerry: Hello.` The mapping table can convert the original speaker in the text file into the corresponding target speaker. Filling in the key name of the first row of the mapping table means enabling the marking mode.
 
 * **II.** Click `Create Multi-Speaker Dubbing Project` below the file display.
 

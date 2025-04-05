@@ -2,7 +2,9 @@ import os
 import time
 import subprocess
 from . import logger, i18n
+from .librosa_load import get_rms
 import gradio as gr
+import numpy as np
 import csv
 import re
 import shutil
@@ -10,6 +12,7 @@ import platform
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
+LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 
 def positive_int(*a):
@@ -81,7 +84,7 @@ def file_show(files):
         return error
 
 
-from .subtitle import Base_subtitle, Subtitle, Subtitles, to_time
+from .subtitle import Base_subtitle, Subtitle, Subtitles
 from .edit_panel import *
 
 
@@ -149,7 +152,7 @@ def read_prcsv(filename, fps, offset):
 
 
 def read_txt(filename):
-    REF_DUR = 2
+    # REF_DUR = 2
     try:
         with open(filename, "r", encoding="utf-8") as f:
             text = f.read()
@@ -158,13 +161,78 @@ def read_txt(filename):
         subtitle_list = Subtitles()
         idx = 1
         for s in sentences:
-            subtitle_list.append(Subtitle(idx, to_time(REF_DUR * idx - REF_DUR), to_time(REF_DUR * idx), s, ntype="srt"))
+            subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", s, ntype="srt"))
             idx += 1
     except Exception as e:
         err = f"{i18n('Failed to read file')}: {str(e)}"
         logger.error(err)
         gr.Warning(err)
     return subtitle_list
+
+
+def read_labeled_txt(filename: str, spk_dict: dict):
+    try:
+        idx = 1
+        subtitle_list = Subtitles()
+        subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", "", ntype="srt"))
+        with open(filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.startswith("#") or line.strip() == "":
+                    continue
+                match = LABELED_TXT_PATTERN.match(line.strip())
+                if match:
+                    speaker = match.group(1).strip()
+                    speaker = spk_dict.get(speaker, speaker)
+                    if speaker in ['', 'None']:
+                        speaker = None
+                    subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", match.group(2).strip(), ntype="srt", speaker=speaker))
+                    idx += 1
+                    if speaker is not None:
+                        if speaker not in list(subtitle_list.speakers.keys()):
+                            subtitle_list.speakers[speaker] = 0
+                        else:
+                            subtitle_list.speakers[speaker] += 1
+                else:
+                    subtitle_list[-1].text += ',' + line
+            if not subtitle_list[0].text:
+                subtitle_list.pop(0)
+        return subtitle_list
+    except Exception as e:
+        err = f"{i18n('Failed to read file')}: {str(e)}"
+        logger.error(err)
+        gr.Warning(err)
+    return subtitle_list
+
+
+def get_speaker_map(in_files):
+    if in_files in [[], None] or len(in_files) > 1:
+        gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
+        return None, gr.update(choices=None,value=None)
+    filename = in_files[0].name
+    speakers = set()
+    rows = []
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith("#") or line.strip() == "":
+                continue
+            match = LABELED_TXT_PATTERN.match(line.strip())
+            if match:
+                speaker = match.group(1).strip()
+                speakers.add(speaker)
+        for speaker in speakers:
+            rows.append([speaker, 'None'])
+    return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
+
+
+def modify_spkmap(ori, tar, tab):
+    if ori not in [None, "", []]:
+        if tar in [None, ""]:
+            tar = "None"
+        for i in tab:
+            if i[0] == ori:
+                i[-1] = tar
+                break
+    return tab
 
 
 def read_file(file_name, fps, offset):
@@ -182,16 +250,41 @@ def read_file(file_name, fps, offset):
     return subtitle_list
 
 
-def create_multi_speaker(in_files, fps, offset):
+def create_multi_speaker(in_files, speaker_map, fps, offset):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file = in_files[0]
     try:
-        subtitle_list = read_file(in_file.name, fps, offset)
+        if speaker_map[0][0] == "":
+            subtitle_list = read_file(in_file.name, fps, offset)
+        else:
+            spk_dict = {i[0]: i[-1] for i in speaker_map}
+            subtitle_list = read_labeled_txt(in_file.name, spk_dict)
+            assert len(subtitle_list) != 0, "Empty???"
     except Exception as e:
         what = str(e)
         gr.Warning(what)
         return getworklist(), *load_page(Subtitles()), Subtitles()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
     return getworklist(), *load_page(subtitle_list), subtitle_list
+
+
+def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):
+    # Padding(sec) is actually margin of safety
+    hop_length = 512
+    rms_list = get_rms(audio, hop_length=hop_length).squeeze(0)
+    threshold = 10 ** (threshold_db / 20.0)
+    for i, rms in enumerate(rms_list):
+        if rms >= threshold:
+            break
+    if i == rms_list.shape[-1]:
+        print("[debug] remove_silence: failed to find the cutting point")
+        return audio
+    for j, rms in enumerate(reversed(rms_list)):
+        if rms >= threshold:
+            break
+    cutting_point1 = max(i * hop_length - int(padding_begin * sr), 0)
+    cutting_point2 = min((rms_list.shape[-1] - j) * hop_length + int(padding_fin * sr), audio.shape[-1])
+    audio = audio[cutting_point1:cutting_point2]
+    return audio

@@ -66,25 +66,25 @@ def play_audio(idx, subtitle_list):
 def getworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work"))
+        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces"))
         return gr.update(choices=c, value=c[-1])
     except:
         return gr.update(choices=[""])
 
 
-def getspklist():
+def getspklist(value="None"):
     try:
         c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c, value="None")
+        return gr.update(choices=c, value="None"), gr.update(choices=c, value=value)
     except:
-        return gr.update(choices=["None"], value="None")
+        return gr.update(choices=["None"], value="None"), gr.update(choices=["None"], value="None")
 
 
 def load_work(dirname):
     try:
         if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
-        with open(os.path.join(current_path, "SAVAdata", "temp", "work", dirname, "st.pkl"), 'rb') as f:
+        with open(os.path.join(current_path, "SAVAdata", "temp", "workspaces", dirname, "st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
         return subtitles, *load_page(subtitles)
     except Exception as e:
@@ -210,7 +210,7 @@ def del_spk(name):
         os.remove(os.path.join(current_path, "SAVAdata", "speakers", name))
         gr.Info(f"{i18n('Delete')}:{name}")
     except Exception as e:
-        gr.Warning(f"Error：{str(e)}")
+        gr.Warning(f"Error: {str(e)}")
     return getspklist()
 
 

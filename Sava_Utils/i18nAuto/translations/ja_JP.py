@@ -25,7 +25,7 @@ i18n_dict = {
     "Reassemble successfully!": "再構成が完了しました！",
     "This function has been disabled!": "この機能は無効になっています！",
     "Please enter a valid name!": "有効な名前を入力してください！",
-    "Saved successfully!": "保存に成功しました！",
+    "Saved successfully": "保存に成功しました",
 
     # UI in main
     "Subtitle Dubbing": "字幕ダビング",

@@ -66,7 +66,7 @@ def play_audio(idx, subtitle_list):
 def getworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work"))
+        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces"))
         return gr.update(choices=c, value=c[-1])
     except:
         return gr.update(choices=[""])
@@ -84,7 +84,7 @@ def load_work(dirname):
     try:
         if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
-        with open(os.path.join(current_path, "SAVAdata", "temp", "work", dirname, "st.pkl"), 'rb') as f:
+        with open(os.path.join(current_path, "SAVAdata", "temp", "workspaces", dirname, "st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
         return subtitles, *load_page(subtitles)
     except Exception as e:

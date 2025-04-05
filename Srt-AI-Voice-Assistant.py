@@ -411,7 +411,7 @@ if __name__ == "__main__":
                         edit_start_end_time_list = []
                         with gr.Row():
                             worklist = gr.Dropdown(
-                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "work")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "work")) else [""],
+                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) else [""],
                                 label=i18n('History'),
                                 scale=2,
                                 visible=not Sava_Utils.config.server_mode,

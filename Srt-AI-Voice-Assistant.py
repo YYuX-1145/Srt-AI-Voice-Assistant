@@ -371,14 +371,14 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
-                        speaker_map = gr.Dataframe(label=i18n('Speaker Map'), headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
-                        with gr.Row():
-                            origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)
-                            speaker_list0 = gr.Dropdown(label=i18n('Select Target Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=False)
-                            speaker_list0.change(modify_spkmap, inputs=[origin_speaker_list, speaker_list0, speaker_map], outputs=[speaker_map])
-                        with gr.Row():
+                        with gr.Accordion(i18n('Speaker Map'), open=False):
+                            speaker_map = gr.Dataframe(show_label=False, headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
+                            with gr.Row():
+                                origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)
+                                speaker_list0 = gr.Dropdown(label=i18n('Select Target Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=False)
+                                speaker_list0.change(modify_spkmap, inputs=[origin_speaker_list, speaker_list0, speaker_map], outputs=[speaker_map])
                             update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
-                            create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
+                        create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
                         with gr.TabItem("AR-TTS"):
                             GSV_ARGS = GSV.getUI()

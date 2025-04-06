@@ -11,6 +11,7 @@
 6. (4.1) Server mode  
 7. (4.2) I18n  
 8. (4.3) Automatic audio acceleration & silence removing; Creating multi-speaker dubbing project from labeled texts.  
+9. (4.3.1) Add Find and Replace; add a one-click regeneration button.  
 
 ### 250214 Update:
 1. Supports reading historical projects  

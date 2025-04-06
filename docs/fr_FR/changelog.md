@@ -11,6 +11,7 @@
 6. (4.1) Mode serveur  
 7. (4.2) I18n  
 8. (4.3) Accélération automatique de l'audio et suppression du silence ; Création de projets de doublage à plusieurs locuteurs à partir de textes étiquetés.  
+9. (4.3.1) Ajouter la fonction de Recherche et de Remplacement ; ajouter un bouton de régénération en un clic.  
 
 ### Mise à jour du 140225 :
 1. Prise en charge de la lecture de projets historiques

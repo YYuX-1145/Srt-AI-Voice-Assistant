@@ -53,7 +53,7 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret.append(gr.update(value="None", interactive=False, visible=True))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
         ret += btn
-    return ret
+    return ret + btn  # all regen btn*4
 
 
 def play_audio(idx, subtitle_list):
@@ -132,6 +132,7 @@ def merge_subtitle(page, subtitles: Subtitles, *args):
                 subtitles[min_i].text += ','
             subtitles[min_i].text += subtitles[min_i + 1].text
             subtitles.pop(min_i + 1)
+        subtitles[min_i].is_success = None
     else:
         gr.Info(i18n('Please select both the start and end points!'))
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
@@ -149,9 +150,10 @@ def copy_subtitle(page, subtitles: Subtitles, *args):
             targetlist.append(int(indexlist[i]))
     if len(targetlist) == 0:
         gr.Info(i18n('No subtitles selected.'))
-    targetlist.sort(reverse=True)
-    for i in targetlist:
-        subtitles.insert(i + 1 + subtitles[i].copy_count, subtitles[i].copy())
+    else:
+        for i in reversed(targetlist):
+            subtitles.insert(i + 1 + subtitles[i].copy_count, subtitles[i].copy())
+        subtitles.sort(i, targetlist[-1] + 1 + subtitles[i].copy_count, partial=True)
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 
@@ -189,7 +191,9 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
         if checklist[i] and int(indexlist[i]) != -1:
             if subtitles[int(indexlist[i])].speaker is not None:
                 subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
-            subtitles[int(indexlist[i])].speaker = speaker
+            if subtitles[int(indexlist[i])].speaker != speaker:
+                subtitles[int(indexlist[i])].speaker = speaker
+                subtitles[int(indexlist[i])].is_success = None
             if speaker is not None:
                 subtitles.speakers[speaker] += 1
     subtitles.dump()
@@ -243,8 +247,13 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
             gr.Warning(f"Error: {str(e)}")
             return load_page(subtitles)
         for i in subtitles:
-            i.text = pat.sub(target_text, i.text)
+            i.text, count = pat.subn(target_text, i.text)
+            if count != 0:
+                i.is_success = None
     else:
         for i in subtitles:
-            i.text = i.text.replace(find_text_expression, target_text)
+            x = i.text.replace(find_text_expression, target_text)
+            if i.text != x:
+                i.text = x
+                i.is_success = None
     return load_page(subtitles)

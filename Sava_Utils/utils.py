@@ -189,7 +189,7 @@ def read_labeled_txt(filename: str, spk_dict: dict):
                     idx += 1
                     if speaker is not None:
                         if speaker not in list(subtitle_list.speakers.keys()):
-                            subtitle_list.speakers[speaker] = 0
+                            subtitle_list.speakers[speaker] = 1
                         else:
                             subtitle_list.speakers[speaker] += 1
                 else:

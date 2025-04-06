@@ -64,7 +64,9 @@
     * Utilise les paramètres spécifiques du locuteur s'il est attribué.
     * Les projets avec plusieurs locuteurs doivent avoir des locuteurs attribués.
 
-* **IV.** Cliquez sur `Reconstituer l'audio` pour recomposer l'audio complet.
+* **IV.** Après avoir apporté des modifications aux sous-titres, vous pouvez également cliquer sur `Tout Synthétiser` pour régénérer la voix des sous-titres modifiés ou dont la synthèse n'a pas été réussie.
+
+* **V.** Cliquez sur `Reconstituer l'audio` pour recomposer l'audio complet.
 
 ### C. Rééditer des projets historiques
 * Sélectionnez un projet de l'historique de synthèse dans le panneau supérieur. Ensuite, cliquez sur le bouton `Charger`.

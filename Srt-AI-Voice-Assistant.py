@@ -141,41 +141,67 @@ def generate_preprocess(*args, project=None):
     return generate(*args, **kwargs)
 
 
-def gen_multispeaker(subtitles: Subtitles, max_workers):
+def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
+    page = args[0]
+    max_workers = int(args[1])
+    subtitles: Subtitles = args[-1]
     if len(subtitles) == 0 or subtitles is None:
         gr.Info(i18n('There is no subtitle in the current workspace'))
-        return None, *load_page(Subtitles())
+        return *show_page(page, Subtitles()), None
     for key in list(subtitles.speakers.keys()):
         if subtitles.speakers[key] <= 0:
             subtitles.speakers.pop(key)
-    if len(list(subtitles.speakers.keys())) == 0 and subtitles.default_speaker is None:
+    if len(list(subtitles.speakers.keys())) == 0 and subtitles.default_speaker is None and subtitles.proj is None:
         gr.Warning(i18n('Warning: No speaker has been assigned'))
+    proj_args = (None, None, *args[:-1])
+    if remake:
+        todo = [i for i in subtitles if not i.is_success]
+    else:
+        todo = subtitles
+    if len(todo) == 0:
+        gr.Info(i18n('No subtitles are going to be synthesized.'))
+        return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
-    progress = 0
     tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
-    for i in subtitles:
+    for key in list(tasks.keys()):
+        if len(tasks[key]) == 0:
+            tasks.pop((key))
+    for i in todo:
         tasks[i.speaker].append(i)
+    ok = True
     for key in tasks.keys():
         if key is None:
             if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None]) > 0:
                 print(f"{i18n('Using default speaker')}:{subtitles.default_speaker}")
+                spk = subtitles.default_speaker
+            elif subtitles.proj is not None:
+                args = proj_args
+                project = subtitles.proj
+                spk = None
             else:
                 continue
-        spk = key if key is not None else subtitles.default_speaker
+        else:
+            spk = key
+        if spk is not None:
+            try:
+                with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
+                    info = pickle.load(f)
+            except FileNotFoundError:
+                logger.error(f"{i18n('Speaker archive not found')}: {spk}")
+                gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
+                continue
+            args = info["raw_data"]
+            project = info["project"]
         try:
-            with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
-                info = pickle.load(f)
-        except FileNotFoundError:
-            logger.error(f"{i18n('Speaker archive not found')}: {spk}")
-            gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
+            args, kwargs = Projet_dict[project].arg_filter(*args)
+            Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
+        except Exception as e:
+            gr.Warning(str(e))
             continue
-        args = info["raw_data"]
-        project = info["project"]
-        args, kwargs = Projet_dict[project].arg_filter(*args)
-        Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
         if Sava_Utils.config.server_mode:
             max_workers = 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
+        progress = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(
                 tqdm(
                     executor.map(
@@ -192,7 +218,7 @@ def gen_multispeaker(subtitles: Subtitles, max_workers):
                             for i in tasks[key]
                         ],
                     ),
-                    total=len(subtitles),
+                    total=len(todo),
                     initial=progress,
                     desc=f"{i18n('Synthesizing multi-speaker task, the current speaker is')} :{spk}",
                 )
@@ -200,10 +226,16 @@ def gen_multispeaker(subtitles: Subtitles, max_workers):
         file_list = [i for i in file_list if i is not None]
         progress += len(file_list)
         if len(file_list) == 0:
+            ok = False
             gr.Warning(f"{i18n('Synthesis for the single speaker has failed !')} {spk}")
-    audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
+
     gr.Info(i18n('Done!'))
-    return audio, *load_page(subtitles)
+    if remake:
+        if ok:
+            gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
+        return show_page(page, subtitles)
+    audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
+    return *show_page(page, subtitles), audio
 
 
 def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
@@ -232,7 +264,7 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                         shutil.move(f"{filepath}.wav", filepath)
                     else:
                         logger.error("Failed to execute ffmpeg.")
-            subtitle.is_success=True
+            subtitle.is_success = True
             return filepath
         else:
             data = json.loads(audio)
@@ -319,78 +351,6 @@ def remake(*args):
         gr.Warning("Audio re-generation failed!")
     subtitle_list.dump()
     return fp, *show_page(page, subtitle_list)
-
-
-def remake_all(*args):
-    page = args[0]
-    max_workers = int(args[1])
-    subtitles: Subtitles = args[-1]
-    if len(subtitles)==0 or subtitles is None:
-        gr.Info(i18n('There is no subtitle in the current workspace'))
-        return *show_page(page, Subtitles()),None
-    proj_args = (None, None, *args[:-1])
-    #failed_list = []
-    todo = [i for i in subtitles if not i.is_success]
-    tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
-    for i in todo:
-        tasks[i.speaker].append(i)
-    for key in tasks.keys():
-        if key is None:
-            if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None]) > 0:
-                print(f"{i18n('Using default speaker')}:{subtitles.default_speaker}")
-                spk = subtitles.default_speaker
-            elif subtitles.proj is not None:
-                args = proj_args
-                project = subtitles.proj
-                spk = None
-            else:
-                continue
-        else:
-            spk = key
-        if spk is not None:
-            try:
-                with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
-                    info = pickle.load(f)
-            except FileNotFoundError:
-                logger.error(f"{i18n('Speaker archive not found')}: {spk}")
-                gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
-                continue
-            args = info["raw_data"]
-            project = info["project"]
-        try:
-            args, kwargs = Projet_dict[project].arg_filter(*args)
-            Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
-        except Exception as e:
-            gr.Warning(str(e))
-            continue
-        if Sava_Utils.config.server_mode:
-            max_workers = 1
-        progress=0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(
-                tqdm(
-                    executor.map(
-                        lambda x: save(x[0], **x[1]),
-                        [
-                            (
-                                args,
-                                {
-                                    "proj": project,
-                                    "dir": subtitles.get_abs_dir(),
-                                    "subtitle": i,
-                                },
-                            )
-                            for i in tasks[key]
-                        ],
-                    ),
-                    total=len(todo),
-                    initial=progress,
-                    desc=f"{i18n('Resynthesizing')}: {key}",
-                )
-            )
-        progress += len(file_list)
-    subtitles.dump()
-    return *show_page(page,subtitles), subtitles.audio_join(sr=Sava_Utils.config.output_sr)
 
 
 def recompose(page: int, subtitle_list: Subtitles):
@@ -552,10 +512,10 @@ if __name__ == "__main__":
                             edit_rows.append(all_regen_btn_mstts)
                             all_regen_btn_custom = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_custom)
-                            all_regen_btn_bv2.click(remake_all, inputs=[page_slider,workers,*BV2_ARGS, STATE], outputs=[*edit_rows, audio_output])
-                            all_regen_btn_gsv.click(remake_all, inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=[*edit_rows, audio_output])
-                            all_regen_btn_mstts.click(remake_all, inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=[*edit_rows, audio_output])
-                            all_regen_btn_custom.click(remake_all, inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=[*edit_rows, audio_output])
+                            all_regen_btn_bv2.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *BV2_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_mstts.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_custom.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=edit_rows)
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row():
                                 find_text_expression = gr.Text(show_label=False, placeholder=i18n('Find What'), scale=3)
@@ -587,7 +547,7 @@ if __name__ == "__main__":
                         del_spk_list_btn = gr.Button(value="🗑️", min_width=60, scale=0)
                         del_spk_list_btn.click(del_spk, inputs=[speaker_list], outputs=[speaker_list0, speaker_list])
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
-                        start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[STATE, workers], outputs=[audio_output, page_slider, *edit_rows])
+                        start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
                 TRANSLATION_MODULE.UI(input_file)
                 componments.append(TRANSLATION_MODULE)

@@ -1,6 +1,7 @@
 import gradio as gr
 import os
 import pickle
+import re
 from . import i18n
 from .subtitle import Subtitles, Subtitle
 import Sava_Utils
@@ -57,10 +58,11 @@ def show_page(page_start, subtitle_list: Subtitles):
 
 def play_audio(idx, subtitle_list):
     i = int(idx)
-    if i == -1 or not subtitle_list[i].is_success:
+    p = os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
+    if i == -1 or not os.path.exists(p):
         gr.Info(i18n('Not available!'))
         return None
-    return os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
+    return p
 
 
 def getworklist():
@@ -225,3 +227,24 @@ def switch_spk_proj(name):
         return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)]
     else:
         raise ""
+
+
+def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, enable_re: bool):
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n('There is no subtitle in the current workspace'))
+        return load_page(Subtitles())
+    if find_text_expression == '':
+        gr.Warning(i18n('You must enter the text to find.'))
+        return load_page(subtitles)
+    if enable_re:
+        try:
+            pat = re.compile(find_text_expression)
+        except Exception as e:
+            gr.Warning(f"Error: {str(e)}")
+            return load_page(subtitles)
+        for i in subtitles:
+            i.text = pat.sub(target_text, i.text)
+    else:
+        for i in subtitles:
+            i.text = i.text.replace(find_text_expression, target_text)
+    return load_page(subtitles)

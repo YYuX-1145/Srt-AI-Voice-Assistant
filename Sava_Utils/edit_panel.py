@@ -150,9 +150,10 @@ def copy_subtitle(page, subtitles: Subtitles, *args):
             targetlist.append(int(indexlist[i]))
     if len(targetlist) == 0:
         gr.Info(i18n('No subtitles selected.'))
-    targetlist.sort(reverse=True)
+    #targetlist.sort(reverse=True)
     for i in targetlist:
         subtitles.insert(i + 1 + subtitles[i].copy_count, subtitles[i].copy())
+    subtitles.sort()
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 

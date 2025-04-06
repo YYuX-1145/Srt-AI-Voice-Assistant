@@ -163,11 +163,11 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
     tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
+    for i in todo:
+        tasks[i.speaker].append(i)
     for key in list(tasks.keys()):
         if len(tasks[key]) == 0:
             tasks.pop((key))
-    for i in todo:
-        tasks[i.speaker].append(i)
     ok = True
     for key in tasks.keys():
         if key is None:

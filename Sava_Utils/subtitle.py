@@ -15,9 +15,9 @@ MAX_TIMESTAMP = 18000
 SRT_TIME_Pattern = re.compile(r"\d+:\d+:\d+,\d+")
 
 
-def compare_index(i1, i2):
-    l1 = list(map(int, i1.split(".")))
-    l2 = list(map(int, i2.split(".")))
+def compare_index_lt(i1, i2):
+    l1 = list(map(int, i1.split("-")))
+    l2 = list(map(int, i2.split("-")))
     while len(l1) < len(l2):
         l1.append(0)
     while len(l2) < len(l1):
@@ -81,6 +81,8 @@ class Base_subtitle:
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"
 
+    def __lt__(self,other) -> bool:
+        return compare_index_lt(self.index,other.index)
 
 class Subtitle(Base_subtitle):
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30, speaker=None):
@@ -209,7 +211,7 @@ class Subtitles:
         self.subtitles.append(subtitle)
 
     def sort(self):
-        self.subtitles.sort(key=compare_index)
+        self.subtitles.sort()
 
     def __iter__(self):
         return iter(self.subtitles)

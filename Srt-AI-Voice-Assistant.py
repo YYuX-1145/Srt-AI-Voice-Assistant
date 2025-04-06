@@ -153,6 +153,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             subtitles.speakers.pop(key)
     if len(list(subtitles.speakers.keys())) == 0 and subtitles.default_speaker is None and subtitles.proj is None:
         gr.Warning(i18n('Warning: No speaker has been assigned'))
+        return *show_page(page, subtitles), None
     proj_args = (None, None, *args[:-1])
     if remake:
         todo = [i for i in subtitles if not i.is_success]
@@ -162,13 +163,14 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
         gr.Info(i18n('No subtitles are going to be resynthesized.'))
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
-    tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
+    tasks = {key: [] for key in [*list(subtitles.speakers.keys()), None]}
     for i in todo:
         tasks[i.speaker].append(i)
     for key in list(tasks.keys()):
         if len(tasks[key]) == 0:
             tasks.pop((key))
     ok = True
+    progress = 0
     for key in tasks.keys():
         if key is None:
             if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None]) > 0:
@@ -200,7 +202,6 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             continue
         if Sava_Utils.config.server_mode:
             max_workers = 1
-        progress = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             file_list = list(
                 tqdm(

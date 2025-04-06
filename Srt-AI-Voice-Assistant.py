@@ -159,7 +159,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     else:
         todo = subtitles
     if len(todo) == 0:
-        gr.Info(i18n('No subtitles are going to be synthesized.'))
+        gr.Info(i18n('No subtitles are going to be resynthesized.'))
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
     tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
@@ -174,7 +174,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None]) > 0:
                 print(f"{i18n('Using default speaker')}:{subtitles.default_speaker}")
                 spk = subtitles.default_speaker
-            elif subtitles.proj is not None:
+            elif subtitles.proj is not None and remake:
                 args = proj_args
                 project = subtitles.proj
                 spk = None

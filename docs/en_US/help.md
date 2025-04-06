@@ -64,7 +64,9 @@
     * Uses speaker-specific parameters if assigned.
     * Multi-speaker projects must have assigned speakers.
 
-* **IV.** Click `Reassemble Audio` to recompose full audio.
+* **IV.** After making changes to the subtitles, you can also click `Regenerate All` to regenerate the audios of the changed subtitles or those that failed to be synthesized.
+
+* **V.** Click `Reassemble Audio` to recompose full audio.
 
 ### C. Re-editing Historical Projects
 * Select a project from the synthesis history in the top panel. Then click `Load` button.

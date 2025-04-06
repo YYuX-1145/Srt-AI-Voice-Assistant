@@ -234,7 +234,7 @@ class Subtitles:
         srt_content = []
         for i in self.subtitles:
             idx += 1
-            if raw or i.real_st == 0 or i.real_et == 0:
+            if raw or (i.real_st == 0 and i.real_et == 0):
                 if SRT_TIME_Pattern.fullmatch(i.start_time_raw) and SRT_TIME_Pattern.fullmatch(i.end_time_raw):
                     start = i.start_time_raw
                     end = i.end_time_raw

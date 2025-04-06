@@ -209,6 +209,9 @@ def get_speaker_map(in_files):
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return None, gr.update(choices=None,value=None)
     filename = in_files[0].name
+    if filename[-4:].lower() != ".txt":
+        gr.Info("labeled texts mode only supports .txt")
+        return None, gr.update(choices=None, value=None)
     speakers = set()
     rows = []
     with open(filename, 'r', encoding='utf-8') as f:

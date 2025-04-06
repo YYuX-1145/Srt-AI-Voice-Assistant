@@ -221,6 +221,8 @@ def get_speaker_map(in_files):
                 speakers.add(speaker)
         for speaker in speakers:
             rows.append([speaker, 'None'])
+    if len(rows)==0:
+        rows.append(['',''])
     return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
 
 
@@ -260,6 +262,7 @@ def create_multi_speaker(in_files, speaker_map, fps, offset):
             subtitle_list = read_file(in_file.name, fps, offset)
         else:
             spk_dict = {i[0]: i[-1] for i in speaker_map}
+            assert in_file.name[-4:].lower() == ".txt", "labeled texts mode only supports .txt"
             subtitle_list = read_labeled_txt(in_file.name, spk_dict)
             assert len(subtitle_list) != 0, "Empty???"
     except Exception as e:

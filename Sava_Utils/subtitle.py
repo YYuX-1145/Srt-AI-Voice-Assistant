@@ -183,23 +183,23 @@ class Subtitles:
                 self.subtitles[id].real_et = ptr
                 ptr += interval
                 audiolist.append(np.zeros(interval))
-                self.subtitles[id].is_success = True
+                #self.subtitles[id].is_success = True
             else:
                 failed_list.append(self.subtitles[id].index)
         if delayed_list != []:
-            logger.warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
+            # logger.warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
             gr.Warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
         if failed_list != []:
-            logger.warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{delayed_list}")
-            gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{delayed_list}")
+            logger.warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
+            gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
         audio_content = np.concatenate(audiolist)
         self.dump()
         return sr, audio_content
 
     def get_state(self, idx):
-        if self.subtitles[idx].is_delayed:
-            return "delayed"
         if self.subtitles[idx].is_success:
+            if self.subtitles[idx].is_delayed:
+                return "delayed"
             return "ok"
         elif self.subtitles[idx].is_success is None:
             return "None"

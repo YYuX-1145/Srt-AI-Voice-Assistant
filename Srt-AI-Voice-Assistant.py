@@ -232,10 +232,12 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                         shutil.move(f"{filepath}.wav", filepath)
                     else:
                         logger.error("Failed to execute ffmpeg.")
+            subtitle.is_success=True
             return filepath
         else:
             data = json.loads(audio)
             logger.error(f"{i18n('Failed subtitle id')}:{subtitle.index},{i18n('error message received')}:{str(data)}")
+            subtitle.is_success = False
             return None
     else:
         logger.error(f"{i18n('Failed subtitle id')}:{subtitle.index}")
@@ -312,13 +314,83 @@ def remake(*args):
     subtitle_list[int(idx)].text = s_txt
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[int(idx)])
     if fp is not None:
-        subtitle_list[int(idx)].is_success = True
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
     else:
-        subtitle_list[int(idx)].is_success = False
         gr.Warning("Audio re-generation failed!")
     subtitle_list.dump()
     return fp, *show_page(page, subtitle_list)
+
+
+def remake_all(*args):
+    page = args[0]
+    max_workers = int(args[1])
+    subtitles: Subtitles = args[-1]
+    if len(subtitles)==0 or subtitles is None:
+        gr.Info(i18n('There is no subtitle in the current workspace'))
+        return *show_page(page, Subtitles()),None
+    proj_args = (None, None, *args[:-1])
+    #failed_list = []
+    todo = [i for i in subtitles if not i.is_success]
+    tasks = {key: [] for key in [*subtitles.speakers.keys(), None]}
+    for i in todo:
+        tasks[i.speaker].append(i)
+    for key in tasks.keys():
+        if key is None:
+            if subtitles.proj is None and subtitles.default_speaker is not None and len(tasks[None]) > 0:
+                print(f"{i18n('Using default speaker')}:{subtitles.default_speaker}")
+                spk = subtitles.default_speaker
+            elif subtitles.proj is not None:
+                args = proj_args
+                project = subtitles.proj
+                spk = None
+            else:
+                continue
+        else:
+            spk = key
+        if spk is not None:
+            try:
+                with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
+                    info = pickle.load(f)
+            except FileNotFoundError:
+                logger.error(f"{i18n('Speaker archive not found')}: {spk}")
+                gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
+                continue
+            args = info["raw_data"]
+            project = info["project"]
+        try:
+            args, kwargs = Projet_dict[project].arg_filter(*args)
+            Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
+        except Exception as e:
+            gr.Warning(str(e))
+            continue
+        if Sava_Utils.config.server_mode:
+            max_workers = 1
+        progress=0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            file_list = list(
+                tqdm(
+                    executor.map(
+                        lambda x: save(x[0], **x[1]),
+                        [
+                            (
+                                args,
+                                {
+                                    "proj": project,
+                                    "dir": subtitles.get_abs_dir(),
+                                    "subtitle": i,
+                                },
+                            )
+                            for i in tasks[key]
+                        ],
+                    ),
+                    total=len(todo),
+                    initial=progress,
+                    desc=f"{i18n('Resynthesizing')}: {key}",
+                )
+            )
+        progress += len(file_list)
+    subtitles.dump()
+    return *show_page(page,subtitles), subtitles.audio_join(sr=Sava_Utils.config.output_sr)
 
 
 def recompose(page: int, subtitle_list: Subtitles):
@@ -458,20 +530,32 @@ if __name__ == "__main__":
                         recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
                         export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):
-                            all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=60)
+                            all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=50)
                             all_selection_btn.click(lambda: [True for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
-                            reverse_selection_btn = gr.Button(value=i18n('Reverse Selection'), interactive=True, min_width=60)
+                            reverse_selection_btn = gr.Button(value=i18n('Reverse Selection'), interactive=True, min_width=50)
                             reverse_selection_btn.click(lambda *args: [not i for i in args], inputs=edit_check_list, outputs=edit_check_list)
-                            clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=60)
+                            clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=50)
                             clear_selection_btn.click(lambda: [False for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
-                            apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=60)
+                            apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
                             apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=[*edit_rows])
-                            copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=60)
+                            copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)
                             copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
-                            merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=60)
+                            merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=50)
                             merge_btn.click(merge_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
-                            delete_btn = gr.Button(value=i18n('Delete'), interactive=True, min_width=60)
+                            delete_btn = gr.Button(value=i18n('Delete'), interactive=True, min_width=50)
                             delete_btn.click(delete_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
+                            all_regen_btn_bv2 = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            edit_rows.append(all_regen_btn_bv2)
+                            all_regen_btn_gsv = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=True, interactive=True, min_width=50)
+                            edit_rows.append(all_regen_btn_gsv)
+                            all_regen_btn_mstts = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            edit_rows.append(all_regen_btn_mstts)
+                            all_regen_btn_custom = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            edit_rows.append(all_regen_btn_custom)
+                            all_regen_btn_bv2.click(remake_all, inputs=[page_slider,workers,*BV2_ARGS, STATE], outputs=[*edit_rows, audio_output])
+                            all_regen_btn_gsv.click(remake_all, inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=[*edit_rows, audio_output])
+                            all_regen_btn_mstts.click(remake_all, inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=[*edit_rows, audio_output])
+                            all_regen_btn_custom.click(remake_all, inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=[*edit_rows, audio_output])
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row():
                                 find_text_expression = gr.Text(show_label=False, placeholder=i18n('Find What'), scale=3)

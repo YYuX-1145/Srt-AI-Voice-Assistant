@@ -81,8 +81,9 @@ class Base_subtitle:
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"
 
-    def __lt__(self,other) -> bool:
-        return compare_index_lt(self.index,other.index)
+    def __lt__(self, other) -> bool:
+        return compare_index_lt(self.index, other.index)
+
 
 class Subtitle(Base_subtitle):
     def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30, speaker=None):
@@ -185,7 +186,7 @@ class Subtitles:
                 self.subtitles[id].real_et = ptr
                 ptr += interval
                 audiolist.append(np.zeros(interval))
-                #self.subtitles[id].is_success = True
+                # self.subtitles[id].is_success = True
             else:
                 failed_list.append(self.subtitles[id].index)
         if delayed_list != []:
@@ -210,8 +211,13 @@ class Subtitles:
     def append(self, subtitle: Subtitle):
         self.subtitles.append(subtitle)
 
-    def sort(self):
-        self.subtitles.sort()
+    def sort(self, begin=0, end=0, partial=False):
+        if not partial:
+            self.subtitles.sort()
+        else:
+            if end > len(self.subtitles):
+                end = len(self.subtitles)
+            self.subtitles[begin:end] = sorted(self.subtitles[begin:end])
 
     def __iter__(self):
         return iter(self.subtitles)

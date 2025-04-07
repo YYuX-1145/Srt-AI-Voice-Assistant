@@ -88,8 +88,8 @@ class MSTTS(TTSProjet):
         express.set("style", style)
         express.set("role", role)
         prosody = ElementTree.SubElement(express, "prosody")
-        prosody.set("rate", f"{int(100-rate*100)}%")
-        prosody.set("pitch", f"{int(100-pitch*100)}%")
+        prosody.set("rate", f"{int((rate - 1) * 100)}%")
+        prosody.set("pitch", f"{int((pitch- 1) * 100)}%")
         prosody.text = text
         body = ElementTree.tostring(xml_body)
         try:

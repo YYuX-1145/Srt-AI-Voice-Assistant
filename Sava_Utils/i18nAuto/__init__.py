@@ -4,6 +4,7 @@ class I18n():
     def __init__(self, language=None):
         if language in ["Auto", None]:
             language = locale.getdefaultlocale()[0]
+        self.language = language
         ls=dict()
         try:
             exec(f"from .translations.{language} import i18n_dict",globals(),ls)

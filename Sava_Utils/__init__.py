@@ -66,7 +66,7 @@ args, unknown = parser.parse_known_args()
 
 config.server_mode = args.server_mode or config.server_mode
 if config.server_mode:
-    logger.warning(i18nAuto("Server Mode has been enabled!"))
+    logger.warning(i18n("Server Mode has been enabled!"))
 
 from .utils import clear_cache
 if config.clear_tmp:

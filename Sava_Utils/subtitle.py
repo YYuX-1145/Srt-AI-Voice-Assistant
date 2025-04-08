@@ -64,19 +64,23 @@ class Base_subtitle:
         result = int(h) * 3600 + int(m) * 60 + round(float(s), 2)
         return result
 
-    def reset_srt_time(self, st, et):
-        if SRT_TIME_Pattern.fullmatch(st) and SRT_TIME_Pattern.fullmatch(et):
-            start_time_new = self.to_float_srt_time(st)
-            end_time_new = self.to_float_srt_time(et)
-            if start_time_new < MAX_TIMESTAMP and end_time_new < MAX_TIMESTAMP:
-                self.start_time_raw = st
-                self.start_time = start_time_new
-                self.end_time_raw = et
-                self.end_time = end_time_new
+    def reset_srt_time(self, timestamp):
+        if timestamp != self.get_srt_time():
+            st, et = timestamp.split("-->")
+            st = st.strip()
+            et = et.strip()
+            if SRT_TIME_Pattern.fullmatch(st) and SRT_TIME_Pattern.fullmatch(et):
+                start_time_new = self.to_float_srt_time(st)
+                end_time_new = self.to_float_srt_time(et)
+                if start_time_new < MAX_TIMESTAMP and end_time_new < MAX_TIMESTAMP:
+                    self.start_time_raw = st
+                    self.start_time = start_time_new
+                    self.end_time_raw = et
+                    self.end_time = end_time_new
+                else:
+                    raise ValueError(f"too long: {st} --> {et}")
             else:
-                raise ValueError(f"too long: {st} --> {et}")
-        else:
-            raise ValueError(f"{i18n('Input format mismatch')}: {st} --> {et}")
+                raise ValueError(f"{i18n('Input format mismatch')}: {st} --> {et}")
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}"
@@ -173,7 +177,7 @@ class Subtitles:
                 audiolist.append(np.zeros(silence_len))
                 ptr += silence_len
                 self.subtitles[id].is_delayed = False
-            elif ptr > start_frame:
+            elif start_frame != 0 and ptr > start_frame:
                 self.subtitles[id].is_delayed = True
                 delayed_list.append(self.subtitles[id].index)
             f_path = os.path.join(abs_path, f"{i.index}.wav")

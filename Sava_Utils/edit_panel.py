@@ -47,11 +47,11 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret += btn
     for i in range(Sava_Utils.config.num_edit_rows - pageend + page_start):
         ret.append(gr.update(value=-1, visible=False))
-        ret.append(gr.update(value=-1, interactive=False, visible=True))
-        ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
-        ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
-        ret.append(gr.update(value="None", interactive=False, visible=True))
-        ret.append(gr.update(value="NO INFO", interactive=False, visible=True))
+        ret.append(gr.update(value=-1, interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="None", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
         ret += btn
     return ret + btn  # all regen btn*4
 
@@ -166,9 +166,8 @@ def apply_start_end_time(page, subtitles: Subtitles, *args):
     # for i in range(page-1,min(page+Sava_Utils.config.num_edit_rows-1,len(subtitles)-1)):
     for i, title_index in enumerate(indexlist):
         try:
-            if title_index != -1 and timelist[i] != subtitles[title_index].get_srt_time():
-                st, et = timelist[i].split("-->")
-                subtitles[title_index].reset_srt_time(st.strip(), et.strip())
+            if title_index != -1:
+                subtitles[title_index].reset_srt_time(timelist[i])
         except ValueError as e:
             gr.Info(str(e))
     subtitles.dump()

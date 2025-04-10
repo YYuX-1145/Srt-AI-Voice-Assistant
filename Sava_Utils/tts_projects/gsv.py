@@ -186,7 +186,18 @@ class GSV(TTSProjet):
                 self.del_preset_btn = gr.Button(value="🗑️", variant="stop", min_width=60)
                 self.refresh_presets_btn.click(self.refresh_presets_list, outputs=[self.choose_presets])
                 self.del_preset_btn.click(self.del_preset, inputs=[self.choose_presets], outputs=[self.choose_presets])
-            preset_args = [self.choose_presets, self.choose_ar_tts, self.desc_presets, self.api_port2, self.refer_audio, self.refer_text, self.refer_lang, self.aux_ref_audio, self.sovits_path, self.gpt_path]
+            preset_args = [
+                self.choose_presets,
+                self.choose_ar_tts,
+                self.desc_presets,
+                self.api_port2,
+                self.refer_audio,
+                self.refer_text,
+                self.refer_lang,
+                self.aux_ref_audio,
+                self.sovits_path,
+                self.gpt_path,
+            ]
             self.save_presets_btn.click(self.save_preset, inputs=preset_args, outputs=[self.choose_presets])
         with gr.Row():
             self.gen_btn2 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
@@ -234,7 +245,7 @@ class GSV(TTSProjet):
     def load_preset(self, name):
         try:
             if name in ['None', None, "", []] or not os.path.exists(os.path.join(current_path, "SAVAdata", "presets", name)):
-                return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(label="", value="", placeholder="描述信息，可选", interactive=True), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
+                return gr.update(), gr.update(label="", value="", placeholder=i18n('(Optional) Description'), interactive=True), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
 
             dir = os.path.join(current_path, "SAVAdata", "presets", name)
             preset = ARPreset.from_dict(json.load(open(os.path.join(dir, "info.json"), encoding="utf-8")))

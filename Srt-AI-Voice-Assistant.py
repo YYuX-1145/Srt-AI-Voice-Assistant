@@ -430,7 +430,7 @@ if __name__ == "__main__":
                         fps = gr.Number(label=i18n('Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr'), value=30, visible=True, interactive=True, minimum=1)
                         workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
                         offset = gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label=i18n('Voice time offset (seconds)'))
-                        input_file = gr.File(label=i18n('Upload file (Batch mode only supports one speaker at a time)'), file_types=['.csv', '.srt', '.txt'], type="file", file_count='multiple')
+                        input_file = gr.File(label=i18n('Upload file (Batch mode only supports one speaker at a time)'), file_types=['.csv', '.srt', '.txt'], file_count='multiple')
                         gen_textbox_output_text = gr.Textbox(label=i18n('Output Info'), interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
                         if not Sava_Utils.config.server_mode:
@@ -490,10 +490,7 @@ if __name__ == "__main__":
                                     customregenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)
                                     edit_rows.append(customregenbtn)
                                     customregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, CUSTOM.choose_custom_api, STATE], outputs=[audio_player, *edit_rows])
-                        page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
-                        workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
                         workrefbtn.click(getworklist, inputs=[], outputs=[worklist])
-                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
                         export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=50)
@@ -522,6 +519,11 @@ if __name__ == "__main__":
                             all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
                             all_regen_btn_mstts.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=edit_rows)
                             all_regen_btn_custom.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=edit_rows)
+                        
+                        page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
+                        workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
+                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])                        
+                        
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row():
                                 find_text_expression = gr.Text(show_label=False, placeholder=i18n('Find What'), scale=3)

@@ -66,7 +66,7 @@ class Translation_module:
         with gr.TabItem(i18n('Subtitle Translation')):
             with gr.Row():
                 with gr.Column():
-                    self.translation_upload = gr.File(label=i18n('Upload your subtitle files (multiple allowed).'), file_count="multiple", type="file", file_types=[".srt", ".csv", ".txt"])
+                    self.translation_upload = gr.File(label=i18n('Upload your subtitle files (multiple allowed).'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
                     self.result = gr.Text(interactive=False, value="", label=i18n('Output Info'))
                     self.translation_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
                     self.send_btn = gr.Button(value=i18n('Send output files to Main Page'), interactive=True)

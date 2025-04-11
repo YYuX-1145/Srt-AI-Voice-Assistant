@@ -25,7 +25,7 @@ class WAV2SRT():
                 with gr.Row():
                     self.wav2srt_pid=gr.State(value=-1)
                     with gr.Column():
-                        self.wav2srt_input=gr.File(label=i18n('Upload File'),type="file",file_count="multiple",interactive=True)
+                        self.wav2srt_input=gr.File(label=i18n('Upload File'),file_count="multiple",interactive=True)
                         self.wav2srt_out_dir=gr.Textbox(value="Default",label=i18n('Save Path(Folder Path), Default: SAVAdata\\output'),visible=not self.config.server_mode,interactive=not self.config.server_mode)
                         self.wav2srt_pydir=gr.Textbox(value='Auto',label=i18n('Python Interpreter Path, align with GSV by default'),visible=not self.config.server_mode,interactive=not self.config.server_mode)
                         self.wav2srt_engine=gr.Radio(choices=["funasr","whisper"],value="funasr",label=i18n('Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support'),interactive=True)
@@ -35,7 +35,7 @@ class WAV2SRT():
                         self.wav2srt_args=gr.Textbox(value="",label=i18n('Other Parameters'),interactive=True)                     
                     with gr.Column():
                         gr.Markdown(i18n('WAV2SRT_INFO'))
-                        self.wav2srt_output=gr.File(label=i18n('Output File'),type="file",file_count="multiple",interactive=False)
+                        self.wav2srt_output=gr.File(label=i18n('Output File'),file_count="multiple",interactive=False)
                         self.wav2srt_output_status=gr.Textbox(label=i18n('Output Info'),value="",interactive=False,)
                         with gr.Row():
                             self.wav2srt_run=gr.Button(value=i18n('Start'),variant="primary",interactive=True)      

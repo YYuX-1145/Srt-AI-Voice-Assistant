@@ -1,7 +1,7 @@
 import os
 import sys
 import io
-
+import inspect
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
@@ -447,7 +447,7 @@ if __name__ == "__main__":
                         edit_real_index_list = []
                         edit_check_list = []
                         edit_start_end_time_list = []
-                        with gr.Row():
+                        with gr.Row(equal_height=True):
                             worklist = gr.Dropdown(
                                 choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) else [""],
                                 label=i18n('History'),
@@ -467,14 +467,14 @@ if __name__ == "__main__":
                                 edit_check_list.append(edit_check)
                                 edit_rows.append(edit_real_index)  # real index
                                 edit_real_index_list.append(edit_real_index)
-                                edit_rows.append(gr.Text(scale=1, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
-                                edit_start_end_time = gr.Textbox(scale=3, show_label=False, interactive=False, value="NO INFO", max_lines=1)
+                                edit_rows.append(gr.Text(scale=1, visible=False, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
+                                edit_start_end_time = gr.Textbox(scale=3, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)
                                 edit_start_end_time_list.append(edit_start_end_time)
                                 edit_rows.append(edit_start_end_time)  # start time and end time
-                                s_txt = gr.Textbox(scale=6, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # content
+                                s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # content
                                 edit_rows.append(s_txt)
-                                edit_rows.append(gr.Textbox(show_label=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
-                                edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
+                                edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
+                                edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
                                 with gr.Row():
                                     __ = gr.Button(value="▶️", scale=1, min_width=60)
                                     __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
@@ -519,13 +519,13 @@ if __name__ == "__main__":
                             all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
                             all_regen_btn_mstts.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=edit_rows)
                             all_regen_btn_custom.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=edit_rows)
-                        
+
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
-                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])                        
-                        
+                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
+
                         with gr.Accordion(i18n('Find and Replace'), open=False):
-                            with gr.Row():
+                            with gr.Row(equal_height=True):
                                 find_text_expression = gr.Text(show_label=False, placeholder=i18n('Find What'), scale=3)
                                 target_text = gr.Text(show_label=False, placeholder=i18n('Replace With'), scale=3)
                                 enable_re = gr.Checkbox(label=i18n('Enable Regular Expression'), min_width=60, scale=1)
@@ -589,6 +589,14 @@ if __name__ == "__main__":
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         CUSTOM.gen_btn4.click(lambda *args: generate_preprocess(*args, project="custom"), inputs=[input_file, fps, offset, workers, CUSTOM.choose_custom_api], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
 
-    app.queue(concurrency_count=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
-        share=args.share, server_port=server_port if server_port > 0 else None, inbrowser=True, server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1', show_api=not Sava_Utils.config.server_mode
+    queue_kwargs = {
+        "default_concurrency_limit" if "default_concurrency_limit" in inspect.signature(gr.Blocks.queue).parameters else "concurrency_count": Sava_Utils.config.concurrency_count,
+        "max_size": 2 * Sava_Utils.config.concurrency_count,
+    }
+    app.queue(**queue_kwargs).launch(
+        share=args.share,
+        server_port=server_port if server_port > 0 else None,
+        inbrowser=True,
+        server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1',
+        show_api=not Sava_Utils.config.server_mode,
     )

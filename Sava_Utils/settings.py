@@ -262,7 +262,7 @@ class Settings_UI:
         self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])        
         self.save_settings_btn = gr.Button(value=i18n('Apply & Save'), variant="primary")
         self.restart_btn = gr.Button(value=i18n('Restart UI'), variant="stop")
-        
+
         componments_list = [
             self.language,
             self.server_port,
@@ -287,6 +287,7 @@ class Settings_UI:
             self.ms_region,
             self.ms_key,
             self.ms_lang_option,
+            self.ollama_url,
         ]
 
         self.save_settings_btn.click(self.save_settngs, inputs=componments_list, outputs=componments_list)

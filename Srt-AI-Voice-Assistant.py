@@ -120,7 +120,6 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
             else:
                 continue
         sr, audio = subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
-        sf.write(os.path.join(current_path, "SAVAdata", "output", f"{os.path.basename(in_file.name)}.wav"), audio, sr)
     t2 = time.time()
     m, s = divmod(t2 - t1, 60)
     use_time = "%02d:%02d" % (m, s)

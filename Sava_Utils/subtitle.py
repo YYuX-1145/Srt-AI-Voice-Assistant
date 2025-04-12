@@ -2,6 +2,7 @@ import os
 import re
 import gradio as gr
 import numpy as np
+import soundfile as sf
 import datetime
 import pickle
 import shutil
@@ -201,6 +202,7 @@ class Subtitles:
             gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
         audio_content = np.concatenate(audiolist)
         self.dump()
+        sf.write(os.path.join(current_path, "SAVAdata", "output", f"{os.path.basename(self.dir)}.wav"), audio_content, sr)
         return sr, audio_content
 
     def get_state(self, idx):

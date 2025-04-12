@@ -11,8 +11,6 @@ current_path = os.environ.get("current_path")
 
 def load_page(subtitle_list, target_index=1):
     length = len(subtitle_list)
-    if length == 0:
-        pass
     if target_index > 1:
         value = min(target_index, ((length - 1) // Sava_Utils.config.num_edit_rows) * Sava_Utils.config.num_edit_rows + 1)
     else:

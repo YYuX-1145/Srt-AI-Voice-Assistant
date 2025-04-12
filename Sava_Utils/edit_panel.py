@@ -230,7 +230,7 @@ def switch_spk_proj(name):
         raise ""
 
 
-def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, enable_re: bool):
+def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, enable_re: bool, page_index:int=1):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return load_page(Subtitles())
@@ -253,4 +253,4 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
             if i.text != x:
                 i.text = x
                 i.is_success = None
-    return load_page(subtitles)
+    return load_page(subtitles, page_index)

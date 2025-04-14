@@ -5,6 +5,7 @@ import Sava_Utils
 import time
 import os
 import sys
+import platform
 
 from . import logger, i18n
 
@@ -164,7 +165,10 @@ def load_cfg():
 def restart():
     gr.Warning(i18n('Restarting...'))
     time.sleep(0.5)
-    os.system("cls")
+    if platform.system() == "Windows":
+        os.system("cls")
+    else:
+        os.system("clear")
     if os.environ.get('exe') != 'True':
         os.execl(sys.executable, f'"{sys.executable}"', f'"{sys.argv[0]}"')
     else:

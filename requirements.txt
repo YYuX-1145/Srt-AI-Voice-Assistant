@@ -1,4 +1,4 @@
-gradio==3.50.2
+gradio # Works best with 3.50.2, but compatible with higher versions.
 soundfile
 colorlog
 soxr

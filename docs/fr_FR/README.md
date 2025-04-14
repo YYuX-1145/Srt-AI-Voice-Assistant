@@ -1,5 +1,5 @@
 # Srt-AI-Voice-Assistant
-### Ce projet peut utiliser plusieurs systèmes de synthèse vocale AI (TTS) pour doubler vos fichiers de sous-titres ou de texte.<br>Il propose également diverses fonctions auxiliaires pratiques, comme la transcription audio/vidéo et la traduction de sous-titres.
+### Ce projet peut utiliser plusieurs systèmes de synthèse vocale IA pour doubler vos fichiers de sous-titres ou de texte.<br>Il propose également diverses fonctions auxiliaires pratiques, comme la transcription audio/vidéo et la traduction de sous-titres.
 Si vous rencontrez des problèmes ou souhaitez faire une demande de fonctionnalité, veuillez vous rendre sur [Issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues).
 ## Fonctionnalités
 - ✅ Open-source, interface WebUI conviviale, exécution locale et accessible via le réseau local

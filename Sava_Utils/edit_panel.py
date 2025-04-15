@@ -237,6 +237,7 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
     if find_text_expression == '':
         gr.Warning(i18n('You must enter the text to find.'))
         return load_page(subtitles)
+    replaced=[]
     if enable_re:
         try:
             pat = re.compile(find_text_expression)
@@ -247,10 +248,13 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
             i.text, count = pat.subn(target_text, i.text)
             if count != 0:
                 i.is_success = None
+                replaced.append(i.index)
     else:
         for i in subtitles:
             x = i.text.replace(find_text_expression, target_text)
             if i.text != x:
                 i.text = x
                 i.is_success = None
+                replaced.append(i.index)
+    gr.Info(f"Found and replaced {len(replaced)} subtitle(s).\n{replaced}")
     return load_page(subtitles, page_index)

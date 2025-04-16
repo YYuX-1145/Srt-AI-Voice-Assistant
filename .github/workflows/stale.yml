@@ -20,10 +20,11 @@ jobs:
     - uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        only-issues: true
+        days-before-pr-stale: -1
+        days-before-pr-close: -1
         stale-issue-label: "stale"
-        days-before-stale: 14
-        days-before-close: 0
+        days-before-issue-stale: 14
+        days-before-issue-close: 0
         close-issue-message: 'This issue has been automatically closed due to 14 days of inactivity. If it still needs to be addressed, please reopen this issue.'
         remove-stale-when-updated: true
         enable-statistics: false

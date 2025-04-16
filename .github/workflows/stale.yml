@@ -1,5 +1,4 @@
 # This workflow warns and then closes issues and PRs that have had no activity for a specified amount of time.
-#
 # You can adjust the behavior by modifying this file.
 # For more information, see:
 # https://github.com/actions/stale
@@ -28,3 +27,4 @@ jobs:
         close-issue-message: 'This issue has been automatically closed due to 14 days of inactivity. If it still needs to be addressed, please reopen this issue.'
         remove-stale-when-updated: true
         enable-statistics: false
+

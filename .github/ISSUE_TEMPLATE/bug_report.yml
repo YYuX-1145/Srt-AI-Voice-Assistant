@@ -5,7 +5,7 @@ body:
     attributes:
       label: Self-Checks
       options:
-        - label: I have already read the documentation and couldn't find any useful information to solve my problem. | 我已经阅读完内置说明，但无法解决问题。
+        - label: I have already read the documentation and couldn't find any useful information to solve my problem. | 我已经阅读完内置说明，但仍无法解决问题。
           required: true
         - label: I have searched for the existing issues. | 我已经查看过现有的issue。
           required: true
@@ -20,8 +20,8 @@ body:
   - type: textarea
     attributes:
       label: System Info
-      description: OS and any relevant environments? Which TTS project are you using? And its version?
-      placeholder: e.g. I'm using the integrated package./I'm running it and using GPT-SoVITS-v3 on WSL2 with Python 3.12.
+      description: OS and any relevant environments? Which TTS project are you using? And its version? | 您的系统环境？您正在使用哪一个TTS项目？以及它的版本？
+      placeholder: e.g. I'm using the integrated package./I'm running it and using GPT-SoVITS-v3 on WSL2 with Python 3.12. | 我在使用本项目提供的整合包/我在wsl2下使用GSV并用python3.12运行本项目
     validations:
       required: false
       

@@ -1,0 +1,40 @@
+name: "Bug report"
+description: Something is not working as expected.
+body:
+  - type: checkboxes
+    attributes:
+      label: Self-Checks
+      options:
+        - label: I have already read the documentation and couldn't find any useful information to solve my problem. | 我已经阅读完内置说明，但无法解决问题。
+          required: true
+        - label: I have searched for the existing issues. | 我已经查看过现有的issue。
+          required: true
+          
+  - type: textarea
+    attributes:
+      label: Describe the problem
+      description: A clear and concise description of the problem. | 请清晰地描述遇到的问题。
+    validations:
+      required: true
+      
+  - type: textarea
+    attributes:
+      label: System Info
+      description: OS and any relevant environments? Which TTS project are you using? And its version?
+      placeholder: e.g. I'm using the integrated package./I'm running it and using GPT-SoVITS-v3 on WSL2 with Python 3.12.
+    validations:
+      required: false
+      
+  - type: textarea
+    attributes:
+      label: How To Reproduce | 请您提供问题的复现方法
+      description: Include detailed steps, screenshots(This should both include the console of this application and corresponding API). | 请提供复现问题的步骤，并提供本项目控制台报错截图和对应TTS项目的API的控制台截图。
+    validations:
+      required: true
+      
+  - type: textarea
+    attributes:
+      label: (Optional) Additional context
+      placeholder: Add any other context about the problem here. | (可选)补充说明
+    validations:
+      required: false

@@ -12,6 +12,7 @@ import platform
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
+system = platform.system()
 LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 
@@ -39,6 +40,10 @@ def clear_cache():
 
 
 def rc_open_window(command, dir=current_path):
+    if system != "Windows":
+        gr.Warning("This function is only available on Windows!")
+        logger.warning("This function is only available on Windows!")
+        return
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
     logger.info(f"{i18n('Execute command')}:{command}")
@@ -51,9 +56,6 @@ def rc_bg(command, dir=current_path, get_id=True):
     if get_id:
         yield process.pid
     yield process.wait()
-
-
-system = platform.system()
 
 
 def kill_process(pid):
@@ -285,7 +287,7 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-
         if rms >= threshold:
             break
     if i == rms_list.shape[-1]:
-        print("[debug] remove_silence: failed to find the cutting point")
+        logger.debug("remove_silence: failed to find the cutting point")
         return audio
     for j, rms in enumerate(reversed(rms_list)):
         if rms >= threshold:

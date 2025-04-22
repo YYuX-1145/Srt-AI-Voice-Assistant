@@ -104,7 +104,7 @@ class Settings:
             if os.path.exists(bv2_pydir):
                 self.bv2_pydir = os.path.abspath(bv2_pydir)
             else:
-                gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir }")
+                gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir}")
                 self.bv2_pydir = ""
         else:
             if os.path.exists(os.path.join(current_path, "venv\\python.exe")) and "VITS2" in current_path.upper():
@@ -117,7 +117,7 @@ class Settings:
             if os.path.exists(gsv_pydir):
                 self.gsv_pydir = os.path.abspath(gsv_pydir)
             else:
-                gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir }")
+                gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
                 self.gsv_pydir = ""
         else:
             if os.path.exists(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper():

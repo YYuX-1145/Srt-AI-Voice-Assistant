@@ -89,11 +89,11 @@ class Settings:
         self.num_edit_rows = int(num_edit_rows)
         self.theme = theme
         self.bv2_pydir = bv2_pydir
-        self.bv2_dir = bv2_dir
+        self.bv2_dir = os.path.abspath(bv2_dir) if bv2_dir else bv2_dir
         self.bv2_args = bv2_args
         self.gsv_fallback = gsv_fallback
         self.gsv_pydir = gsv_pydir
-        self.gsv_dir = gsv_dir
+        self.gsv_dir = os.path.abspath(gsv_dir) if gsv_dir else gsv_dir
         self.gsv_args = gsv_args
         self.ms_region = ms_region
         self.ms_key = ms_key

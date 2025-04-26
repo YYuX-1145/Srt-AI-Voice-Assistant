@@ -165,6 +165,7 @@ i18n_dict = {
     "Model Paths seem to be invalid, which could lead to errors!": "模型路径可能无效，会导致切换错误！",
     "You have incorrectly entered a folder path!": "你错误地填写成了文件夹的路径！！！",
     "Models switched successfully": "模型已切换",
+    "GSV root path has been not configured or does not exist.": "GSV项目根目录未配置或不存在！",
     "Error details": "报错内容",
     "Successfully deleted": "删除成功",
     "Please select a valid preset!": "请选择一个有效的预设！",

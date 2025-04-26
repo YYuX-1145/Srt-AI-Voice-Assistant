@@ -66,6 +66,19 @@ def temp_aux_ra(a: bytes):
     return dir
 
 
+S2_MODEL_PATH = ["SoVITS_weights", "SoVITS_weights_v2", "SoVITS_weights_v3", "SoVITS_weights_v4"]
+S2_PRETRAINED = [
+    "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth",
+    "GPT_SoVITS/pretrained_models/s2Gv3.pth",
+    "GPT_SoVITS/pretrained_models/gsv-v4-pretrained/s2Gv4.pth",
+]
+S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v3", "GPT_weights_v4"]
+S1_PRETRAINED = [
+    "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
+    "GPT_SoVITS/pretrained_models/s1v3.ckpt",
+]
+
+
 class GSV(TTSProjet):
     def __init__(self, config):
         self.gsv_fallback = False
@@ -78,6 +91,7 @@ class GSV(TTSProjet):
     def update_cfg(self, config):
         self.gsv_fallback = config.gsv_fallback
         self.server_mode = config.server_mode
+        self.gsv_dir = config.gsv_dir
 
     def api(self, port, artts_name, **kwargs):
         try:
@@ -173,9 +187,12 @@ class GSV(TTSProjet):
             self.refer_text = gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription | Pretrained Speaker (Cosy)'))
             self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n('Language of Main Reference Audio'), interactive=True, allow_custom_value=False)
         with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode):
-            self.sovits_path = gr.Textbox(value="", label=f"Sovits {i18n('Model Path')}", interactive=True)
-            self.gpt_path = gr.Textbox(value="", label=f"GPT {i18n('Model Path')}", interactive=True)
-            self.switch_gsvmodel_btn = gr.Button(value=i18n('Switch Models'), variant="primary")
+            self.sovits_path = gr.Dropdown(value="", label=f"Sovits {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
+            self.gpt_path = gr.Dropdown(value="", label=f"GPT {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
+            with gr.Row():                
+                self.switch_gsvmodel_btn = gr.Button(value=i18n('Switch Models'), variant="primary", scale=4)
+                self.scan_gsvmodel_btn = gr.Button(value=i18n('🔄️'), variant="secondary", scale=1, min_width=60)
+                self.scan_gsvmodel_btn.click(self.find_gsv_models,inputs=[],outputs=[self.sovits_path,self.gpt_path])
         with gr.Row():
             self.api_port2 = gr.Number(label="API Port", value=9880, interactive=not self.server_mode, visible=not self.server_mode)
         # self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
@@ -333,6 +350,30 @@ class GSV(TTSProjet):
             gr.Warning(err)
             logger.error(err)
             return False
+
+    def find_gsv_models(self):
+        if self.gsv_dir in ["", None] or not os.path.isdir(self.gsv_dir):
+            gr.Warning(i18n('GSV root path has been not configured or does not exist.'))
+            return gr.update(choices=['']), gr.update(choices=[''])
+        s1 = ['']
+        s2 = ['']
+        for item in S2_PRETRAINED:
+            m = os.path.join(self.gsv_dir, item)
+            if os.path.exists(m):
+                s2.append(m)
+        for item in S2_MODEL_PATH:
+            cd = os.path.join(self.gsv_dir, item)
+            if os.path.isdir(cd):
+                s2 += [os.path.join(self.gsv_dir, item, i) for i in os.listdir(cd) if i.endswith(".pth")]
+        for item in S1_PRETRAINED:
+            m = os.path.join(self.gsv_dir, item)
+            if os.path.exists(m):
+                s1.append(m)
+        for item in S1_MODEL_PATH:
+            cd = os.path.join(self.gsv_dir, item)
+            if os.path.isdir(cd):
+                s1 += [os.path.join(self.gsv_dir, item, i) for i in os.listdir(cd) if i.endswith(".ckpt")]
+        return gr.update(choices=s2), gr.update(choices=s1)
 
     def del_preset(self, name):
         try:

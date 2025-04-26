@@ -18,5 +18,5 @@ If you have encountered problems or want to create a feature request, please go 
 * Use this version only when there are dependency conflicts or installation issues.
 
 ## [Download the integrated package with GPT-SoVITS (From Hugging Face)](https://huggingface.co/YYuX/GPT-SoVITS-SAVA-windows-package/tree/main)
-* The GPT-SoVITS integrated package includes the packaged version, without removing any built-in or pretrained models, and its codes for finetuning and training are the same with the official repository.
+* The GPT-SoVITS integrated package includes the packaged version, without removing any built-in or pretrained models, and its code for finetuning and training is the same with the official repository.
 * Note: Packaged Version included in the GPT-SoVITS integrated package may not be the latest version; overwrite it to update.

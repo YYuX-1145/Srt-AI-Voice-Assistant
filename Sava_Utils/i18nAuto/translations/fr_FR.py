@@ -165,6 +165,7 @@ i18n_dict = {
     "Model Paths seem to be invalid, which could lead to errors!": "Le chemin du modèle semble invalide, cela pourrait entraîner des erreurs !",
     "You have incorrectly entered a folder path!": "Vous avez incorrectement saisi le nom du répertoire !",
     "Models switched successfully": "Le modèle a été changé avec succès",
+    "GSV root path has been not configured or does not exist.": "Le chemin racine de GSV n'est pas configuré ou n'existe pas.",
     "Error details": "Détails de l'erreur",
     "Successfully deleted": "Supprimé avec succès",
     "Please select a valid preset!": "Veuillez sélectionner un préréglage valide !",

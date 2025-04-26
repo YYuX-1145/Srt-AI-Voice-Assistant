@@ -18,12 +18,13 @@ class Custom(TTSProjet):
         return custom_api(text)
 
     def _UI(self):
-        with gr.Column():
-            gr.Markdown(value=MANUAL.getInfo("help_custom"))
-            self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False)
-            self.refresh_custom_btn = gr.Button(value="🔄️")
-            self.gen_btn4 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
-            self.refresh_custom_btn.click(self.refresh_custom_api_list, outputs=[self.choose_custom_api])
+        with gr.TabItem(i18n('Custom API')):
+            with gr.Column():
+                gr.Markdown(value=MANUAL.getInfo("help_custom"))
+                self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False)
+                self.refresh_custom_btn = gr.Button(value="🔄️")
+                self.gen_btn4 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+                self.refresh_custom_btn.click(self.refresh_custom_api_list, outputs=[self.choose_custom_api])
         return []
 
     def before_gen_action(self, *args, **kwargs):

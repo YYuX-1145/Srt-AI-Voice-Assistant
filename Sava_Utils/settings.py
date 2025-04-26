@@ -195,8 +195,9 @@ class Settings_UI:
         self._apply_to_componments()
 
     def _apply_to_componments(self):
-        for i in self.componments:
-            i.update_cfg(config=Sava_Utils.config)
+        for item in self.componments.values():
+            for i in item:
+                i.update_cfg(config=Sava_Utils.config)
 
     def save_settngs(self, *args):
         current_edit_rows = Sava_Utils.config.num_edit_rows

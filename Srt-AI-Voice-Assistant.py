@@ -42,7 +42,11 @@ MSTTS = Sava_Utils.tts_projects.mstts.MSTTS(Sava_Utils.config)
 CUSTOM = Sava_Utils.tts_projects.custom.Custom(Sava_Utils.config)
 TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
 Projet_dict = {"bv2": BV2, "gsv": GSV, "mstts": MSTTS, "custom": CUSTOM}
-componments = [BV2, GSV, MSTTS, CUSTOM]
+componments = {
+    1: [GSV, BV2, MSTTS, CUSTOM],
+    2: [TRANSLATION_MODULE],
+    3: [],
+}
 
 
 def custom_api(text):
@@ -417,14 +421,10 @@ if __name__ == "__main__":
                             update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
-                        with gr.TabItem("AR-TTS"):
-                            GSV_ARGS = GSV.getUI()
-                        with gr.TabItem("Bert-VITS2-HiyoriUI"):
-                            BV2_ARGS = BV2.getUI()
-                        with gr.TabItem("Azure-TTS(Microsoft)"):
-                            MSTTS_ARGS = MSTTS.getUI()
-                        with gr.TabItem(i18n('Custom API')):
-                            CUSTOM.getUI()
+                        TTS_ARGS=[]
+                        for i in componments[1]:
+                            TTS_ARGS.append(i.getUI())
+                    GSV_ARGS,BV2_ARGS,MSTTS_ARGS,CUSTOM_ARGS=TTS_ARGS
                     with gr.Column():
                         fps = gr.Number(label=i18n('Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr'), value=30, visible=True, interactive=True, minimum=1)
                         workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
@@ -556,14 +556,14 @@ if __name__ == "__main__":
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
-                TRANSLATION_MODULE.UI(input_file)
-                componments.append(TRANSLATION_MODULE)
+                for i in componments[2]:
+                    i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
                 available = False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
 
                 WAV2SRT = WAV2SRT(config=Sava_Utils.config)
-                componments.append(WAV2SRT)
+                componments[3].append(WAV2SRT)
                 available = WAV2SRT.UI(input_file, TRANSLATION_MODULE.translation_upload)
                 if not available:
                     gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")

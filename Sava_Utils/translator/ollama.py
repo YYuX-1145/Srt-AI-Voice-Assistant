@@ -9,9 +9,9 @@ from .. import logger, i18n
 
 
 class Ollama(Traducteur):
-    def __init__(self):
+    def __init__(self, config=None):
         self.models = []
-        super().__init__(name="ollama")
+        super().__init__("ollama", config)
 
     def update_cfg(self, config):
         self.ollama_url = config.ollama_url
@@ -51,7 +51,7 @@ class Ollama(Traducteur):
         if prompt:
             prompt = prompt + ' ' + text
         else:
-            prompt = f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}" 
+            prompt = f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}"
         data_json = {
             "model": model_name,
             "prompt": prompt,

@@ -229,6 +229,7 @@ i18n_dict = {
     "Select Your Model": "选择模型",
     "Unload Model": "卸载模型",
     "OLLAMA_NOTICE": "⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️",
+    "Custom prompt (enabled when filled in)":"自定义提示词（填写视为启用）",
     # EXTENSIONS
     # WAV2SRT
     "Audio/Video Transcribe": "音视频转字幕",

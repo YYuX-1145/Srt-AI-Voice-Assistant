@@ -4,7 +4,7 @@ import concurrent.futures
 from tqdm import tqdm
 import Sava_Utils
 from . import i18n
-from .utils import read_prcsv, read_srt, read_txt
+from .utils import read_file
 from .translator.ollama import Ollama
 
 
@@ -19,15 +19,7 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
         gr.Info(i18n('Please upload the subtitle file!'))
         return i18n('Please upload the subtitle file!'), output_list
     for in_file in in_files:
-        if in_file.name[-4:].lower() == ".csv":
-            subtitle_list = read_prcsv(in_file.name, fps=30, offset=0)
-        elif in_file.name[-4:].lower() == ".srt":
-            subtitle_list = read_srt(in_file.name, offset=0)
-        elif in_file.name[-4:].lower() == ".txt":
-            subtitle_list = read_txt(in_file.name)
-        else:
-            gr.Warning(i18n('Unknown format. Please ensure the extension name is correct!'))
-            continue
+        subtitle_list = read_file(in_file.name)
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 x = list(tqdm(executor.map(lambda x: TRANSLATORS[translator].api(*x), [(i.text, language, *args) for i in subtitle_list]), total=len(subtitle_list), desc=f"{i18n('Translating')}: {os.path.basename(in_file.name)}"))

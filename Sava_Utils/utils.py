@@ -242,7 +242,7 @@ def modify_spkmap(ori, tar, tab):
     return tab
 
 
-def read_file(file_name, fps, offset):
+def read_file(file_name, fps=30, offset=0):
     if Sava_Utils.config.server_mode:
         assert os.stat(file_name).st_size < 65536, i18n('Error: File too large')  # 64KB
     if file_name[-4:].lower() == ".csv":

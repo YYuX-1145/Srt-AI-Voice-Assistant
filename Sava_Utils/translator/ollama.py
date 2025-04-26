@@ -43,14 +43,18 @@ class Ollama(Traducteur):
             return None
         rc_open_window(f"ollama stop {model} && exit")
 
-    def api(self, text, target_lang, model_name, url):
+    def api(self, text, target_lang, model_name, url, prompt):
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
         if model_name in [None, [], ""]:
             raise ValueError(i18n('You must specify the model!'))
+        if prompt:
+            prompt = prompt + ' ' + text
+        else:
+            prompt = f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}" 
         data_json = {
             "model": model_name,
-            "prompt": f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}",
+            "prompt": prompt,
             "stream": False,
         }
         # print(data_json["prompt"])
@@ -73,5 +77,6 @@ class Ollama(Traducteur):
                 if not self.server_mode:
                     self.refresh_model_btn = gr.Button(value="🔄️")
                     self.refresh_model_btn.click(self.get_models, inputs=[self.api_url], outputs=[self.select_model])
+            self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
             self.translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
-            self.translate_btn.click(lambda *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url], outputs=[output_info, output_files])
+            self.translate_btn.click(lambda *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt], outputs=[output_info, output_files])

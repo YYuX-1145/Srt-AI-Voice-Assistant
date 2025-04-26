@@ -35,16 +35,18 @@ import Sava_Utils.tts_projects.gsv
 import Sava_Utils.tts_projects.mstts
 import Sava_Utils.tts_projects.custom
 from Sava_Utils.subtitle_translation import Translation_module
+from Sava_Utils.polyphone import Polyphone
 
 BV2 = Sava_Utils.tts_projects.bv2.BV2(Sava_Utils.config)
 GSV = Sava_Utils.tts_projects.gsv.GSV(Sava_Utils.config)
 MSTTS = Sava_Utils.tts_projects.mstts.MSTTS(Sava_Utils.config)
 CUSTOM = Sava_Utils.tts_projects.custom.Custom(Sava_Utils.config)
 TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
+POLYPHONE = Polyphone(Sava_Utils.config)
 Projet_dict = {"bv2": BV2, "gsv": GSV, "mstts": MSTTS, "custom": CUSTOM}
 componments = {
     1: [GSV, BV2, MSTTS, CUSTOM],
-    2: [TRANSLATION_MODULE],
+    2: [TRANSLATION_MODULE, POLYPHONE],
     3: [],
 }
 
@@ -413,6 +415,7 @@ if __name__ == "__main__":
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
                         with gr.Accordion(i18n('Speaker Map'), open=False):
+                            use_labled_text_mode = gr.Checkbox(label=i18n('Enable labled text mode'))
                             speaker_map = gr.Dataframe(show_label=False, headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
                             with gr.Row():
                                 origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)
@@ -582,7 +585,7 @@ if __name__ == "__main__":
                             gr.Markdown(value=MANUAL.getInfo("help"))
 
         update_spkmap_btn.click(get_speaker_map, inputs=[input_file], outputs=[speaker_map, origin_speaker_list])
-        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
+        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode,speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
         BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])

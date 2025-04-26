@@ -24,7 +24,7 @@ class MSTTS(TTSProjet):
         self.cfg_ms_region = config.ms_region
         self.cfg_ms_key = config.ms_key
         self.ms_lang_option = config.ms_lang_option
-        self.server_mode = config.server_mode
+        super().update_cfg(config)
 
     def getms_speakers(self):
         # if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):

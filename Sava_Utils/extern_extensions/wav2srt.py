@@ -16,6 +16,7 @@ class WAV2SRT(Base_Componment):
 
     def update_cfg(self, config):
         self.gsv_pydir = config.gsv_pydir
+        super().update_cfg(config)
 
     def _UI(self, file_main, file_tr):
         available = False

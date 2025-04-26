@@ -90,8 +90,8 @@ class GSV(TTSProjet):
 
     def update_cfg(self, config):
         self.gsv_fallback = config.gsv_fallback
-        self.server_mode = config.server_mode
         self.gsv_dir = config.gsv_dir
+        super().update_cfg(config)
 
     def api(self, port, artts_name, **kwargs):
         try:

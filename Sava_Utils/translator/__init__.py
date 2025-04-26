@@ -9,7 +9,7 @@ class Traducteur(Base_Componment):
         super().__init__(config)
 
     def update_cfg(self, config):
-        self.server_mode = config.server_mode
+        super().update_cfg(config)
 
     @abstractmethod
     def api(self, *args, **kwargs):

@@ -15,7 +15,7 @@ class Ollama(Traducteur):
 
     def update_cfg(self, config):
         self.ollama_url = config.ollama_url
-        return super().update_cfg(config)
+        super().update_cfg(config)
 
     def get_models(self, url):
         try:

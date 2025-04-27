@@ -31,6 +31,7 @@ class Polyphone(Base_Componment):
             if self.server_mode:
                 gr.Markdown(i18n('This function has been disabled!'))
                 return
+            gr.Markdown(i18n('POLYPHONE_NOTICE'))
             self.language = gr.Dropdown(label=i18n('Choose Language'), value=list(PATH.keys())[1], choices=list(PATH.keys()), interactive=True)
             self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
             self.language.change(lambda: np.array([['', '']], dtype=str), outputs=[self.tab])
@@ -60,10 +61,11 @@ class Polyphone(Base_Componment):
             x = self.read_file(lang)
             content = {i[0]: i[-1] for i in x if i[0]}
             for i in map:
-                if PATTERN[lang].match(i[-1]):
-                    content[i[0]] = i[-1]
-                else:
-                    gr.Info(f"i18n('Input format mismatch'): {i[-1]}")
+                if i[0]:
+                    if PATTERN[lang].match(i[-1]):
+                        content[i[0]] = i[-1]
+                    else:
+                        gr.Info(f"{i18n('Input format mismatch')}: {i[-1]}")
             with open(os.path.join(self.gsv_dir, PATH[lang]), 'w', encoding='utf-8') as f:
                 for key,value in content.items():
                     f.write(WRITE_FN[lang](key,value))

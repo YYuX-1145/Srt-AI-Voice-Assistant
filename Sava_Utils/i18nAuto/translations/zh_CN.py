@@ -231,9 +231,10 @@ i18n_dict = {
     "OLLAMA_NOTICE": "⚠️LLM在运行时会占用较多VRAM。使用完毕后不要忘了选择并卸载对应模型以释放显存！⚠️",
     "Custom prompt (enabled when filled in)": "自定义提示词（填写视为启用）",
     # Polyphone Editor
-    "Polyphone Editor":"多音字编辑",
-    "Read":"读取",
-    "Save":"保存",
+    "POLYPHONE_NOTICE": "⚠️本功能可修改GPT-SoVITS多音字配置，保存修改后重启API生效⚠️",
+    "Polyphone Editor": "多音字编辑",
+    "Read": "读取",
+    "Save": "保存",
     # EXTENSIONS
     # WAV2SRT
     "Audio/Video Transcribe": "音视频转字幕",

@@ -231,6 +231,7 @@ i18n_dict = {
     "OLLAMA_NOTICE": "⚠️Le grand modèle de langage (LLM) utilise beaucoup de mémoire vidéo (VRAM) lors de son exécution. N'oubliez pas de sélectionner et de décharger le modèle correspondant pour libérer la mémoire vidéo après utilisation !⚠️",
     "Custom prompt (enabled when filled in)": "Invite personnalisée (activée si remplie)",
     # Polyphone Editor
+    "POLYPHONE_NOTICE": "⚠️Cette fonctionnalité permet de modifier la configuration des caractères polyphoniques de GPT-SoVITS. Les modifications prendront effet après avoir été enregistrées et après le redémarrage de l'API.⚠️",
     "Polyphone Editor": "Éditeur polyphonique",
     "Read": "Charger",
     "Save": "Enregistrer",

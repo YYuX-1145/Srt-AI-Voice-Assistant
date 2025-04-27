@@ -63,13 +63,17 @@ def play_audio(idx, subtitle_list):
     return p
 
 
-def getworklist():
+def getworklist(value=None):
     try:
         assert not Sava_Utils.config.server_mode
         c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces"))
-        return gr.update(choices=c, value=c[-1])
+        return gr.update(choices=c, value=value if value else c[-1])
     except:
-        return gr.update(choices=[""])
+        if value:
+            c = [value]
+        else:
+            c = [""]
+        return gr.update(choices=c, value=value if value else "")
 
 
 def getspklist(value="None"):

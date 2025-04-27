@@ -298,7 +298,7 @@ def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offse
         gr.Warning(what)
         return getworklist(), *load_page(Subtitles()), Subtitles()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
-    return getworklist(), *load_page(subtitle_list), subtitle_list
+    return getworklist(value=os.path.basename(subtitle_list.dir)), *load_page(subtitle_list), subtitle_list
 
 
 def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):

@@ -132,7 +132,7 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     return (
         (sr, audio),
         f"{i18n('Done! Time used')}:{use_time}",
-        getworklist(),
+        getworklist(value=os.path.basename(subtitle_list.dir)),
         *load_page(subtitle_list),
         subtitle_list,
     )
@@ -451,13 +451,12 @@ if __name__ == "__main__":
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
                             worklist = gr.Dropdown(
-                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) else [""],
+                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) and not Sava_Utils.config.server_mode else [""],
                                 label=i18n('History'),
                                 scale=2,
-                                visible=not Sava_Utils.config.server_mode,
                             )
-                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
-                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
                             audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4)
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)

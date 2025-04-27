@@ -230,6 +230,10 @@ i18n_dict = {
     "Unload Model": "Décharger le modèle",
     "OLLAMA_NOTICE": "⚠️Le grand modèle de langage (LLM) utilise beaucoup de mémoire vidéo (VRAM) lors de son exécution. N'oubliez pas de sélectionner et de décharger le modèle correspondant pour libérer la mémoire vidéo après utilisation !⚠️",
     "Custom prompt (enabled when filled in)": "Invite personnalisée (activée si remplie)",
+    # Polyphone Editor
+    "Polyphone Editor": "Éditeur polyphonique",
+    "Read": "Charger",
+    "Save": "Enregistrer",
     # EXTENSIONS
     # WAV2SRT
     "Audio/Video Transcribe": "Transcription audio/vidéo",

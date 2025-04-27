@@ -27,17 +27,17 @@ class Polyphone(Base_Componment):
         return super().update_cfg(config)
 
     def _UI(self, *args):
-        if self.server_mode:
-            gr.Markdown(i18n('This function has been disabled!'))
-            return
         with gr.TabItem(i18n('Polyphone Editor')):
+            if self.server_mode:
+                gr.Markdown(i18n('This function has been disabled!'))
+                return
             self.language = gr.Dropdown(label=i18n('Choose Language'), value=list(PATH.keys())[1], choices=list(PATH.keys()), interactive=True)
             self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
             self.language.change(lambda: np.array([['', '']], dtype=str), outputs=[self.tab])
         with gr.Row():
-            self.readbtn = gr.Button(value=i18n('Read Polyphone File'), variant="primary")
+            self.readbtn = gr.Button(value=i18n('Read'), variant="primary")
             self.readbtn.click(self.read_file, inputs=[self.language], outputs=[self.tab])
-            self.writebtn = gr.Button(value=i18n('Save Polyphone File'), variant="primary")
+            self.writebtn = gr.Button(value=i18n('Save'), variant="primary")
             self.writebtn.click(self.save_file,inputs=[self.language,self.tab])
 
     def read_file(self, lang):

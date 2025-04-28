@@ -90,21 +90,21 @@ class Settings:
         self.num_edit_rows = int(num_edit_rows)
         self.export_spk_pattern = export_spk_pattern
         self.theme = theme
-        self.bv2_pydir = bv2_pydir
-        self.bv2_dir = os.path.abspath(bv2_dir) if bv2_dir else bv2_dir
+        self.bv2_pydir = bv2_pydir.strip('"')
+        self.bv2_dir = os.path.abspath(bv2_dir.strip('"')) if bv2_dir else bv2_dir
         self.bv2_args = bv2_args
         self.gsv_fallback = gsv_fallback
-        self.gsv_pydir = gsv_pydir
-        self.gsv_dir = os.path.abspath(gsv_dir) if gsv_dir else gsv_dir
+        self.gsv_pydir = gsv_pydir.strip('"')
+        self.gsv_dir = os.path.abspath(gsv_dir.strip('"')) if gsv_dir else gsv_dir
         self.gsv_args = gsv_args
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
         self.ollama_url = ollama_url
         # detect python envs####
-        if bv2_pydir != "":
-            if os.path.exists(bv2_pydir):
-                self.bv2_pydir = os.path.abspath(bv2_pydir)
+        if self.bv2_pydir != "":
+            if os.path.exists(self.bv2_pydir):
+                self.bv2_pydir = os.path.abspath(self.bv2_pydir)
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir}")
                 self.bv2_pydir = ""
@@ -115,9 +115,9 @@ class Settings:
             else:
                 self.bv2_pydir = ""
 
-        if gsv_pydir != "":
-            if os.path.exists(gsv_pydir):
-                self.gsv_pydir = os.path.abspath(gsv_pydir)
+        if self.gsv_pydir != "":
+            if os.path.exists(self.gsv_pydir):
+                self.gsv_pydir = os.path.abspath(self.gsv_pydir)
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
                 self.gsv_pydir = ""

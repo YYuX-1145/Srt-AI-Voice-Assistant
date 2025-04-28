@@ -261,7 +261,7 @@ class Subtitles:
             srt_content.append(str(idx) + "\n")
             srt_content.append(f"{start} --> {end}" + "\n")
             if Sava_Utils.config.export_spk_pattern and i.speaker:
-                srt_content.append(Sava_Utils.config.export_spk_pattern.replace(r"{#NAME}", i.speaker) + i.text + "\n")
+                srt_content.append(Sava_Utils.config.export_spk_pattern.replace(r"{#NAME}", i.speaker).replace(r"{#TEXT}", i.text.strip()) + "\n")
             else:
                 srt_content.append(i.text + "\n")
             srt_content.append("\n")

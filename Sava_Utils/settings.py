@@ -228,8 +228,8 @@ class Settings_UI:
             gr.Markdown(value=i18n('General'))
             self.language = gr.Dropdown(label="Language (Requires a restart)", value=Sava_Utils.config.language, allow_custom_value=False, choices=['Auto', "en_US", "zh_CN", "ja_JP", "ko_KR", "fr_FR"])
             with gr.Row():
-                self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.'), value=Sava_Utils.config.server_port, minimum=0, scale=3)
-                self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access, scale=1)
+                self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.'), value=Sava_Utils.config.server_port, minimum=0)
+                self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access)
             with gr.Row():
                 self.overwrite_workspace = gr.Checkbox(label=i18n('Overwrite history records with files of the same name instead of creating a new project.'), value=Sava_Utils.config.overwrite_workspace, interactive=True)
                 self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup (which will also erase history records).'), value=Sava_Utils.config.clear_tmp, interactive=True)

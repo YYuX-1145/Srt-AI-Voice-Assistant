@@ -191,6 +191,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
                 with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
                     info = pickle.load(f)
             except FileNotFoundError:
+                ok = False
                 logger.error(f"{i18n('Speaker archive not found')}: {spk}")
                 gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
                 continue
@@ -200,6 +201,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             args, kwargs = Projet_dict[project].arg_filter(*args)
             Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
         except Exception as e:
+            ok = False
             gr.Warning(str(e))
             continue
         if Sava_Utils.config.server_mode:
@@ -419,6 +421,7 @@ if __name__ == "__main__":
                                 speaker_list0 = gr.Dropdown(label=i18n('Select Target Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=False)
                                 speaker_list0.change(modify_spkmap, inputs=[origin_speaker_list, speaker_list0, speaker_map], outputs=[speaker_map])
                             update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
+                            apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
                         TTS_ARGS=[]
@@ -498,7 +501,7 @@ if __name__ == "__main__":
                             clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=50)
                             clear_selection_btn.click(lambda: [False for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
                             apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
-                            apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=[*edit_rows])
+                            apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
                             copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)
                             copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
                             merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=50)
@@ -521,6 +524,8 @@ if __name__ == "__main__":
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
                         recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
+
+                        apply_spkmap2workspace_btn.click(apply_spkmap2workspace,inputs=[speaker_map,page_slider,STATE],outputs=edit_rows)
 
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row(equal_height=True):

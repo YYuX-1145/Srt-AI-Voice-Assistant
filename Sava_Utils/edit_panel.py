@@ -194,12 +194,19 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
     return *checklist, *show_page(page, subtitles)
 
 
-# def set_default_speaker(speaker,subtitles:Subtitles):
-#     if subtitles is None or len(subtitles) == 0:
-#         return
-#     if speaker in ["", "None", []]:
-#         speaker = None
-#     subtitles.default_speaker=speaker
+def apply_spkmap2workspace(speaker_map, page, subtitles: Subtitles):
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n("There is no subtitle in the current workspace"))
+        return show_page(page, Subtitles())
+    spk_dict = {i[0]: i[-1] for i in speaker_map}
+    for i in subtitles:
+        try:
+            i.speaker = spk_dict[str(i.speaker)]
+            i.is_success = None
+        except KeyError:    
+            pass
+    gr.Info(i18n('Done!'))
+    return show_page(page, subtitles)
 
 
 def del_spk(name):

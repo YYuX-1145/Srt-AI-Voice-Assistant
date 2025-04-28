@@ -153,12 +153,6 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     if len(subtitles) == 0 or subtitles is None:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return *show_page(page, Subtitles()), None
-    for key in list(subtitles.speakers.keys()):
-        if subtitles.speakers[key] <= 0:
-            subtitles.speakers.pop(key)
-    if len(list(subtitles.speakers.keys())) == 0 and subtitles.default_speaker is None and subtitles.proj is None:
-        gr.Warning(i18n('Warning: No speaker has been assigned'))
-        return *show_page(page, subtitles), None
     proj_args = (None, None, *args[:-1])
     if remake:
         todo = [i for i in subtitles if not i.is_success]
@@ -168,12 +162,15 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
         gr.Info(i18n('No subtitles are going to be resynthesized.'))
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
-    tasks = {key: [] for key in [*list(subtitles.speakers.keys()), None]}
+    tasks = dict()
     for i in todo:
-        tasks[i.speaker].append(i)
-    for key in list(tasks.keys()):
-        if len(tasks[key]) == 0:
-            tasks.pop((key))
+        try:
+            tasks[i.speaker].append(i)
+        except KeyError:
+            tasks[i.speaker] = [i]
+    if list(tasks.keys()) == [None] and subtitles.default_speaker is None and subtitles.proj is None:
+        gr.Warning(i18n('Warning: No speaker has been assigned'))
+        return *show_page(page, subtitles), None
     ok = True
     progress = 0
     for key in tasks.keys():

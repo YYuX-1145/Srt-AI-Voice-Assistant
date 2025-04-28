@@ -189,11 +189,6 @@ def read_labeled_txt(filename: str, spk_dict: dict):
                         speaker = None
                     subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", match.group(2).strip(), ntype="srt", speaker=speaker))
                     idx += 1
-                    if speaker is not None:
-                        try:
-                            subtitle_list.speakers[speaker] += 1
-                        except KeyError:
-                            subtitle_list.speakers[speaker] = 1
                 else:
                     subtitle_list[-1].text += ',' + line
             if not subtitle_list[0].text:
@@ -212,24 +207,16 @@ def get_speaker_map(in_files):
         return None, gr.update(choices=None,value=None)
     filename = in_files[0].name
     subtitles = read_labeled_file(filename, spk_dict={}, fps=30, offset=0)
-    # speakers = set()
+    speakers = set()
+    for i in subtitles:
+        if i.speaker:
+            speakers.add(i.speaker)
     rows = []
-    # with open(filename, 'r', encoding='utf-8') as f:
-    #     for line in f:
-    #         if line.startswith("#") or line.strip() == "":
-    #             continue
-    #         match = LABELED_TXT_PATTERN.match(line.strip())
-    #         if match:
-    #             speaker = match.group(1).strip()
-    #             speakers.add(speaker)
-    #     for speaker in speakers:
-    #         rows.append([speaker, 'None'])
-    for i in subtitles.speakers.keys():
+    for i in speakers:
         rows.append([i, 'None'])
     if len(rows)==0:
         rows.append(['',''])
-    # return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
-    return np.array(rows, dtype=str), gr.update(choices=list(subtitles.speakers.keys()), value=None)
+    return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
 
 
 def modify_spkmap(ori, tar, tab):
@@ -276,11 +263,6 @@ def read_labeled_file(file_name, spk_dict, fps=30, offset=0):
                     speaker = None
                 i.speaker = speaker
                 i.text = match.group(2).strip()
-                if speaker is not None:
-                    try:
-                        subtitle_list.speakers[speaker] += 1
-                    except KeyError:
-                        subtitle_list.speakers[speaker] = 1
     return subtitle_list    
 
 def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offset):

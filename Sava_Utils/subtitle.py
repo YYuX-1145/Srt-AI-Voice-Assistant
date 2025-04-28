@@ -260,7 +260,10 @@ class Subtitles:
                 end = to_time(i.real_et / self.sr)
             srt_content.append(str(idx) + "\n")
             srt_content.append(f"{start} --> {end}" + "\n")
-            srt_content.append(i.text + "\n")
+            if Sava_Utils.config.export_spk_pattern and i.speaker:
+                srt_content.append(Sava_Utils.config.export_spk_pattern.replace(r"{#NAME}", i.speaker) + i.text + "\n")
+            else:
+                srt_content.append(i.text + "\n")
             srt_content.append("\n")
         if fp is None:
             t = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')

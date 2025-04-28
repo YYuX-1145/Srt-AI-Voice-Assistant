@@ -268,17 +268,19 @@ def read_labeled_file(file_name, spk_dict, fps=30, offset=0):
             gr.Warning(str(e))
             return Subtitles()
         for i in subtitle_list:
-                match = LABELED_TXT_PATTERN.match(i.text.strip())
-                if match:
-                    speaker = match.group(1).strip()
-                    speaker = spk_dict.get(speaker, speaker)
-                    if speaker in ['', 'None']:
-                        speaker = None
-                    if speaker is not None:
-                        try:
-                            subtitle_list.speakers[speaker] += 1
-                        except KeyError:
-                            subtitle_list.speakers[speaker] = 1
+            match = LABELED_TXT_PATTERN.match(i.text.strip())
+            if match:
+                speaker = match.group(1).strip()
+                speaker = spk_dict.get(speaker, speaker)
+                if speaker in ['', 'None']:
+                    speaker = None
+                i.speaker = speaker
+                i.text = match.group(2).strip()
+                if speaker is not None:
+                    try:
+                        subtitle_list.speakers[speaker] += 1
+                    except KeyError:
+                        subtitle_list.speakers[speaker] = 1
     return subtitle_list    
 
 def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offset):

@@ -119,6 +119,7 @@ i18n_dict = {
     "Sampling rate of output audio, 0=Auto": "输出音频采样率，0=自动",
     "Remove inhalation and silence at the beginning and the end of the audio": "(实验功能)去除音频开头结尾的吸气声和静音",
     "Edit Panel Row Count (Requires a restart)": "编辑栏行数,重启生效",
+    "Export subtitles with speaker name. Fill in the pattern to enable.": "导出字幕时导出角色名，填写模版视为启用",
     "Theme (Requires a restart)": "选择主题，重启后生效，部分主题可能需要科学上网",
     "Clear temporary files": "立即清除临时文件",
     "Submodule Settings": "子模块设置",

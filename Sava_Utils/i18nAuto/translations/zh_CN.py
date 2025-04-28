@@ -31,6 +31,7 @@ i18n_dict = {
     "Subtitle Dubbing": "字幕配音",
     "File content": "文件内容展示",
     "Speaker Map": "说话人映射表",
+    "Enable Marking Mode": "启用标记模式",
     "Original Speaker": "原始说话人",
     "Target Speaker": "映射后的目标说话人",
     "Select Original Speaker": "选择原始说话人",
@@ -233,6 +234,7 @@ i18n_dict = {
     # Polyphone Editor
     "POLYPHONE_NOTICE": "⚠️本功能可修改GPT-SoVITS多音字配置，保存修改后重启API生效⚠️",
     "Polyphone Editor": "多音字编辑",
+    "Overwrite instead of Append": "覆写而不是追加",
     "Read": "读取",
     "Save": "保存",
     # EXTENSIONS

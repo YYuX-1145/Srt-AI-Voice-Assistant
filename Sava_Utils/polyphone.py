@@ -34,12 +34,13 @@ class Polyphone(Base_Componment):
             gr.Markdown(i18n('POLYPHONE_NOTICE'))
             self.language = gr.Dropdown(label=i18n('Choose Language'), value=list(PATH.keys())[1], choices=list(PATH.keys()), interactive=True)
             self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
+            self.overwrite = gr.Checkbox(value=False, label=i18n('Overwrite instead of Append'))
             self.language.change(lambda: np.array([['', '']], dtype=str), outputs=[self.tab])
         with gr.Row():
             self.readbtn = gr.Button(value=i18n('Read'), variant="primary")
             self.readbtn.click(self.read_file, inputs=[self.language], outputs=[self.tab])
             self.writebtn = gr.Button(value=i18n('Save'), variant="primary")
-            self.writebtn.click(self.save_file,inputs=[self.language,self.tab])
+            self.writebtn.click(self.save_file, inputs=[self.language, self.tab, self.overwrite])
 
     def read_file(self, lang):
         if self.gsv_dir in [None, ""] or not os.path.isdir(self.gsv_dir):
@@ -56,10 +57,13 @@ class Polyphone(Base_Componment):
             rows.append(['', ''])
         return np.array(rows, dtype=str)
 
-    def save_file(self, lang, map):
+    def save_file(self, lang, map, overwrite):
         try:
-            x = self.read_file(lang)
-            content = {i[0]: i[-1] for i in x if i[0]}
+            if overwrite:
+                content = {}
+            else:
+                x = self.read_file(lang)
+                content = {i[0]: i[-1] for i in x if i[0]}
             for i in map:
                 if i[0]:
                     if PATTERN[lang].match(i[-1]):
@@ -67,11 +71,11 @@ class Polyphone(Base_Componment):
                     else:
                         gr.Info(f"{i18n('Input format mismatch')}: {i[-1]}")
             with open(os.path.join(self.gsv_dir, PATH[lang]), 'w', encoding='utf-8') as f:
-                for key,value in content.items():
-                    f.write(WRITE_FN[lang](key,value))
-            cachedir=os.path.join(self.gsv_dir, CACHE[lang])
-            if os.path.isfile(cachedir):            
-                os.remove(cachedir)            
+                for key, value in content.items():
+                    f.write(WRITE_FN[lang](key, value))
+            cachedir = os.path.join(self.gsv_dir, CACHE[lang])
+            if os.path.isfile(cachedir):
+                os.remove(cachedir)
             gr.Info(i18n('Done!'))
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")

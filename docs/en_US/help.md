@@ -36,7 +36,7 @@
 
 ### B. Multi-Speaker Scenario
 * **I.** Upload subtitle/text files in the right panel of `Subtitle Dubbing`. 
-* Marking mode: The content of the file should be as follows: `Speaker:Content`, e.x. `Jerry: Hello.` The mapping table can convert the original speaker in the text file into the corresponding target speaker. Filling in the key name of the first row of the mapping table means enabling the marking mode.
+* Marking mode: The content of the file should be as follows: `Speaker:Content`, e.x. `Jerry: Hello.` The mapping table can convert the original speaker in the text file into the corresponding target speaker.  
 
 * **II.** Click `Create Multi-Speaker Dubbing Project` below the file display.
 

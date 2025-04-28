@@ -415,7 +415,7 @@ if __name__ == "__main__":
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
                         with gr.Accordion(i18n('Speaker Map'), open=False):
-                            use_labled_text_mode = gr.Checkbox(label=i18n('Enable labled text mode'))
+                            use_labled_text_mode = gr.Checkbox(label=i18n('Enable Marking Mode'))
                             speaker_map = gr.Dataframe(show_label=False, headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
                             with gr.Row():
                                 origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)

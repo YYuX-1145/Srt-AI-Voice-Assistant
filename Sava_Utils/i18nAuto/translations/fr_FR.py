@@ -37,6 +37,7 @@ i18n_dict = {
     "Select Target Speaker": "Choisissez le Locuteur Cible",
     "Identify Original Speakers": "Identifier les Locuteurs d'Origine",
     "Create Multi-Speaker Dubbing Project": "Créer un projet de doublage à plusieurs locuteurs",
+    "Apply to current Workspace": "Appliquer à l'espace de travail actuel",
     "Custom API": "API personnalisée",
     "Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr": "Taux d'images du projet Adobe Premiere, uniquement applicable aux fichiers csv exportés depuis Pr",
     "API Launcher": "Lanceur d'API",
@@ -57,7 +58,7 @@ i18n_dict = {
     "Copy": "Copier",
     "Merge": "Fusionner",
     "Delete": "Supprimer",
-    "Regenerate All": "Resynthétiser Tout",
+    "Continue Generation": "Continuer la Génération",
     "Find What": "Texte à rechercher",
     "Replace With": "Remplacer par",
     "Enable Regular Expression": "Utiliser les expressions régulières",
@@ -118,6 +119,7 @@ i18n_dict = {
     "Sampling rate of output audio, 0=Auto": "Taux d'échantillonnage de l'audio de sortie, 0=Automatique",
     "Remove inhalation and silence at the beginning and the end of the audio": "Supprimer l'inhalation et le silence au début et à la fin de l'audio. ",
     "Edit Panel Row Count (Requires a restart)": "Nombre de lignes de la barre d'édition, un redémarrage requis",
+    "Export subtitles with speaker name. Fill in your template to enable.": "Exportez les sous-titres avec le nom du locuteur. Remplissez votre modèle pour activer cette fonction.",
     "Theme (Requires a restart)": "Choisir un thème, un redémarrage requis.",
     "Clear temporary files": "Supprimer immédiatement les fichiers temporaires",
     "Submodule Settings": "Paramètres de Sous-Module",
@@ -230,6 +232,12 @@ i18n_dict = {
     "Unload Model": "Décharger le modèle",
     "OLLAMA_NOTICE": "⚠️Le grand modèle de langage (LLM) utilise beaucoup de mémoire vidéo (VRAM) lors de son exécution. N'oubliez pas de sélectionner et de décharger le modèle correspondant pour libérer la mémoire vidéo après utilisation !⚠️",
     "Custom prompt (enabled when filled in)": "Invite personnalisée (activée si remplie)",
+    # Polyphone Editor
+    "POLYPHONE_NOTICE": "⚠️Cette fonctionnalité permet de modifier la configuration des caractères polyphoniques de GPT-SoVITS. Les modifications prendront effet après avoir été enregistrées et après le redémarrage de l'API.⚠️",
+    "Polyphone Editor": "Éditeur polyphonique",
+    "Overwrite instead of Append": "Surcharger plutôt qu'Ajouter",
+    "Read": "Charger",
+    "Save": "Enregistrer",
     # EXTENSIONS
     # WAV2SRT
     "Audio/Video Transcribe": "Transcription audio/vidéo",

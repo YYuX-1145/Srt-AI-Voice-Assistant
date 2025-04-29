@@ -130,7 +130,6 @@ class Subtitles:
         self.dir = dir
         self.sr = 32000
         self.default_speaker = None
-        self.speakers = dict()
 
     def dump(self):
         assert self.dir is not None
@@ -157,7 +156,6 @@ class Subtitles:
     def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
         abs_path = os.path.join(current_path, self.dir)
-        # print(self.speakers)
         audiolist = []
         delayed_list = []
         failed_list = []
@@ -260,7 +258,10 @@ class Subtitles:
                 end = to_time(i.real_et / self.sr)
             srt_content.append(str(idx) + "\n")
             srt_content.append(f"{start} --> {end}" + "\n")
-            srt_content.append(i.text + "\n")
+            if Sava_Utils.config.export_spk_pattern and i.speaker:
+                srt_content.append(Sava_Utils.config.export_spk_pattern.replace(r"{#NAME}", i.speaker).replace(r"{#TEXT}", i.text.strip()) + "\n")
+            else:
+                srt_content.append(i.text + "\n")
             srt_content.append("\n")
         if fp is None:
             t = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')

@@ -1,18 +1,13 @@
+from ..base_componment import Base_Componment
 from abc import ABC, abstractmethod
 
 
-class TTSProjet(ABC):
-    _instances = {}
+class TTSProjet(Base_Componment):
 
     def __init__(self, name, config):
         self.name = name
-        self.server_mode = False
         self.args = []
-        self.ui = False
-        self.update_cfg(config)
-
-    def update_cfg(self, config):
-        self.server_mode = config.server_mode
+        super().__init__(config)
 
     @abstractmethod
     def api(self, *args, **kwargs):
@@ -24,22 +19,6 @@ class TTSProjet(ABC):
 
     def before_gen_action(self, *args, **kwargs):
         pass
-
-    def __new__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__new__(cls)
-        return cls._instances[cls]
-
-    def getUI(self):
-        if not self.ui:
-            self.ui = True
-            return self._UI()
-        else:
-            raise "ERR"
-
-    @abstractmethod
-    def _UI(self):
-        raise "err"
 
     @abstractmethod
     def arg_filter(self, *args):

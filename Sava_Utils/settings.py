@@ -62,6 +62,7 @@ class Settings:
         output_sr: int = 0,
         remove_silence: bool = False,
         num_edit_rows: int = 7,
+        export_spk_pattern: str = "",
         theme: str = "default",
         bv2_pydir: str = "",
         bv2_dir: str = "",
@@ -87,22 +88,23 @@ class Settings:
         self.output_sr = int(output_sr)
         self.remove_silence = remove_silence
         self.num_edit_rows = int(num_edit_rows)
+        self.export_spk_pattern = export_spk_pattern
         self.theme = theme
-        self.bv2_pydir = bv2_pydir
-        self.bv2_dir = os.path.abspath(bv2_dir) if bv2_dir else bv2_dir
+        self.bv2_pydir = bv2_pydir.strip('"')
+        self.bv2_dir = os.path.abspath(bv2_dir.strip('"')) if bv2_dir else bv2_dir
         self.bv2_args = bv2_args
         self.gsv_fallback = gsv_fallback
-        self.gsv_pydir = gsv_pydir
-        self.gsv_dir = os.path.abspath(gsv_dir) if gsv_dir else gsv_dir
+        self.gsv_pydir = gsv_pydir.strip('"')
+        self.gsv_dir = os.path.abspath(gsv_dir.strip('"')) if gsv_dir else gsv_dir
         self.gsv_args = gsv_args
         self.ms_region = ms_region
         self.ms_key = ms_key
         self.ms_lang_option = ms_lang_option
         self.ollama_url = ollama_url
         # detect python envs####
-        if bv2_pydir != "":
-            if os.path.exists(bv2_pydir):
-                self.bv2_pydir = os.path.abspath(bv2_pydir)
+        if self.bv2_pydir != "":
+            if os.path.exists(self.bv2_pydir):
+                self.bv2_pydir = os.path.abspath(self.bv2_pydir)
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir}")
                 self.bv2_pydir = ""
@@ -113,9 +115,9 @@ class Settings:
             else:
                 self.bv2_pydir = ""
 
-        if gsv_pydir != "":
-            if os.path.exists(gsv_pydir):
-                self.gsv_pydir = os.path.abspath(gsv_pydir)
+        if self.gsv_pydir != "":
+            if os.path.exists(self.gsv_pydir):
+                self.gsv_pydir = os.path.abspath(self.gsv_pydir)
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
                 self.gsv_pydir = ""
@@ -195,8 +197,9 @@ class Settings_UI:
         self._apply_to_componments()
 
     def _apply_to_componments(self):
-        for i in self.componments:
-            i.update_cfg(config=Sava_Utils.config)
+        for item in self.componments.values():
+            for i in item:
+                i.update_cfg(config=Sava_Utils.config)
 
     def save_settngs(self, *args):
         current_edit_rows = Sava_Utils.config.num_edit_rows
@@ -225,8 +228,8 @@ class Settings_UI:
             gr.Markdown(value=i18n('General'))
             self.language = gr.Dropdown(label="Language (Requires a restart)", value=Sava_Utils.config.language, allow_custom_value=False, choices=['Auto', "en_US", "zh_CN", "ja_JP", "ko_KR", "fr_FR"])
             with gr.Row():
-                self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.'), value=Sava_Utils.config.server_port, minimum=0, scale=3)
-                self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access, scale=1)
+                self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.'), value=Sava_Utils.config.server_port, minimum=0)
+                self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access)
             with gr.Row():
                 self.overwrite_workspace = gr.Checkbox(label=i18n('Overwrite history records with files of the same name instead of creating a new project.'), value=Sava_Utils.config.overwrite_workspace, interactive=True)
                 self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup (which will also erase history records).'), value=Sava_Utils.config.clear_tmp, interactive=True)
@@ -240,7 +243,9 @@ class Settings_UI:
                 with gr.Row():
                     self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
                     self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
-            self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
+                with gr.Row():
+                    self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
+                    self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
         with gr.Accordion(i18n('Submodule Settings'),open=False):
             with gr.Group():
@@ -280,6 +285,7 @@ class Settings_UI:
             self.output_sr,
             self.remove_silence,
             self.num_edit_rows,
+            self.export_spk_pattern,
             self.theme,
             self.bv2_pydir_input,
             self.bv2_dir_input,

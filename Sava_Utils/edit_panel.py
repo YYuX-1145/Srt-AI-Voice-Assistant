@@ -63,13 +63,17 @@ def play_audio(idx, subtitle_list):
     return p
 
 
-def getworklist():
+def getworklist(value=None):
     try:
         assert not Sava_Utils.config.server_mode
         c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces"))
-        return gr.update(choices=c, value=c[-1])
+        return gr.update(choices=c, value=value if value else c[-1])
     except:
-        return gr.update(choices=[""])
+        if value:
+            c = [value]
+        else:
+            c = [""]
+        return gr.update(choices=c, value=value if value else "")
 
 
 def getspklist(value="None"):
@@ -182,27 +186,27 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
     indexlist = args[Sava_Utils.config.num_edit_rows :]
     assert len(checklist) == len(indexlist)
     subtitles.default_speaker = speaker
-    if speaker is not None and speaker not in subtitles.speakers.keys():
-        subtitles.speakers[speaker] = 0
     for i in range(Sava_Utils.config.num_edit_rows):
-        if checklist[i] and int(indexlist[i]) != -1:
-            if subtitles[int(indexlist[i])].speaker is not None:
-                subtitles.speakers[subtitles[int(indexlist[i])].speaker] -= 1
-            if subtitles[int(indexlist[i])].speaker != speaker:
-                subtitles[int(indexlist[i])].speaker = speaker
-                subtitles[int(indexlist[i])].is_success = None
-            if speaker is not None:
-                subtitles.speakers[speaker] += 1
+        if checklist[i] and int(indexlist[i]) != -1 and subtitles[int(indexlist[i])].speaker != speaker:
+            subtitles[int(indexlist[i])].speaker = speaker
+            subtitles[int(indexlist[i])].is_success = None
     subtitles.dump()
     return *checklist, *show_page(page, subtitles)
 
 
-# def set_default_speaker(speaker,subtitles:Subtitles):
-#     if subtitles is None or len(subtitles) == 0:
-#         return
-#     if speaker in ["", "None", []]:
-#         speaker = None
-#     subtitles.default_speaker=speaker
+def apply_spkmap2workspace(speaker_map, page, subtitles: Subtitles):
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n("There is no subtitle in the current workspace"))
+        return show_page(page, Subtitles())
+    spk_dict = {i[0]: i[-1] for i in speaker_map}
+    for i in subtitles:
+        try:
+            i.speaker = spk_dict[str(i.speaker)]
+            i.is_success = None
+        except KeyError:    
+            pass
+    gr.Info(i18n('Done!'))
+    return show_page(page, subtitles)
 
 
 def del_spk(name):

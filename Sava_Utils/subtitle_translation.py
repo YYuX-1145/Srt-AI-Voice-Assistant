@@ -5,6 +5,7 @@ from tqdm import tqdm
 import Sava_Utils
 from . import i18n
 from .utils import read_file
+from .base_componment import Base_Componment
 from .translator.ollama import Ollama
 
 
@@ -36,7 +37,7 @@ def start_translation(in_files, language, output_dir, *args, translator=None):
     return "OK" if len(output_list) == len(in_files) else i18n('An error occurred'), output_list
 
 
-class Translation_module:
+class Translation_module(Base_Componment):
     def __init__(self, config):
         self.ui = False
         self.config = config
@@ -46,8 +47,9 @@ class Translation_module:
         self.config = config
         for i in TRANSLATORS.values():
             i.update_cfg(config=config)
+        super().update_cfg(config)
 
-    def UI(self, *args):
+    def getUI(self, *args):
         if not self.ui:
             self.ui = True
             self._UI(*args)

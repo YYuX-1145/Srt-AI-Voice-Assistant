@@ -189,11 +189,6 @@ def read_labeled_txt(filename: str, spk_dict: dict):
                         speaker = None
                     subtitle_list.append(Subtitle(idx, "00:00:00,000", "00:00:00,000", match.group(2).strip(), ntype="srt", speaker=speaker))
                     idx += 1
-                    if speaker is not None:
-                        if speaker not in list(subtitle_list.speakers.keys()):
-                            subtitle_list.speakers[speaker] = 1
-                        else:
-                            subtitle_list.speakers[speaker] += 1
                 else:
                     subtitle_list[-1].text += ',' + line
             if not subtitle_list[0].text:
@@ -211,21 +206,14 @@ def get_speaker_map(in_files):
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return None, gr.update(choices=None,value=None)
     filename = in_files[0].name
-    if filename[-4:].lower() != ".txt":
-        gr.Info("labeled texts mode only supports .txt")
-        return None, gr.update(choices=None, value=None)
+    subtitles = read_labeled_file(filename, spk_dict={}, fps=30, offset=0)
     speakers = set()
+    for i in subtitles:
+        if i.speaker:
+            speakers.add(i.speaker)
     rows = []
-    with open(filename, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.startswith("#") or line.strip() == "":
-                continue
-            match = LABELED_TXT_PATTERN.match(line.strip())
-            if match:
-                speaker = match.group(1).strip()
-                speakers.add(speaker)
-        for speaker in speakers:
-            rows.append([speaker, 'None'])
+    for i in speakers:
+        rows.append([i, 'None'])
     if len(rows)==0:
         rows.append(['',''])
     return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
@@ -257,25 +245,44 @@ def read_file(file_name, fps=30, offset=0):
     return subtitle_list
 
 
-def create_multi_speaker(in_files, speaker_map, fps, offset):
+def read_labeled_file(file_name, spk_dict, fps=30, offset=0):
+    if file_name[-4:].lower() == ".txt":
+        subtitle_list = read_labeled_txt(file_name, spk_dict)
+    else:
+        try:
+            subtitle_list = read_file(file_name, fps, offset)
+        except Exception as e:
+            gr.Warning(str(e))
+            return Subtitles()
+        for i in subtitle_list:
+            match = LABELED_TXT_PATTERN.match(i.text.strip())
+            if match:
+                speaker = match.group(1).strip()
+                speaker = spk_dict.get(speaker, speaker)
+                if speaker in ['', 'None']:
+                    speaker = None
+                i.speaker = speaker
+                i.text = match.group(2).strip()
+    return subtitle_list    
+
+def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offset):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()
     in_file = in_files[0]
     try:
-        if speaker_map[0][0] == "":
+        if not use_labled_text_mode:
             subtitle_list = read_file(in_file.name, fps, offset)
         else:
             spk_dict = {i[0]: i[-1] for i in speaker_map}
-            assert in_file.name[-4:].lower() == ".txt", "labeled texts mode only supports .txt"
-            subtitle_list = read_labeled_txt(in_file.name, spk_dict)
+            subtitle_list = read_labeled_file(in_file.name, spk_dict, fps, offset)
             assert len(subtitle_list) != 0, "Empty???"
     except Exception as e:
         what = str(e)
         gr.Warning(what)
         return getworklist(), *load_page(Subtitles()), Subtitles()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
-    return getworklist(), *load_page(subtitle_list), subtitle_list
+    return getworklist(value=os.path.basename(subtitle_list.dir)), *load_page(subtitle_list), subtitle_list
 
 
 def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):

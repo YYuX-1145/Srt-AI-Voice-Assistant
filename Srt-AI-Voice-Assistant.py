@@ -35,14 +35,20 @@ import Sava_Utils.tts_projects.gsv
 import Sava_Utils.tts_projects.mstts
 import Sava_Utils.tts_projects.custom
 from Sava_Utils.subtitle_translation import Translation_module
+from Sava_Utils.polyphone import Polyphone
 
 BV2 = Sava_Utils.tts_projects.bv2.BV2(Sava_Utils.config)
 GSV = Sava_Utils.tts_projects.gsv.GSV(Sava_Utils.config)
 MSTTS = Sava_Utils.tts_projects.mstts.MSTTS(Sava_Utils.config)
 CUSTOM = Sava_Utils.tts_projects.custom.Custom(Sava_Utils.config)
 TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
+POLYPHONE = Polyphone(Sava_Utils.config)
 Projet_dict = {"bv2": BV2, "gsv": GSV, "mstts": MSTTS, "custom": CUSTOM}
-componments = [BV2, GSV, MSTTS, CUSTOM]
+componments = {
+    1: [GSV, BV2, MSTTS, CUSTOM],
+    2: [TRANSLATION_MODULE, POLYPHONE],
+    3: [],
+}
 
 
 def custom_api(text):
@@ -126,7 +132,7 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     return (
         (sr, audio),
         f"{i18n('Done! Time used')}:{use_time}",
-        getworklist(),
+        getworklist(value=os.path.basename(subtitle_list.dir)),
         *load_page(subtitle_list),
         subtitle_list,
     )
@@ -147,12 +153,6 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     if len(subtitles) == 0 or subtitles is None:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return *show_page(page, Subtitles()), None
-    for key in list(subtitles.speakers.keys()):
-        if subtitles.speakers[key] <= 0:
-            subtitles.speakers.pop(key)
-    if len(list(subtitles.speakers.keys())) == 0 and subtitles.default_speaker is None and subtitles.proj is None:
-        gr.Warning(i18n('Warning: No speaker has been assigned'))
-        return *show_page(page, subtitles), None
     proj_args = (None, None, *args[:-1])
     if remake:
         todo = [i for i in subtitles if not i.is_success]
@@ -162,12 +162,15 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
         gr.Info(i18n('No subtitles are going to be resynthesized.'))
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
-    tasks = {key: [] for key in [*list(subtitles.speakers.keys()), None]}
+    tasks = dict()
     for i in todo:
-        tasks[i.speaker].append(i)
-    for key in list(tasks.keys()):
-        if len(tasks[key]) == 0:
-            tasks.pop((key))
+        try:
+            tasks[i.speaker].append(i)
+        except KeyError:
+            tasks[i.speaker] = [i]
+    if list(tasks.keys()) == [None] and subtitles.default_speaker is None and subtitles.proj is None:
+        gr.Warning(i18n('Warning: No speaker has been assigned'))
+        return *show_page(page, subtitles), None
     ok = True
     progress = 0
     for key in tasks.keys():
@@ -188,6 +191,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
                 with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
                     info = pickle.load(f)
             except FileNotFoundError:
+                ok = False
                 logger.error(f"{i18n('Speaker archive not found')}: {spk}")
                 gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
                 continue
@@ -197,6 +201,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             args, kwargs = Projet_dict[project].arg_filter(*args)
             Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
         except Exception as e:
+            ok = False
             gr.Warning(str(e))
             continue
         if Sava_Utils.config.server_mode:
@@ -233,6 +238,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     if remake:
         if ok:
             gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
+        subtitles.dump()
         return show_page(page, subtitles)
     audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
     return *show_page(page, subtitles), audio
@@ -409,22 +415,20 @@ if __name__ == "__main__":
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
                         with gr.Accordion(i18n('Speaker Map'), open=False):
+                            use_labled_text_mode = gr.Checkbox(label=i18n('Enable Marking Mode'))
                             speaker_map = gr.Dataframe(show_label=False, headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
                             with gr.Row():
                                 origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)
                                 speaker_list0 = gr.Dropdown(label=i18n('Select Target Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=False)
                                 speaker_list0.change(modify_spkmap, inputs=[origin_speaker_list, speaker_list0, speaker_map], outputs=[speaker_map])
                             update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
+                            apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
-                        with gr.TabItem("AR-TTS"):
-                            GSV_ARGS = GSV.getUI()
-                        with gr.TabItem("Bert-VITS2-HiyoriUI"):
-                            BV2_ARGS = BV2.getUI()
-                        with gr.TabItem("Azure-TTS(Microsoft)"):
-                            MSTTS_ARGS = MSTTS.getUI()
-                        with gr.TabItem(i18n('Custom API')):
-                            CUSTOM.getUI()
+                        TTS_ARGS=[]
+                        for i in componments[1]:
+                            TTS_ARGS.append(i.getUI())
+                    GSV_ARGS,BV2_ARGS,MSTTS_ARGS,CUSTOM_ARGS=TTS_ARGS
                     with gr.Column():
                         fps = gr.Number(label=i18n('Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr'), value=30, visible=True, interactive=True, minimum=1)
                         workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
@@ -448,13 +452,12 @@ if __name__ == "__main__":
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
                             worklist = gr.Dropdown(
-                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) else [""],
+                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) and not Sava_Utils.config.server_mode else [""],
                                 label=i18n('History'),
                                 scale=2,
-                                visible=not Sava_Utils.config.server_mode,
                             )
-                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
-                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60, visible=not Sava_Utils.config.server_mode)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
                             audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4)
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)
@@ -499,20 +502,20 @@ if __name__ == "__main__":
                             clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=50)
                             clear_selection_btn.click(lambda: [False for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
                             apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
-                            apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=[*edit_rows])
+                            apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
                             copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)
                             copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
                             merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=50)
                             merge_btn.click(merge_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
                             delete_btn = gr.Button(value=i18n('Delete'), interactive=True, min_width=50)
                             delete_btn.click(delete_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
-                            all_regen_btn_bv2 = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            all_regen_btn_bv2 = gr.Button(value=i18n('Continue Generation'), variant="primary", visible=False, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_bv2)
-                            all_regen_btn_gsv = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=True, interactive=True, min_width=50)
+                            all_regen_btn_gsv = gr.Button(value=i18n('Continue Generation'), variant="primary", visible=True, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_gsv)
-                            all_regen_btn_mstts = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            all_regen_btn_mstts = gr.Button(value=i18n('Continue Generation'), variant="primary", visible=False, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_mstts)
-                            all_regen_btn_custom = gr.Button(value=i18n('Regenerate All'), variant="primary", visible=False, interactive=True, min_width=50)
+                            all_regen_btn_custom = gr.Button(value=i18n('Continue Generation'), variant="primary", visible=False, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_custom)
                             all_regen_btn_bv2.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *BV2_ARGS, STATE], outputs=edit_rows)
                             all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
@@ -522,6 +525,8 @@ if __name__ == "__main__":
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
                         recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
+
+                        apply_spkmap2workspace_btn.click(apply_spkmap2workspace,inputs=[speaker_map,page_slider,STATE],outputs=edit_rows)
 
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row(equal_height=True):
@@ -556,15 +561,15 @@ if __name__ == "__main__":
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
-                TRANSLATION_MODULE.UI(input_file)
-                componments.append(TRANSLATION_MODULE)
+                for i in componments[2]:
+                    i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
                 available = False
                 from Sava_Utils.extern_extensions.wav2srt import WAV2SRT
 
                 WAV2SRT = WAV2SRT(config=Sava_Utils.config)
-                componments.append(WAV2SRT)
-                available = WAV2SRT.UI(input_file, TRANSLATION_MODULE.translation_upload)
+                componments[3].append(WAV2SRT)
+                available = WAV2SRT.getUI(input_file, TRANSLATION_MODULE.translation_upload)
                 if not available:
                     gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem(i18n('Settings')):
@@ -582,7 +587,7 @@ if __name__ == "__main__":
                             gr.Markdown(value=MANUAL.getInfo("help"))
 
         update_spkmap_btn.click(get_speaker_map, inputs=[input_file], outputs=[speaker_map, origin_speaker_list])
-        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
+        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode,speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
         BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])

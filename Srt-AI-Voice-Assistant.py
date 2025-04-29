@@ -238,6 +238,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     if remake:
         if ok:
             gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
+        subtitles.dump()
         return show_page(page, subtitles)
     audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
     return *show_page(page, subtitles), audio

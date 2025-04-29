@@ -12,10 +12,12 @@ OUT_DIR_DEFAULT=os.path.join(current_path,"SAVAdata","output")
 class WAV2SRT(Base_Componment):
     def __init__(self, config):
         self.gsv_pydir = ""
+        self.gsv_dir = ""
         super().__init__(config)
 
     def update_cfg(self, config):
         self.gsv_pydir = config.gsv_pydir
+        self.gsv_dir = config.gsv_dir
         super().update_cfg(config)
 
     def _UI(self, file_main, file_tr):
@@ -81,7 +83,7 @@ class WAV2SRT(Base_Componment):
             msg+=f"{i18n('Processing')}: {os.path.basename(input.name)}\n"
             output_path=f"{os.path.join(out_dir,os.path.basename(input.name))}.srt"
             command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{output_path}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}'
-            x=rc_bg(command=command,dir=self.gsv_dir if self.gsv_dir else current_path)
+            x=rc_bg(command=command,dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
             pid=next(x)
             yield pid,msg,output_list
             exit_code=next(x)

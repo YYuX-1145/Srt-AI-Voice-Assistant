@@ -36,11 +36,11 @@ class Polyphone(Base_Componment):
             self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
             self.overwrite = gr.Checkbox(value=False, label=i18n('Overwrite instead of Append'))
             self.language.change(lambda: np.array([['', '']], dtype=str), outputs=[self.tab])
-        with gr.Row():
-            self.readbtn = gr.Button(value=i18n('Read'), variant="primary")
-            self.readbtn.click(self.read_file, inputs=[self.language], outputs=[self.tab])
-            self.writebtn = gr.Button(value=i18n('Save'), variant="primary")
-            self.writebtn.click(self.save_file, inputs=[self.language, self.tab, self.overwrite])
+            with gr.Row():
+                self.readbtn = gr.Button(value=i18n('Read'), variant="primary")
+                self.readbtn.click(self.read_file, inputs=[self.language], outputs=[self.tab])
+                self.writebtn = gr.Button(value=i18n('Save'), variant="primary")
+                self.writebtn.click(self.save_file, inputs=[self.language, self.tab, self.overwrite])
 
     def read_file(self, lang):
         if self.gsv_dir in [None, ""] or not os.path.isdir(self.gsv_dir):

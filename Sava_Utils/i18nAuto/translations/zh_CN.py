@@ -59,7 +59,7 @@ i18n_dict = {
     "Copy": "复制",
     "Merge": "合并",
     "Delete": "删除",
-    "Regenerate All": "重新生成",
+    "Continue Generation": "继续生成",
     "Find What": "查找目标",
     "Replace With": "替换为",
     "Enable Regular Expression": "使用正则表达式",

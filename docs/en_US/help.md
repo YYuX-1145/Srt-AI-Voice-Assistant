@@ -64,7 +64,7 @@
     * Uses speaker-specific parameters if assigned.
     * Multi-speaker projects must have assigned speakers.
 
-* **IV.** After making changes to the subtitles, you can also click `Regenerate All` to regenerate the audios of the changed subtitles or those that failed to be synthesized.
+* **IV.** After making changes to the subtitles, you can also click `Continue Generation` to regenerate the audios of the changed subtitles or those that failed to be synthesized.
 
 * **V.** Click `Reassemble Audio` to recompose full audio.
 

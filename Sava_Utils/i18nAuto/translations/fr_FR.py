@@ -58,7 +58,7 @@ i18n_dict = {
     "Copy": "Copier",
     "Merge": "Fusionner",
     "Delete": "Supprimer",
-    "Regenerate All": "Resynthétiser Tout",
+    "Continue Generation": "Continuer la Génération",
     "Find What": "Texte à rechercher",
     "Replace With": "Remplacer par",
     "Enable Regular Expression": "Utiliser les expressions régulières",

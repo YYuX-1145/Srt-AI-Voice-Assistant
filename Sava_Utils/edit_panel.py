@@ -245,14 +245,14 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
     if enable_re:
         try:
             pat = re.compile(find_text_expression)
+            for i in subtitles:
+                i.text, count = pat.subn(target_text, i.text)
+                if count != 0:
+                    i.is_success = None
+                    replaced.append(i.index)
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")
-            return load_page(subtitles)
-        for i in subtitles:
-            i.text, count = pat.subn(target_text, i.text)
-            if count != 0:
-                i.is_success = None
-                replaced.append(i.index)
+            return load_page(subtitles)                
     else:
         for i in subtitles:
             x = i.text.replace(find_text_expression, target_text)

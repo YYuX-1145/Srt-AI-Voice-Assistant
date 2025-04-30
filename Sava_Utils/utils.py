@@ -158,7 +158,7 @@ def read_txt(filename):
     try:
         with open(filename, "r", encoding="utf-8") as f:
             text = f.read()
-        sentences = re.split(r"(?<=[!?。！？])|\n|(?<=[.])(?=\s|$)", text)
+        sentences = re.split(r"(?<=[!?。！？])(?=[^!?。！？（）()[\]【】'\"“”]|$)|\n|(?<=[.])(?=\s|$)", text)
         sentences = [s.strip() for s in sentences if s.strip()]
         subtitle_list = Subtitles()
         idx = 1

@@ -10,7 +10,7 @@ log_colors = {
     "ERROR": "red",
     "CRITICAL": "bold_red",
 }
-logger = logging.getLogger()
+logger = logging.getLogger("SAVA")
 logger.setLevel(logging.INFO)
 try:
     import colorlog

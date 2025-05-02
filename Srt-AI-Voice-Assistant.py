@@ -430,9 +430,10 @@ if __name__ == "__main__":
                             TTS_ARGS.append(i.getUI())
                     GSV_ARGS,BV2_ARGS,MSTTS_ARGS,CUSTOM_ARGS=TTS_ARGS
                     with gr.Column():
-                        fps = gr.Number(label=i18n('Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr'), value=30, visible=True, interactive=True, minimum=1)
-                        workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
-                        offset = gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label=i18n('Voice time offset (seconds)'))
+                        with gr.Accordion(i18n('Other Parameters'), open=True):
+                            fps = gr.Number(label=i18n('Frame rate of Adobe Premiere project, only applicable to csv files exported from Pr'), value=30, visible=True, interactive=True, minimum=1)
+                            workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
+                            offset = gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label=i18n('Voice time offset (seconds)'))
                         input_file = gr.File(label=i18n('Upload file (Batch mode only supports one speaker at a time)'), file_types=['.csv', '.srt', '.txt'], file_count='multiple')
                         gen_textbox_output_text = gr.Textbox(label=i18n('Output Info'), interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
@@ -459,12 +460,12 @@ if __name__ == "__main__":
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
-                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4)
+                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, waveform_options={"show_recording_waveform":False}, scale=4)
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)
                             export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index = gr.Number(show_label=False, visible=False, value=-1, interactive=False)  # real index
-                            with gr.Row():
+                            with gr.Row(equal_height=True):
                                 edit_check = gr.Checkbox(value=False, interactive=True, min_width=40, label="", scale=0)
                                 edit_check_list.append(edit_check)
                                 edit_rows.append(edit_real_index)  # real index
@@ -477,7 +478,7 @@ if __name__ == "__main__":
                                 edit_rows.append(s_txt)
                                 edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
                                 edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
-                                with gr.Row():
+                                with gr.Row(equal_height=True):
                                     __ = gr.Button(value="▶️", scale=1, min_width=60)
                                     __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
                                     bv2regenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)

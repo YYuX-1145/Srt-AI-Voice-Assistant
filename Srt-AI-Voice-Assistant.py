@@ -2,6 +2,7 @@ import os
 import sys
 import io
 import inspect
+import warnings
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
@@ -14,6 +15,7 @@ os.environ["current_path"] = current_path
 import shutil
 
 import gradio as gr
+warnings.filterwarnings("ignore", category=UserWarning)
 
 import json
 

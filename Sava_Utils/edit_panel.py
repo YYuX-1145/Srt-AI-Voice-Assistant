@@ -57,10 +57,12 @@ def show_page(page_start, subtitle_list: Subtitles):
 def play_audio(idx, subtitle_list):
     i = int(idx)
     p = os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
+    yield None
     if i == -1 or not os.path.exists(p):
         gr.Info(i18n('Not available!'))
-        return None
-    return p
+        yield None
+    else:
+        yield p
 
 
 def getworklist(value=None):

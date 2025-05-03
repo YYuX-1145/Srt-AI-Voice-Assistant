@@ -8,8 +8,8 @@ import os
 PATH = {"ZH": "GPT_SoVITS/text/g2pw/polyphonic.rep", "EN": "GPT_SoVITS/text/engdict-hot.rep"}
 CACHE = {"ZH": "GPT_SoVITS/text/g2pw/polyphonic.pickle", "EN": "GPT_SoVITS/text/engdict_cache.pickle"}
 
-ZH_SINGLE_PY_PATTERN = re.compile(r"[a-z]+[0-5]")
-ZH_FORMAT_PATTERN = re.compile(r"^[a-z]+[0-5](?:\s+[a-z]+[0-5])*$")
+ZH_SINGLE_PY_PATTERN = re.compile(r"[a-z]+[1-5]")
+ZH_FORMAT_PATTERN = re.compile(r"^[a-z]+[1-5](?:\s+[a-z]+[1-5])*$")
 # Raw: 一丝不苟: ['yi1', 'si1', 'bu4', 'gou3']
 # Userinput: yi1 si1 bu4 gou3
 EN_FORMAT_PATTERN = re.compile(r"^[A-Z]+[0-2]{0,1}(?:\s+[A-Z]+[0-2]{0,1})*$")

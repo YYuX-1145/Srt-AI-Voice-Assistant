@@ -531,11 +531,12 @@ if __name__ == "__main__":
 
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row(equal_height=True):
-                                find_text_expression = gr.Text(show_label=False, placeholder=i18n('Find What'), scale=3)
-                                target_text = gr.Text(show_label=False, placeholder=i18n('Replace With'), scale=3)
+                                find_text_expression = gr.Textbox(show_label=False, placeholder=i18n('Find What'), scale=3)
+                                target_text = gr.Textbox(show_label=False, placeholder=i18n('Replace With'), scale=3)
+                                find_and_rep_exec = gr.Textbox(show_label=False, placeholder=r'Exec... e.g. item.speaker="Name"', scale=3, visible=not Sava_Utils.config.server_mode)
                                 enable_re = gr.Checkbox(label=i18n('Enable Regular Expression'), min_width=60, scale=1)
                                 find_and_replace_btn = gr.Button(value=i18n('Replace All'), variant="primary", min_width=60, scale=1)
-                                find_and_replace_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, enable_re, page_slider], outputs=[page_slider, *edit_rows])
+                                find_and_replace_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, find_and_rep_exec, enable_re, page_slider], outputs=[page_slider, *edit_rows])
                 with gr.Accordion(label=i18n('Multi-speaker dubbing')):
                     with gr.Row(equal_height=True):
                         speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=not Sava_Utils.config.server_mode, scale=4)

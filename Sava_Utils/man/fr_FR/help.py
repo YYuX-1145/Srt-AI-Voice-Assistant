@@ -28,7 +28,7 @@ help = r"""
 
 ### A. Scénario avec un seul locuteur
 * **I.** Téléchargez les fichiers de sous-titres ou de texte dans le panneau de droite de la page `Doublage de sous-titres`.
-* Mode de balisage : Le contenu du fichier doit être le suivant : `Locuteur : Contenu`, e.x `Vincent:Bonjour.` Le tableau de correspondance peut convertir le locuteur d'origine dans le fichier de texte en locuteur cible correspondant.  
+* Mode de balisage : Le contenu du fichier doit être le suivant : `Locuteur : Contenu`, e.g. `Vincent:Bonjour.` Le tableau de correspondance peut convertir le locuteur d'origine dans le fichier de texte en locuteur cible correspondant.  
 
 * **II.** Sélectionnez votre projet et ajustez les paramètres dans le panneau central.
 

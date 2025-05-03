@@ -234,7 +234,7 @@ def switch_spk_proj(name):
         raise ""
 
 
-def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, enable_re: bool, page_index:int=1):
+def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, exec_code:str, enable_re: bool, page_index:int=1):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return load_page(Subtitles())
@@ -245,20 +245,28 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
     if enable_re:
         try:
             pat = re.compile(find_text_expression)
-            for i in subtitles:
-                i.text, count = pat.subn(target_text, i.text)
+            LEN = len(subtitles)
+            for i,item in enumerate(reversed(subtitles)):
+                index = LEN - i - 1
+                item.text, count = pat.subn(target_text, item.text)
                 if count != 0:
-                    i.is_success = None
-                    replaced.append(i.index)
+                    item.is_success = None
+                    replaced.insert(0, item.index)
+                    if exec_code and not Sava_Utils.config.server_mode:
+                        exec(exec_code)
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")
             return load_page(subtitles)                
     else:
-        for i in subtitles:
-            x = i.text.replace(find_text_expression, target_text)
-            if i.text != x:
-                i.text = x
-                i.is_success = None
-                replaced.append(i.index)
+        LEN = len(subtitles)
+        for i, item in enumerate(reversed(subtitles)):
+            index =  LEN - i - 1
+            x = item.text.replace(find_text_expression, target_text)
+            if item.text != x:
+                item.text = x
+                item.is_success = None
+                replaced.insert(0, item.index)
+                if exec_code and not Sava_Utils.config.server_mode:
+                    exec(exec_code)
     gr.Info(f"Found and replaced {len(replaced)} subtitle(s).\n{replaced}")
     return load_page(subtitles, page_index)

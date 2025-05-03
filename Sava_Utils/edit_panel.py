@@ -240,7 +240,7 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
         return load_page(Subtitles())
     if find_text_expression == '':
         gr.Warning(i18n('You must enter the text to find.'))
-        return load_page(subtitles)
+        return load_page(subtitles, page_index)
     replaced=[]
     if enable_re:
         try:
@@ -256,7 +256,7 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
                         exec(exec_code)
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")
-            return load_page(subtitles)                
+            return load_page(subtitles, page_index)
     else:
         LEN = len(subtitles)
         for i, item in enumerate(reversed(subtitles)):
@@ -266,7 +266,11 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
                 item.text = x
                 item.is_success = None
                 replaced.insert(0, item.index)
-                if exec_code and not Sava_Utils.config.server_mode:
-                    exec(exec_code)
+                try:
+                    if exec_code and not Sava_Utils.config.server_mode:
+                        exec(exec_code)
+                except Exception as e:
+                    gr.Warning(f"Error: {str(e)}")
+                    return load_page(subtitles, page_index)
     gr.Info(f"Found and replaced {len(replaced)} subtitle(s).\n{replaced}")
     return load_page(subtitles, page_index)

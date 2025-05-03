@@ -8,14 +8,22 @@ import os
 PATH = {"ZH": "GPT_SoVITS/text/g2pw/polyphonic.rep", "EN": "GPT_SoVITS/text/engdict-hot.rep"}
 CACHE = {"ZH": "GPT_SoVITS/text/g2pw/polyphonic.pickle", "EN": "GPT_SoVITS/text/engdict_cache.pickle"}
 
-ZH_FORMAT_PATTERN = re.compile(r"^\['[a-z]+[1-5]'(?:,\s*'[a-z]+[1-5]')*\]$")
-# 一丝不苟: ['yi1', 'si1', 'bu4', 'gou3']
+ZH_SINGLE_PY_PATTERN = re.compile(r"[a-z]+[0-5]")
+ZH_FORMAT_PATTERN = re.compile(r"^[a-z]+[0-5](?:\s+[a-z]+[0-5])*$")
+# Raw: 一丝不苟: ['yi1', 'si1', 'bu4', 'gou3']
+# Userinput: yi1 si1 bu4 gou3
 EN_FORMAT_PATTERN = re.compile(r"^[A-Z]+[0-2]{0,1}(?:\s+[A-Z]+[0-2]{0,1})*$")
 # CHATGPT CH AE1 T JH IY1 P IY1 T IY1
 PATTERN = {"ZH": ZH_FORMAT_PATTERN, "EN": EN_FORMAT_PATTERN}
 
-READ_FN = {"ZH": lambda x: [i.strip() for i in x.split(":")], "EN": lambda x: [i.strip() for i in x.split(' ', 1)]}
-WRITE_FN = {"ZH": lambda x, y: f"{x}: {y}\n", "EN": lambda x, y: f"{x} {y}\n"}
+
+def read_fn_zh(x: str):
+    key, content_raw = x.split(":")
+    items = ZH_SINGLE_PY_PATTERN.findall(content_raw)
+    result = ' '.join(items)
+    return key.strip(), result
+READ_FN = {"ZH": read_fn_zh, "EN": lambda x: [i.strip() for i in x.split(' ', 1)]}
+WRITE_FN = {"ZH": lambda x, y: f"{x}: {str(y.split())}\n", "EN": lambda x, y: f"{x} {y}\n"}
 
 
 class Polyphone(Base_Componment):
@@ -66,6 +74,7 @@ class Polyphone(Base_Componment):
                 content = {i[0]: i[-1] for i in x if i[0]}
             for i in map:
                 if i[0]:
+                    i[-1] = i[-1].strip()
                     if PATTERN[lang].match(i[-1]):
                         content[i[0]] = i[-1]
                     else:

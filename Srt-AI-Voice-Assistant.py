@@ -325,6 +325,8 @@ def remake(*args):
     if Sava_Utils.config.server_mode and len(s_txt) > 512:
         gr.Warning("too long!")
         return fp, *load_page(subtitle_list, page)
+    subtitle_list[idx].text = s_txt
+    subtitle_list[idx].is_success = None
     try:
         subtitle_list[idx].reset_srt_time(timestamp)
     except ValueError as e:
@@ -356,7 +358,7 @@ def remake(*args):
             # print(e)
             return fp, *load_page(subtitle_list, page)
     Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
-    subtitle_list[idx].text = s_txt
+    # subtitle_list[idx].text = s_txt
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[idx])
     if fp is not None:
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))

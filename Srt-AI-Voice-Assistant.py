@@ -410,7 +410,7 @@ if __name__ == "__main__":
         speaker_list_choices = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
     except:
         speaker_list_choices = ["None"]
-    with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI", theme=Sava_Utils.config.theme) as app:
+    with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI", theme=Sava_Utils.config.theme, analytics_enabled=False) as app:
         STATE = gr.State(value=Subtitles())
         gr.Markdown(value=MANUAL.getInfo("title"))
         with gr.Tabs():

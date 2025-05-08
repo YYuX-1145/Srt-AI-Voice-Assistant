@@ -17,6 +17,13 @@ def load_page(subtitle_list, target_index=1):
         value = target_index
     return gr.update(minimum=1, maximum=length if length > 0 else 1, interactive=True, value=value), *show_page(value, subtitle_list)
 
+BTN_VISIBLE_DICT = {
+    "bv2": [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)],
+    "gsv": [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+    "mstts": [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)],
+    "custom": [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)],
+    None: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+}
 
 def show_page(page_start, subtitle_list: Subtitles):
     ret = []
@@ -24,17 +31,7 @@ def show_page(page_start, subtitle_list: Subtitles):
     pageend = page_start + Sava_Utils.config.num_edit_rows
     if pageend > length:
         pageend = length + 1
-    if subtitle_list.proj is not None:
-        if subtitle_list.proj == "bv2":
-            btn = [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
-        elif subtitle_list.proj == "gsv":
-            btn = [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)]
-        elif subtitle_list.proj == "mstts":
-            btn = [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
-        else:
-            btn = [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)]
-    else:
-        btn = [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
+    btn = BTN_VISIBLE_DICT[subtitle_list.proj]
     for i in range(page_start - 1, pageend - 1):
         ret.append(gr.update(value=i, visible=False))
         ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
@@ -51,7 +48,8 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret.append(gr.update(value="None", interactive=False, visible=False))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
         ret += btn
-    return ret + btn  # all regen btn*4
+    ret += btn  # all regen btn*4
+    return  ret
 
 
 def play_audio(idx, subtitle_list):
@@ -202,11 +200,10 @@ def apply_spkmap2workspace(speaker_map, page, subtitles: Subtitles):
         return show_page(page, Subtitles())
     spk_dict = {i[0]: i[-1] for i in speaker_map}
     for i in subtitles:
-        try:
-            i.speaker = spk_dict[str(i.speaker)]
+        key = i.speaker if i.speaker else "None"
+        if key in spk_dict:
+            i.speaker = spk_dict[key]
             i.is_success = None
-        except KeyError:    
-            pass
     gr.Info(i18n('Done!'))
     return show_page(page, subtitles)
 
@@ -224,16 +221,7 @@ def del_spk(name):
 
 
 def switch_spk_proj(name):
-    if name == "bv2":
-        return [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
-    elif name == "gsv":
-        return [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)]
-    elif name == "mstts":
-        return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)]
-    elif name == "custom":
-        return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)]
-    else:
-        raise ""
+    return BTN_VISIBLE_DICT[name]
 
 
 def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, exec_code:str, enable_re: bool, page_index:int=1):

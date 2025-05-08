@@ -302,9 +302,9 @@ class GSV(TTSProjet):
             if force and notify:
                 gr.Warning(i18n('This function has been disabled!'))
             return True
-        if port not in list(self.current_sovits_model.keys()):
+        if port not in self.current_sovits_model:
             self.current_sovits_model[port] = None
-        if port not in list(self.current_gpt_model.keys()):
+        if port not in self.current_gpt_model:
             self.current_gpt_model[port] = None
         if not force and sovits_path == self.current_sovits_model[port] and gpt_path == self.current_gpt_model[port]:
             if notify:
@@ -419,7 +419,7 @@ class ARPreset:
         self.port = int(port)
         self.reference_audio_path = reference_audio_path
         self.reference_audio_text = reference_audio_text
-        self.reference_audio_lang = dict_language[reference_audio_lang] if reference_audio_lang not in list(dict_language_rev.keys()) else reference_audio_lang
+        self.reference_audio_lang = dict_language[reference_audio_lang] if reference_audio_lang not in dict_language_rev else reference_audio_lang
         self.auxiliary_audios = auxiliary_audios
         self.sovits_path = sovits_path.strip('"')
         self.gpt_path = gpt_path.strip('"')
@@ -427,7 +427,7 @@ class ARPreset:
     def to_list(self):
         val = self.to_dict()
         val["reference_audio_lang"] = dict_language_rev[val["reference_audio_lang"]]
-        return [val[x] for x in list(val.keys())]
+        return [val[x] for x in val.keys()]
 
     def to_dict(self):
         return self.__dict__

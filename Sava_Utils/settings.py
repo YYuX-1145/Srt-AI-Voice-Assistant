@@ -135,7 +135,7 @@ class Settings:
 
     def to_list(self):
         val = self.to_dict()
-        return [val[x] for x in list(val.keys())]
+        return [val[x] for x in val.keys()]
 
     def to_dict(self):
         return self.__dict__

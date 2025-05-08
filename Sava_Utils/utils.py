@@ -290,16 +290,12 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-
     hop_length = 512
     rms_list = get_rms(audio, hop_length=hop_length).squeeze(0)
     threshold = 10 ** (threshold_db / 20.0)
-    for i, rms in enumerate(rms_list):
-        if rms >= threshold:
-            break
-    if i == rms_list.shape[-1]:
-        logger.debug("remove_silence: failed to find the cutting point")
+    x = rms_list > threshold
+    i = np.argmax(x)
+    j = rms_list.shape[-1] - 1 - np.argmax(x[::-1])
+    if not np.any(x) or i==j:
         return audio
-    for j, rms in enumerate(reversed(rms_list)):
-        if rms >= threshold:
-            break
     cutting_point1 = max(i * hop_length - int(padding_begin * sr), 0)
-    cutting_point2 = min((rms_list.shape[-1] - j) * hop_length + int(padding_fin * sr), audio.shape[-1])
+    cutting_point2 = min(j * hop_length + int(padding_fin * sr), audio.shape[-1])
     audio = audio[cutting_point1:cutting_point2]
     return audio

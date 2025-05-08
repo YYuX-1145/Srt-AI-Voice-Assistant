@@ -24,6 +24,7 @@ import time
 import soundfile as sf
 import concurrent.futures
 from tqdm import tqdm
+from collections import defaultdict
 
 import Sava_Utils
 from Sava_Utils import logger, i18n, args, MANUAL
@@ -164,12 +165,9 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
         gr.Info(i18n('No subtitles are going to be resynthesized.'))
         return *show_page(page, subtitles), None
     abs_dir = subtitles.get_abs_dir()
-    tasks = dict()
+    tasks = defaultdict(list)
     for i in todo:
-        try:
-            tasks[i.speaker].append(i)
-        except KeyError:
-            tasks[i.speaker] = [i]
+        tasks[i.speaker].append(i)
     if list(tasks.keys()) == [None] and subtitles.default_speaker is None and subtitles.proj is None:
         gr.Warning(i18n('Warning: No speaker has been assigned'))
         return *show_page(page, subtitles), None

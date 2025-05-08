@@ -28,7 +28,7 @@ if __name__ == "__main__":
         with open(yml_temp_dir, 'w') as f:
             yaml.dump(gsv_yml, f)
         # launch api
-        if preset["port"] not in process_tab.keys():
+        if preset["port"] not in process_tab:
             command = f'"{sava_config['gsv_pydir']}" "{os.path.join(sava_config['gsv_dir'],apath)}" -c {os.path.abspath(yml_temp_dir)} -p {preset["port"]}'
             process_tab[preset["port"]] = subprocess.Popen(command, cwd=sava_config['gsv_dir'], shell=True)
         count += 1

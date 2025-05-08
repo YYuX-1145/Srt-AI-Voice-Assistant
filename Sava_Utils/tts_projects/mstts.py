@@ -57,7 +57,7 @@ class MSTTS(TTSProjet):
             target_language = [""]
         for i in dataraw:
             if any(lan in i["Locale"] for lan in target_language):
-                if i["Locale"] not in classified_info.keys():
+                if i["Locale"] not in classified_info:
                     classified_info[i["Locale"]] = {}
                 classified_info[i["Locale"]][i["LocalName"]] = i
         with open(os.path.join("SAVAdata", "ms_speaker_info.json"), "w", encoding="utf-8") as f:
@@ -179,12 +179,6 @@ class MSTTS(TTSProjet):
     def display_style_role(self, language, speaker):
         if language in [None, ""] or speaker in [None, ""]:
             return gr.update(value=None, choices=[], allow_custom_value=False), gr.update(value=None, choices=[], allow_custom_value=False)
-        try:
-            choices1 = ["Default"] + self.ms_speaker_info[language][speaker]["StyleList"]
-        except KeyError:
-            choices1 = ["Default"]
-        try:
-            choices2 = ["Default"] + self.ms_speaker_info[language][speaker]["RolePlayList"]
-        except KeyError:
-            choices2 = ["Default"]
+        choices1 = ["Default"] + self.ms_speaker_info[language][speaker].get("StyleList", [])
+        choices2 = ["Default"] + self.ms_speaker_info[language][speaker].get("RolePlayList", [])
         return (gr.update(value=choices1[0], choices=choices1, allow_custom_value=False), gr.update(value=choices2[0], choices=choices2, allow_custom_value=False))

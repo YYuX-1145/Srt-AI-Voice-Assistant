@@ -23,7 +23,7 @@ class Base_Componment(ABC):
 
     @abstractmethod
     def _UI(self):
-        raise "err"
+        raise NotImplementedError
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:

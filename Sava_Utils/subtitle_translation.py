@@ -1,9 +1,7 @@
 import gradio as gr
 import os
-import concurrent.futures
-from tqdm import tqdm
 import Sava_Utils
-from . import i18n
+from . import i18n,logger
 from .utils import read_file
 from .base_componment import Base_Componment
 from .translator.ollama import Ollama
@@ -14,27 +12,32 @@ TRANSLATORS = {"ollama": Ollama()}
 current_path = os.environ.get("current_path")
 
 
-def start_translation(in_files, language, output_dir, *args, translator=None):
+def start_translation(in_files, language, batch_size, output_dir, *args, translator=None):
     output_list = []
+    message = ""
     if in_files is None:
         gr.Info(i18n('Please upload the subtitle file!'))
         return i18n('Please upload the subtitle file!'), output_list
     for in_file in in_files:
         subtitle_list = read_file(in_file.name)
+        tasks = TRANSLATORS[translator].construct_tasks(subtitle_list,int(batch_size))
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-                x = list(tqdm(executor.map(lambda x: TRANSLATORS[translator].api(*x), [(i.text, language, *args) for i in subtitle_list]), total=len(subtitle_list), desc=f"{i18n('Translating')}: {os.path.basename(in_file.name)}"))
-            for sub, txt in zip(subtitle_list, x):
+            result,msg = TRANSLATORS[translator].api(tasks, language, *args, file_name=os.path.basename(in_file.name))
+            if msg:
+                message += f"{os.path.basename(in_file.name)}: {msg}\n"
+            for sub, txt in zip(subtitle_list, result):
                 sub.text = txt
             output_path = os.path.join(output_dir, f"{os.path.basename(in_file.name)[:-4]}_translated_to_{language}.srt")
             subtitle_list.export(fp=output_path, open_explorer=False, raw=True)
             output_list.append(output_path)
         except Exception as e:
-            gr.Warning(f"{i18n('Failed to translate')} {in_file.name} :{str(e)}")
+            err = f"{i18n('Failed to translate')} {in_file.name} :{str(e)}"
+            gr.Warning(err)
+            message += err + "\n"
             continue
 
     # os.system(f'explorer {output_dir}')
-    return "OK" if len(output_list) == len(in_files) else i18n('An error occurred'), output_list
+    return message.strip() if message else "OK", output_list
 
 
 class Translation_module(Base_Componment):
@@ -67,9 +70,10 @@ class Translation_module(Base_Componment):
                     self.send_btn.click(lambda x: [i.name for i in x] if x is not None else x, inputs=[self.translation_output], outputs=[file_main])
                 with gr.Column():
                     self.translation_target_language = gr.Dropdown(label=i18n('Specify Target Language'), choices=LANGUAGE, value=LANGUAGE[1], interactive=True)
+                    self.batch_size = gr.Number(label="Batch Size", value=5, minimum=1, interactive=True)
                     self.output_dir = gr.Text(value=os.path.join(current_path, "SAVAdata", "output"), label=i18n('File Output Path'), interactive=not Sava_Utils.config.server_mode, visible=not Sava_Utils.config.server_mode, max_lines=1)
                     self.translator = gr.Radio(label=i18n('Select Translator'), choices=[i for i in TRANSLATORS.keys()], value="ollama")
-                    Base_args = [self.translation_upload, self.translation_target_language, self.output_dir]
+                    Base_args = [self.translation_upload, self.translation_target_language, self.batch_size, self.output_dir]
                     with gr.Column():
                         v = True
                         for i in TRANSLATORS.keys():

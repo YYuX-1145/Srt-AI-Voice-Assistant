@@ -230,10 +230,12 @@ i18n_dict = {
     # Ollama
     "Failed to get model list from Ollama": "Échec de l'obtention de la liste des modèles auprès d'Ollama",
     "You must specify the model!": "Vous devez spécifier le modèle !",
+    "The language model has probably made a mistake": "Il est probable que le modèle ait commis une erreur",
     "Select Your Model": "Choisissez votre modèle",
     "Unload Model": "Décharger le modèle",
     "OLLAMA_NOTICE": "⚠️Le grand modèle de langage (LLM) utilise beaucoup de mémoire vidéo (VRAM) lors de son exécution. N'oubliez pas de sélectionner et de décharger le modèle correspondant pour libérer la mémoire vidéo après utilisation !⚠️",
     "Custom prompt (enabled when filled in)": "Invite personnalisée (activée si remplie)",
+    "History Message Limit": "Limite de l'historique des messages",
     # Polyphone Editor
     "POLYPHONE_NOTICE": "⚠️Cette fonctionnalité permet de modifier la configuration des caractères polyphoniques de GPT-SoVITS. Les modifications prendront effet après avoir été enregistrées et après le redémarrage de l'API.⚠️",
     "Polyphone Editor": "Éditeur polyphonique",

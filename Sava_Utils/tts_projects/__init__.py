@@ -11,17 +11,15 @@ class TTSProjet(Base_Componment):
 
     @abstractmethod
     def api(self, *args, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def save_action(self, *args, **kwargs):
-        pass
+        raise NotImplementedError
 
     def before_gen_action(self, *args, **kwargs):
         pass
 
     @abstractmethod
     def arg_filter(self, *args):
-        pargs = []
-        kwargs = {}
-        return pargs, kwargs
+        raise NotImplementedError

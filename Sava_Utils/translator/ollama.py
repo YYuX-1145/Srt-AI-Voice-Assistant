@@ -6,6 +6,7 @@ import subprocess
 from . import Traducteur
 from ..utils import rc_open_window
 from .. import logger, i18n
+from tqdm import tqdm
 
 
 class Ollama(Traducteur):
@@ -43,24 +44,48 @@ class Ollama(Traducteur):
             return None
         rc_open_window(f"ollama stop {model} && exit")
 
-    def api(self, text, target_lang, model_name, url, prompt):
+    def api(self, tasks, target_lang, model_name, url, custom_prompt, num_history, file_name: str = ""):
+        num_history = int(num_history)
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
         if model_name in [None, [], ""]:
             raise ValueError(i18n('You must specify the model!'))
-        if prompt:
-            prompt = prompt + ' ' + text
-        else:
-            prompt = f"Directly translate the following content to {target_lang} WITHOUT replying with any additional notes or questions:{text}"
-        data_json = {
+        ret = []
+        msg = ""
+        request_data = {
             "model": model_name,
-            "prompt": prompt,
+            "messages": [],
             "stream": False,
         }
-        # print(data_json["prompt"])
-        response = requests.post(url=f'{url}/api/generate', json=data_json)
-        response.raise_for_status()
-        return re.sub(r'<think>.*?</think>', '', json.loads(response.content)["response"], flags=re.DOTALL).strip()
+        for task in tqdm(tasks, desc=f"{i18n('Translating')}: {file_name}", total=len(tasks)):
+            text = "\n\n".join(task)
+            if custom_prompt:
+                prompt = custom_prompt + '\n' + text
+            else:
+                prompt = f"Please translate the following content into {target_lang}. Strictly preserve the original paragraph structure. Do not include any additional comments or explanations---return only the translated text:\n{text}"
+            data = {"role": "user", "content": prompt}
+            request_data["messages"].append(data)
+            response = requests.post(url=f'{url}/api/chat', json=request_data)
+            response.raise_for_status()
+            response_dict = json.loads(response.content)["message"]
+            result = re.sub(r'<think>.*?</think>', '', response_dict["content"], flags=re.DOTALL).strip()
+
+            request_data["messages"].append(response_dict)
+            if len(request_data["messages"]) > 2*num_history:
+                request_data["messages"].pop(0)
+                request_data["messages"].pop(0)
+
+            #print(request_data)
+            batch = result.split("\n\n")
+            d = len(task) - len(batch)
+            if d:
+                msg += f"{i18n('The language model has probably made a mistake')} @{len(ret)+1}-{len(ret)+len(task)}\n"
+                if d > 0:
+                    batch += ["" for _ in range(d)]
+                else:
+                    batch = batch[: len(task)]
+            ret += batch
+        return ret, msg
 
     def _UI(self, *inputs, output_info, output_files):
         from ..subtitle_translation import start_translation
@@ -78,5 +103,6 @@ class Ollama(Traducteur):
                     self.refresh_model_btn = gr.Button(value="🔄️")
                     self.refresh_model_btn.click(self.get_models, inputs=[self.api_url], outputs=[self.select_model])
             self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
+            self.num_history = gr.Slider(label=i18n('History Message Limit'), value=2, minimum=0, maximum=10, step=1)
             self.translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
-            self.translate_btn.click(lambda *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt], outputs=[output_info, output_files])
+            self.translate_btn.click(lambda *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history], outputs=[output_info, output_files])

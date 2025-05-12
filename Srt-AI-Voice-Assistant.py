@@ -153,7 +153,7 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
     page = args[0]
     max_workers = int(args[1])
     subtitles: Subtitles = args[-1]
-    if len(subtitles) == 0 or subtitles is None:
+    if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return *show_page(page, Subtitles()), None
     proj_args = (None, None, *args[:-1])
@@ -404,10 +404,6 @@ if __name__ == "__main__":
         server_port = Sava_Utils.config.server_port
     else:
         server_port = args.server_port
-    try:
-        speaker_list_choices = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-    except:
-        speaker_list_choices = ["None"]
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI", theme=Sava_Utils.config.theme, analytics_enabled=False) as app:
         STATE = gr.State(value=Subtitles())
         gr.Markdown(value=MANUAL.getInfo("title"))
@@ -418,12 +414,29 @@ if __name__ == "__main__":
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
                         with gr.Accordion(i18n('Speaker Map'), open=False):
                             use_labled_text_mode = gr.Checkbox(label=i18n('Enable Marking Mode'))
-                            speaker_map = gr.Dataframe(show_label=False, headers=[i18n('Original Speaker'), i18n('Target Speaker')], datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
-                            with gr.Row():
-                                origin_speaker_list = gr.Dropdown(label=i18n('Select Original Speaker'), value=None, choices=[], allow_custom_value=False)
-                                speaker_list0 = gr.Dropdown(label=i18n('Select Target Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=False)
-                                speaker_list0.change(modify_spkmap, inputs=[origin_speaker_list, speaker_list0, speaker_map], outputs=[speaker_map])
-                            update_spkmap_btn = gr.Button(value=i18n('Identify Original Speakers'))
+                            speaker_map_set = gr.State(value=set())
+                            speaker_map_dict = gr.State(value=dict())
+
+                            @gr.render(inputs=speaker_map_set)
+                            def edit_map_ui(x):
+                                if len(x)==0:
+                                    gr.Markdown("### " + i18n('Speaker map is empty.'))
+                                    return
+                                getspklist()
+                                with gr.Row():
+                                    gr.Markdown(value='### ' + i18n('Original Speaker'))
+                                    gr.Markdown(value='### ' + i18n('Target Speaker'))
+                                for i in x:
+                                    with gr.Row():
+                                        k = gr.Textbox(value=i,show_label=False,interactive=False)
+                                        v = gr.Dropdown(value=i, choices=Sava_Utils.edit_panel.speaker_list_choices, show_label=False, allow_custom_value=True)
+                                        v.change(modify_spkmap, inputs=[speaker_map_dict,k,v])
+                                gr.Button(value="🗑️",variant="stop").click(lambda:(set(),dict()),outputs=[speaker_map_set,speaker_map_dict])
+
+                            with gr.Accordion(i18n('Identify Original Speakers'),open=True):
+                                with gr.Row():
+                                    update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))
+                                    update_spkmap_btn_current = gr.Button(value=i18n('From Current Workspace'))
                             apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
@@ -455,14 +468,14 @@ if __name__ == "__main__":
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
                             worklist = gr.Dropdown(
-                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "temp", "workspaces")) and not Sava_Utils.config.server_mode else [""],
+                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "workspaces")) and not Sava_Utils.config.server_mode else [""],
                                 label=i18n('History'),
                                 scale=2,
                             )
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
-                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, waveform_options={"show_recording_waveform":False}, scale=4)
+                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4)
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)
                             export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):
@@ -529,7 +542,7 @@ if __name__ == "__main__":
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
                         recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
 
-                        apply_spkmap2workspace_btn.click(apply_spkmap2workspace,inputs=[speaker_map,page_slider,STATE],outputs=edit_rows)
+                        apply_spkmap2workspace_btn.click(apply_spkmap2workspace,inputs=[speaker_map_dict,page_slider,STATE],outputs=edit_rows)
 
                         with gr.Accordion(i18n('Find and Replace'), open=False):
                             with gr.Row(equal_height=True):
@@ -541,27 +554,27 @@ if __name__ == "__main__":
                                 find_and_replace_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, find_and_rep_exec, enable_re, page_slider], outputs=[page_slider, *edit_rows])
                 with gr.Accordion(label=i18n('Multi-speaker dubbing')):
                     with gr.Row(equal_height=True):
-                        speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=speaker_list_choices, allow_custom_value=not Sava_Utils.config.server_mode, scale=4)
+                        speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=Sava_Utils.edit_panel.speaker_list_choices, allow_custom_value=not Sava_Utils.config.server_mode, scale=4)
                         # speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
                         select_spk_projet = gr.Dropdown(choices=['bv2', 'gsv', 'mstts', 'custom'], value='gsv', interactive=True, label=i18n('TTS Project'))
                         refresh_spk_list_btn = gr.Button(value="🔄️", min_width=60, scale=0)
-                        refresh_spk_list_btn.click(getspklist, inputs=[], outputs=[speaker_list0, speaker_list])
+                        refresh_spk_list_btn.click(getspklist, inputs=[], outputs=[speaker_list])
                         apply_btn = gr.Button(value="✅", min_width=60, scale=0)
                         apply_btn.click(apply_spk, inputs=[speaker_list, page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, *edit_rows])
 
                         save_spk_btn_bv2 = gr.Button(value="💾", min_width=60, scale=0, visible=False)
-                        save_spk_btn_bv2.click(lambda *args: save_spk(*args, project="bv2"), inputs=[speaker_list, *BV2_ARGS], outputs=[speaker_list0, speaker_list])
+                        save_spk_btn_bv2.click(lambda *args: save_spk(*args, project="bv2"), inputs=[speaker_list, *BV2_ARGS], outputs=[speaker_list])
                         save_spk_btn_gsv = gr.Button(value="💾", min_width=60, scale=0, visible=True)
-                        save_spk_btn_gsv.click(lambda *args: save_spk(*args, project="gsv"), inputs=[speaker_list, *GSV_ARGS], outputs=[speaker_list0, speaker_list])
+                        save_spk_btn_gsv.click(lambda *args: save_spk(*args, project="gsv"), inputs=[speaker_list, *GSV_ARGS], outputs=[speaker_list])
                         save_spk_btn_mstts = gr.Button(value="💾", min_width=60, scale=0, visible=False)
-                        save_spk_btn_mstts.click(lambda *args: save_spk(*args, project="mstts"), inputs=[speaker_list, *MSTTS_ARGS], outputs=[speaker_list0, speaker_list])
+                        save_spk_btn_mstts.click(lambda *args: save_spk(*args, project="mstts"), inputs=[speaker_list, *MSTTS_ARGS], outputs=[speaker_list])
                         save_spk_btn_custom = gr.Button(value="💾", min_width=60, scale=0, visible=False)
-                        save_spk_btn_custom.click(lambda *args: save_spk(*args, project="custom"), inputs=[speaker_list, CUSTOM.choose_custom_api], outputs=[speaker_list0, speaker_list])
+                        save_spk_btn_custom.click(lambda *args: save_spk(*args, project="custom"), inputs=[speaker_list, CUSTOM.choose_custom_api], outputs=[speaker_list])
 
                         select_spk_projet.change(switch_spk_proj, inputs=[select_spk_projet], outputs=[save_spk_btn_bv2, save_spk_btn_gsv, save_spk_btn_mstts, save_spk_btn_custom])
 
                         del_spk_list_btn = gr.Button(value="🗑️", min_width=60, scale=0)
-                        del_spk_list_btn.click(del_spk, inputs=[speaker_list], outputs=[speaker_list0, speaker_list])
+                        del_spk_list_btn.click(del_spk, inputs=[speaker_list], outputs=[speaker_list])
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
@@ -590,8 +603,9 @@ if __name__ == "__main__":
                         with gr.TabItem(i18n('Help & User guide')):
                             gr.Markdown(value=MANUAL.getInfo("help"))
 
-        update_spkmap_btn.click(get_speaker_map, inputs=[input_file], outputs=[speaker_map, origin_speaker_list])
-        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode,speaker_map, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
+        update_spkmap_btn_upload.click(get_speaker_map_from_file, inputs=[input_file], outputs=[speaker_map_set,speaker_map_dict])
+        update_spkmap_btn_current.click(get_speaker_map_from_sub, inputs=[STATE], outputs=[speaker_map_set, speaker_map_dict])
+        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode,speaker_map_dict, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
         BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])

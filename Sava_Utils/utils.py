@@ -201,33 +201,40 @@ def read_labeled_txt(filename: str, spk_dict: dict):
     return subtitle_list
 
 
-def get_speaker_map(in_files):
+def get_speaker_map_from_file(in_files):
+    speakers = set()
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
-        return None, gr.update(choices=None,value=None)
+        return speakers, dict()
+    yield speakers, dict()
     filename = in_files[0].name
     subtitles = read_labeled_file(filename, spk_dict={}, fps=30, offset=0)
-    speakers = set()
     for i in subtitles:
         if i.speaker:
             speakers.add(i.speaker)
-    rows = []
-    for i in speakers:
-        rows.append([i, 'None'])
-    if len(rows)==0:
-        rows.append(['',''])
-    return np.array(rows, dtype=str), gr.update(choices=list(speakers), value=None)
+        else:
+            speakers.add("None")
+    speakers_dict = {i:i for i in speakers}        
+    yield speakers,speakers_dict
+
+def get_speaker_map_from_sub(subtitles:Subtitles):
+    speakers = set()
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n('There is no subtitle in the current workspace'))
+        return speakers, dict()
+    yield speakers,dict()
+    for i in subtitles:
+        if i.speaker:
+            speakers.add(i.speaker)
+        else:
+            speakers.add("None")
+    speakers_dict = {i: i for i in speakers}
+    yield speakers, speakers_dict
 
 
-def modify_spkmap(ori, tar, tab):
-    if ori not in [None, "", []]:
-        if tar in [None, ""]:
-            tar = "None"
-        for i in tab:
-            if i[0] == ori:
-                i[-1] = tar
-                break
-    return tab
+def modify_spkmap(map: dict, k: str, v: str):
+    value = v.strip()
+    map[k]= value if value!='None' else None
 
 
 def read_file(file_name, fps=30, offset=0):
@@ -265,7 +272,8 @@ def read_labeled_file(file_name, spk_dict, fps=30, offset=0):
                 i.text = match.group(2).strip()
     return subtitle_list    
 
-def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offset):
+
+def create_multi_speaker(in_files, use_labled_text_mode, spk_dict, fps, offset):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()
@@ -274,7 +282,6 @@ def create_multi_speaker(in_files, use_labled_text_mode, speaker_map, fps, offse
         if not use_labled_text_mode:
             subtitle_list = read_file(in_file.name, fps, offset)
         else:
-            spk_dict = {i[0]: i[-1] for i in speaker_map}
             subtitle_list = read_labeled_file(in_file.name, spk_dict, fps, offset)
             assert len(subtitle_list) != 0, "Empty???"
     except Exception as e:

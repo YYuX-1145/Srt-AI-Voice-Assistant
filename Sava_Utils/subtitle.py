@@ -140,13 +140,13 @@ class Subtitles:
         self.proj = proj
 
     def set_dir_name(self, dir_name: str):
-        abspath = os.path.join(current_path, "SAVAdata", "temp", "workspaces", dir_name)
+        abspath = os.path.join(current_path, "SAVAdata", "workspaces", dir_name)
         while os.path.exists(abspath):
             if Sava_Utils.config.overwrite_workspace:
                 shutil.rmtree(abspath)
                 break
             abspath += "(new)"
-        self.dir = os.path.join("SAVAdata", "temp", "workspaces", dir_name)  # relative path
+        self.dir = os.path.join("SAVAdata", "workspaces", dir_name)  # relative path
         os.makedirs(abspath, exist_ok=True)
         self.dump()
 

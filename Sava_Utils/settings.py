@@ -232,7 +232,7 @@ class Settings_UI:
                 self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access)
             with gr.Row():
                 self.overwrite_workspace = gr.Checkbox(label=i18n('Overwrite history records with files of the same name instead of creating a new project.'), value=Sava_Utils.config.overwrite_workspace, interactive=True)
-                self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup (which will also erase history records).'), value=Sava_Utils.config.clear_tmp, interactive=True)
+                self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup'), value=Sava_Utils.config.clear_tmp, interactive=True)
             with gr.Row():
                 self.concurrency_count = gr.Number(label=i18n('Concurrency Count'), value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                 self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)

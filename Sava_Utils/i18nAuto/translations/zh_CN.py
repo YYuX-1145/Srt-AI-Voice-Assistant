@@ -113,7 +113,7 @@ i18n_dict = {
     "The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.": "本程序所使用的端口 0=自动。当冲突无法启动时，使用参数-p来指定启动端口",
     "Enable LAN access. Restart to take effect.": "开启局域网访问,重启生效",
     "Overwrite history records with files of the same name instead of creating a new project.": "同名文件覆盖历史记录而不是新建工程",
-    "Clear temporary files on each startup (which will also erase history records).": "每次启动时清除临时文件（会一并清除合成历史）",
+    "Clear temporary files on each startup": "每次启动时清除临时文件",
     "Concurrency Count": "可同时处理多少请求",
     "Server Mode can only be enabled by modifying configuration file or startup parameters.": "服务模式，只能通过修改配置文件或启动参数开启",
     "Minimum voice interval (seconds)": "语音最小间隔(秒)",

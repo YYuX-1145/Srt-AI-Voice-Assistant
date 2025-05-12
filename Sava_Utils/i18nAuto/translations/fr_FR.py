@@ -112,7 +112,7 @@ i18n_dict = {
     "The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.": "Le port utilisé par ce programme, 0=automatique. Lorsque des conflits empêchent le démarrage, utilisez le paramètre -p pour spécifier le port.",
     "Enable LAN access. Restart to take effect.": "Activer l'accès au réseau local. Redémarrer pour que cela prenne effet.",
     "Overwrite history records with files of the same name instead of creating a new project.": "Écraser les enregistrements historiques avec des fichiers du même nom au lieu de créer un nouveau projet.",
-    "Clear temporary files on each startup (which will also erase history records).": "Supprimer les fichiers temporaires à chaque démarrage (cela effacera également l'historique de synthèse).",
+    "Clear temporary files on each startup": "Supprimer les fichiers temporaires à chaque démarrage",
     "Concurrency Count": "Nombre de requêtes pouvant être traitées simultanément",
     "Server Mode can only be enabled by modifying configuration file or startup parameters.": "Le mode serveur ne peut être activé qu'en modifiant le fichier de configuration ou les paramètres de démarrage.",
     "Minimum voice interval (seconds)": "Intervalle minimal entre les voix (secondes)",

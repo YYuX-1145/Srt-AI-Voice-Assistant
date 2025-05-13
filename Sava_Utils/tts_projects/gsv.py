@@ -105,12 +105,16 @@ class GSV(TTSProjet):
                         "prompt_language": kwargs["prompt_lang"],
                         "text": kwargs["text"],
                         "text_language": kwargs["text_lang"],
+                        "cut_punc": kwargs["text_split_method"],
                         "top_k": kwargs["top_k"],
                         "top_p": kwargs["top_p"],
                         "temperature": kwargs["temperature"],
                         "speed": kwargs["speed_factor"],
+                        "inp_refs": kwargs["aux_ref_audio_paths"],
+                        "sample_steps": kwargs["sample_steps"],
                     }
                     API_URL = f"http://127.0.0.1:{port}/"
+                #print(data_json)
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content
@@ -149,7 +153,7 @@ class GSV(TTSProjet):
             return None
 
     def save_action(self, *args, text: str = None):
-        artts_proj, text_language, port, refer_wav_path, aux_refer_wav_path, prompt_text, prompt_language, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, split_bucket, text_split_method, gpt_path, sovits_path = args
+        artts_proj, text_language, port, refer_wav_path, aux_refer_wav_path, prompt_text, prompt_language, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps,parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
         port = positive_int(port)[0]
         audio = self.api(
             port,
@@ -167,11 +171,12 @@ class GSV(TTSProjet):
             top_k=top_k,
             top_p=top_p,
             seed=-1,
-            parallel_infer=True,
             temperature=temperature,
             repetition_penalty=repetition_penalty,
+            parallel_infer=parallel_infer,
             split_bucket=split_bucket,
             text_split_method=text_split_method,
+            sample_steps = sample_steps,
             media_type="wav",
             streaming_mode=False,
         )
@@ -206,16 +211,13 @@ class GSV(TTSProjet):
                 self.top_p = gr.Slider(minimum=0, maximum=1, step=0.05, label="top_p", value=1, interactive=True)
                 self.temperature = gr.Slider(minimum=0, maximum=1, step=0.05, label="temperature", value=1, interactive=True)
                 self.repetition_penalty = gr.Slider(minimum=0, maximum=2, step=0.05, label="repetition_penalty", value=1.35, interactive=True)
-                self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)
+                self.sample_steps = gr.Dropdown(label="Sample_Steps", value='32', choices=['16','32','48','64','96','128'], interactive=True, show_label=True, allow_custom_value=False)
+                with gr.Row():
+                    self.parallel_infer = gr.Checkbox(label="Parallel_Infer", value=True, interactive=True, show_label=True)
+                    self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)                
                 self.how_to_cut = gr.Radio(label=i18n('How to cut'), choices=list(cut_method.keys()), value=list(cut_method.keys())[0], interactive=True)
             with gr.Accordion(i18n('Presets'), open=False):
-                self.choose_presets = gr.Dropdown(
-                    label="",
-                    value="None",
-                    choices=self.presets_list,
-                    interactive=True,
-                    allow_custom_value=True,
-                )
+                self.choose_presets = gr.Dropdown(label="", value="None", choices=self.presets_list, interactive=True, allow_custom_value=True)
                 self.desc_presets = gr.Textbox(label="", placeholder=i18n('(Optional) Description'), interactive=True)
                 with gr.Row():
                     self.save_presets_btn = gr.Button(value="💾", variant="primary", min_width=60)
@@ -240,11 +242,33 @@ class GSV(TTSProjet):
                 self.gen_btn2 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
             self.switch_gsvmodel_btn.click(self.switch_gsvmodel, inputs=[self.sovits_path, self.gpt_path, self.api_port2], outputs=[])
             self.choose_presets.change(self.load_preset, inputs=[self.choose_presets], outputs=preset_args[1:])
-        GSV_ARGS = [self.choose_ar_tts, self.language2, self.api_port2, self.refer_audio, self.aux_ref_audio, self.refer_text, self.refer_lang, self.batch_size, self.batch_threshold, self.fragment_interval, self.speed_factor, self.top_k, self.top_p, self.temperature, self.repetition_penalty, self.split_bucket, self.how_to_cut, self.gpt_path, self.sovits_path]
+        GSV_ARGS = [
+            self.choose_ar_tts,
+            self.language2,
+            self.api_port2,
+            self.refer_audio,
+            self.aux_ref_audio,
+            self.refer_text,
+            self.refer_lang,
+            self.batch_size,
+            self.batch_threshold,
+            self.fragment_interval,
+            self.speed_factor,
+            self.top_k,
+            self.top_p,
+            self.temperature,
+            self.repetition_penalty,
+            self.sample_steps,
+            self.parallel_infer,
+            self.split_bucket,            
+            self.how_to_cut,
+            self.gpt_path,
+            self.sovits_path,
+        ]
         return GSV_ARGS
 
     def arg_filter(self, *args):
-        in_file, fps, offset, max_workers, artts_proj, language, port, refer_audio, aux_ref_audio, refer_text, refer_lang, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, split_bucket, text_split_method, gpt_path, sovits_path = args
+        in_file, fps, offset, max_workers, artts_proj, language, port, refer_audio, aux_ref_audio, refer_text, refer_lang, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps, parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
         if artts_proj == "GPT_SoVITS":
             if refer_audio is None:
                 gr.Warning(i18n('You must upload Main Reference Audio'))
@@ -254,7 +278,7 @@ class GSV(TTSProjet):
         else:
             refer_audio_path = ''
         aux_ref_audio_path = [temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []
-        pargs = (artts_proj, dict_language[language], port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language[refer_lang], batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, split_bucket, cut_method[text_split_method], gpt_path, sovits_path)
+        pargs = (artts_proj, dict_language[language], port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language[refer_lang], batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps),parallel_infer, split_bucket, cut_method[text_split_method], gpt_path, sovits_path)
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': "gsv", 'max_workers': max_workers}
         return pargs, kwargs
 

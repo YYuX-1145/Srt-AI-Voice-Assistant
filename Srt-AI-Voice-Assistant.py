@@ -455,7 +455,7 @@ if __name__ == "__main__":
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
-                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4)
+                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4, waveform_options={"show_recording_waveform":False})
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)
                             export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=60)
                         for x in range(Sava_Utils.config.num_edit_rows):

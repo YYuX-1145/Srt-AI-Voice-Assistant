@@ -94,7 +94,7 @@ def refworklist():
 
 def getworklist(value=None):
     if not Sava_Utils.config.server_mode:
-        workspaces_list_choices = refspklist()
+        workspaces_list_choices = refworklist()
         return gr.update(choices=workspaces_list_choices, value=value if value else workspaces_list_choices[-1])
     else:
         c = [value] if value else [""]

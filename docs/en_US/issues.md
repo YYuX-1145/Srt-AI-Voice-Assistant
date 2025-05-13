@@ -33,7 +33,7 @@ If no error message is received, please report this issue.
 The following subtitles are delayed due to the previous audio being too long.
 ```
 * Your subtitle timing intervals are not proper.
-* Consider speeding up the speaking rate or manually increasing the subtitle timing intervals.  
+* Consider increasing the value of the setting `Maximum audio acceleration ratio` (setting it to a value greater than 1 to enable the feature) and enable `Remove inhalation and silence`.  
 * There is a minimum voice interval option in the settings (default 0.3 seconds) to prevent voices from overlapping in such cases. If not needed, it can be set to 0.
 
 ## 5. GPT-SoVITS Output Audio Has Duration But It's Silent

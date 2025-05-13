@@ -34,7 +34,8 @@ Si aucun message d'erreur n'est reçu, veuillez signaler ce problème.
 Les sous-titres suivants sont retardés en raison de la longueur excessive de l'audio précédent.
 ```
 * Vos intervalles de temps des sous-titres ne sont pas appropriés.
-* Pensez à accélérer le rythme de parole ou à augmenter manuellement les intervalles de temps des sous-titres.
+* Considérez d'augmenter la valeur de la configuration ` rapport maximal d'accélération audio`(en la fixant à
+une valeur supérieure à 1 pour activer la fonction) et activez `Supprimer l'inhalation et le silence`.
 * Il existe une option d'intervalle vocal minimum dans les paramètres (par défaut 0,3 seconde) pour éviter que les voix ne se chevauchent dans de tels cas. Si cela n'est pas nécessaire, il peut être égal 0.
 
 ## 5. Le fichier audio de sortie de GPT-SoVITS a une durée mais est silencieux.

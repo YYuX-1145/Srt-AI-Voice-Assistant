@@ -416,27 +416,28 @@ if __name__ == "__main__":
                             use_labled_text_mode = gr.Checkbox(label=i18n('Enable Marking Mode'))
                             speaker_map_set = gr.State(value=set())
                             speaker_map_dict = gr.State(value=dict())
-
+                            edit_map_ui_md1 = f"### <center>{i18n('Speaker map is empty.')}</center>"
+                            edit_map_ui_md2 = f"### <center>{i18n('Original Speaker')}</center>"
+                            edit_map_ui_md3 = f"### <center>{i18n('Target Speaker')}</center>"
                             @gr.render(inputs=speaker_map_set)
                             def edit_map_ui(x):
                                 if len(x)==0:
-                                    gr.Markdown("### " + i18n('Speaker map is empty.'))
+                                    gr.Markdown(value=edit_map_ui_md1)
                                     return
-                                getspklist()
+                                c = refspklist()
                                 with gr.Row():
-                                    gr.Markdown(value='### ' + i18n('Original Speaker'))
-                                    gr.Markdown(value='### ' + i18n('Target Speaker'))
+                                    gr.Markdown(value=edit_map_ui_md2)
+                                    gr.Markdown(value=edit_map_ui_md3)
                                 for i in x:
                                     with gr.Row():
                                         k = gr.Textbox(value=i,show_label=False,interactive=False)
-                                        v = gr.Dropdown(value=i, choices=Sava_Utils.edit_panel.speaker_list_choices, show_label=False, allow_custom_value=True)
+                                        v = gr.Dropdown(value=i, choices=c, show_label=False, allow_custom_value=True)
                                         v.change(modify_spkmap, inputs=[speaker_map_dict,k,v])
                                 gr.Button(value="🗑️",variant="stop").click(lambda:(set(),dict()),outputs=[speaker_map_set,speaker_map_dict])
 
                             with gr.Accordion(i18n('Identify Original Speakers'),open=True):
-                                with gr.Row(equal_height=True):
-                                    update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))
-                                    update_spkmap_btn_current = gr.Button(value=i18n('From Current Workspace'))
+                                update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))
+                                update_spkmap_btn_current = gr.Button(value=i18n('From Workspace'))
                             apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
                     with gr.Column():
@@ -467,11 +468,7 @@ if __name__ == "__main__":
                         edit_check_list = []
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
-                            worklist = gr.Dropdown(
-                                choices=os.listdir(os.path.join(current_path, "SAVAdata", "workspaces")) if os.path.exists(os.path.join(current_path, "SAVAdata", "workspaces")) and not Sava_Utils.config.server_mode else [""],
-                                label=i18n('History'),
-                                scale=2,
-                            )
+                            worklist = gr.Dropdown(choices=refworklist(), label=i18n('History'), scale=2)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
@@ -554,7 +551,7 @@ if __name__ == "__main__":
                                 find_and_replace_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, find_and_rep_exec, enable_re, page_slider], outputs=[page_slider, *edit_rows])
                 with gr.Accordion(label=i18n('Multi-speaker dubbing')):
                     with gr.Row(equal_height=True):
-                        speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=Sava_Utils.edit_panel.speaker_list_choices, allow_custom_value=not Sava_Utils.config.server_mode, scale=4)
+                        speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=refspklist(), allow_custom_value=not Sava_Utils.config.server_mode, scale=4)
                         # speaker_list.change(set_default_speaker,inputs=[speaker_list,STATE])
                         select_spk_projet = gr.Dropdown(choices=['bv2', 'gsv', 'mstts', 'custom'], value='gsv', interactive=True, label=i18n('TTS Project'))
                         refresh_spk_list_btn = gr.Button(value="🔄️", min_width=60, scale=0)
@@ -611,11 +608,7 @@ if __name__ == "__main__":
         MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
         CUSTOM.gen_btn4.click(lambda *args: generate_preprocess(*args, project="custom"), inputs=[input_file, fps, offset, workers, CUSTOM.choose_custom_api], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
 
-    queue_kwargs = {
-        "default_concurrency_limit" if "default_concurrency_limit" in inspect.signature(gr.Blocks.queue).parameters else "concurrency_count": Sava_Utils.config.concurrency_count,
-        "max_size": 2 * Sava_Utils.config.concurrency_count,
-    }
-    app.queue(**queue_kwargs).launch(
+    app.queue(default_concurrency_limit=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
         share=args.share,
         server_port=server_port if server_port > 0 else None,
         inbrowser=True,

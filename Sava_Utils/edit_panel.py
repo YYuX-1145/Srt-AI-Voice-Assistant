@@ -84,17 +84,21 @@ def play_audio(idx, subtitle_list):
         yield p
 
 
-def getworklist(value=None):
+def refworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        c = os.listdir(os.path.join(current_path, "SAVAdata", "workspaces"))
-        return gr.update(choices=c, value=value if value else c[-1])
+        return ["",*os.listdir(os.path.join(current_path, "SAVAdata", "workspaces"))]
     except:
-        if value:
-            c = [value]
-        else:
-            c = [""]
-        return gr.update(choices=c, value=value if value else "")
+        return [""]
+
+
+def getworklist(value=None):
+    if not Sava_Utils.config.server_mode:
+        workspaces_list_choices = refspklist()
+        return gr.update(choices=workspaces_list_choices, value=value if value else workspaces_list_choices[-1])
+    else:
+        c = [value] if value else [""]
+        return gr.update(choices=c, value=c[0])
 
 
 def refspklist():
@@ -103,9 +107,8 @@ def refspklist():
     except:
         return ["None"]
 
-speaker_list_choices = refspklist()
+
 def getspklist(value="None"):
-    global speaker_list_choices
     speaker_list_choices = refspklist()
     return gr.update(choices=speaker_list_choices, value=value if len(speaker_list_choices) > 1 else "None")
 

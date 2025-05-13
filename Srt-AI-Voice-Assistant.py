@@ -135,7 +135,7 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     return (
         (sr, audio),
         f"{i18n('Done! Time used')}:{use_time}",
-        getworklist(value=os.path.basename(subtitle_list.dir)),
+        getworklist(value=subtitle_list.dir),
         *load_page(subtitle_list),
         subtitle_list,
     )
@@ -319,10 +319,10 @@ def remake(*args):
     idx = int(idx)
     if int(args[1]) == -1:
         gr.Info("Not available!")
-        return fp, *load_page(subtitle_list,page)
+        return fp, *load_single_line(subtitle_list, idx)
     if Sava_Utils.config.server_mode and len(s_txt) > 512:
         gr.Warning("too long!")
-        return fp, *load_page(subtitle_list, page)
+        return fp, *load_single_line(subtitle_list, idx)
     subtitle_list[idx].text = s_txt
     subtitle_list[idx].is_success = None
     try:
@@ -339,7 +339,7 @@ def remake(*args):
         except FileNotFoundError:
             logger.error(f"{i18n('Speaker archive not found')}: {spk}")
             gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
-            return fp, *load_page(subtitle_list, page)
+            return fp, *load_single_line(subtitle_list, idx)
         args = info["raw_data"]
         proj = info["project"]
         args, kwargs = Projet_dict[proj].arg_filter(*args)
@@ -347,14 +347,14 @@ def remake(*args):
     else:
         if subtitle_list.proj is None:
             gr.Info(i18n('You must specify the speakers while using multi-speaker dubbing!'))
-            return fp, *load_page(subtitle_list, page)
+            return fp, *load_single_line(subtitle_list, idx)
         # args = [None, *args]  # ~~fill data~~
         try:
             proj = subtitle_list.proj
             args, kwargs = Projet_dict[proj].arg_filter(*args)
         except Exception as e:
             # print(e)
-            return fp, *load_page(subtitle_list, page)
+            return fp, *load_single_line(subtitle_list, idx)
     Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
     # subtitle_list[idx].text = s_txt
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[idx])
@@ -363,7 +363,7 @@ def remake(*args):
     else:
         gr.Warning("Audio re-generation failed!")
     subtitle_list.dump()
-    return fp, *load_page(subtitle_list, page)
+    return fp, *load_single_line(subtitle_list, idx)
 
 
 def recompose(page: int, subtitle_list: Subtitles):
@@ -434,7 +434,7 @@ if __name__ == "__main__":
                                 gr.Button(value="🗑️",variant="stop").click(lambda:(set(),dict()),outputs=[speaker_map_set,speaker_map_dict])
 
                             with gr.Accordion(i18n('Identify Original Speakers'),open=True):
-                                with gr.Row():
+                                with gr.Row(equal_height=True):
                                     update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))
                                     update_spkmap_btn_current = gr.Button(value=i18n('From Current Workspace'))
                             apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
@@ -496,18 +496,18 @@ if __name__ == "__main__":
                                 with gr.Row(equal_height=True):
                                     __ = gr.Button(value="▶️", scale=1, min_width=60)
                                     __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
-                                    bv2regenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)
-                                    edit_rows.append(bv2regenbtn)
-                                    bv2regenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *BV2_ARGS, STATE], outputs=[audio_player, page_slider, *edit_rows])
+                                    bv2regenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)                        
+                                    bv2regenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *BV2_ARGS, STATE], outputs=[audio_player, page_slider] + edit_rows[-6:])
                                     gsvregenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=True)
-                                    edit_rows.append(gsvregenbtn)
-                                    gsvregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *GSV_ARGS, STATE], outputs=[audio_player, page_slider, *edit_rows])
+                                    gsvregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *GSV_ARGS, STATE], outputs=[audio_player, page_slider] + edit_rows[-6:])
                                     msttsregenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)
-                                    edit_rows.append(msttsregenbtn)
-                                    msttsregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *MSTTS_ARGS, STATE], outputs=[audio_player, page_slider, *edit_rows])
+                                    msttsregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, *MSTTS_ARGS, STATE], outputs=[audio_player, page_slider] + edit_rows[-6:])
                                     customregenbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=False)
-                                    edit_rows.append(customregenbtn)
-                                    customregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, CUSTOM.choose_custom_api, STATE], outputs=[audio_player, page_slider, *edit_rows])
+                                    customregenbtn.click(remake, inputs=[page_slider, edit_real_index, edit_start_end_time, s_txt, CUSTOM.choose_custom_api, STATE], outputs=[audio_player, page_slider] + edit_rows[-6:])
+                                    edit_rows.append(bv2regenbtn)
+                                    edit_rows.append(gsvregenbtn)
+                                    edit_rows.append(msttsregenbtn)
+                                    edit_rows.append(customregenbtn)                                    
                         workrefbtn.click(getworklist, inputs=[], outputs=[worklist])
                         export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):

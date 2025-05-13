@@ -25,6 +25,7 @@ BTN_VISIBLE_DICT = {
     None: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
 }
 
+
 def show_page(page_start, subtitle_list: Subtitles):
     ret = []
     length = len(subtitle_list)
@@ -49,7 +50,27 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
         ret += btn
     ret += btn  # all regen btn*4
-    return  ret
+    return ret
+
+
+def load_single_line(subtitle_list: Subtitles, index):  # with page slider
+    ret = [gr.update()]
+    i = int(index)
+    if i >=0 and i<len(subtitle_list):
+        ret.append(gr.update(value=i, visible=False))
+        ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].text}", interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].speaker}", interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list.get_state(i), interactive=False, visible=True))
+    else:
+        ret.append(gr.update(value=-1, visible=False))
+        ret.append(gr.update(value=-1, interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="None", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+    return ret
 
 
 def play_audio(idx, subtitle_list):
@@ -95,6 +116,7 @@ def load_work(dirname):
             raise Exception(i18n('Must not be empty!'))
         with open(os.path.join(current_path, "SAVAdata", "workspaces", dirname, "st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
+            subtitles.dir = dirname
         return subtitles, *load_page(subtitles)
     except Exception as e:
         gr.Warning(f"Error: {str(e)}")

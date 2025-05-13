@@ -289,10 +289,10 @@ def create_multi_speaker(in_files, use_labled_text_mode, spk_dict, fps, offset):
         gr.Warning(what)
         return getworklist(), *load_page(Subtitles()), Subtitles()
     subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
-    return getworklist(value=os.path.basename(subtitle_list.dir)), *load_page(subtitle_list), subtitle_list
+    return getworklist(value=subtitle_list.dir), *load_page(subtitle_list), subtitle_list
 
 
-def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):
+def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.15, threshold_db=-27):
     # Padding(sec) is actually margin of safety
     hop_length = 512
     rms_list = get_rms(audio, hop_length=hop_length).squeeze(0)
@@ -304,5 +304,5 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-
         return audio
     cutting_point1 = max(i * hop_length - int(padding_begin * sr), 0)
     cutting_point2 = min(j * hop_length + int(padding_fin * sr), audio.shape[-1])
-    audio = audio[cutting_point1:cutting_point2]
-    return audio
+    #print(audio.shape[-1],cutting_point1,cutting_point2)
+    return audio[cutting_point1:cutting_point2]

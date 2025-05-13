@@ -6,6 +6,7 @@ import time
 import os
 import sys
 import platform
+import shutil
 
 from . import logger, i18n
 
@@ -164,6 +165,17 @@ def load_cfg():
     return config
 
 
+def rm_workspace(name):
+    try:
+        shutil.rmtree(os.path.join(current_path, "SAVAdata", "workspaces", name))
+        gr.Info(f"{name} {i18n('was removed successfully.')}")
+        time.sleep(0.1)
+        return gr.update(visible=False), gr.update(visible=False)
+    except Exception as e:
+        gr.Warning(f"{i18n('An error occurred')}: {str(e)}")
+        return gr.update(),gr.update()
+
+
 def restart():
     gr.Warning(i18n('Restarting...'))
     time.sleep(0.5)
@@ -187,7 +199,7 @@ def restart():
             os.environ["_PYI_PARENT_PROCESS_LEVEL"] = c
         except Exception as e:
             gr.Warning(f"{i18n('An error occurred. Please restart manually!')} {str(e)}")
-        os.system(f"taskkill /PID {os.getpid()} /F")
+        os.system(f"taskkill /PID {os.getpid()} /F && exit")
 
 
 class Settings_UI:
@@ -232,7 +244,7 @@ class Settings_UI:
                 self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access)
             with gr.Row():
                 self.overwrite_workspace = gr.Checkbox(label=i18n('Overwrite history records with files of the same name instead of creating a new project.'), value=Sava_Utils.config.overwrite_workspace, interactive=True)
-                self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup (which will also erase history records).'), value=Sava_Utils.config.clear_tmp, interactive=True)
+                self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup'), value=Sava_Utils.config.clear_tmp, interactive=True)
             with gr.Row():
                 self.concurrency_count = gr.Number(label=i18n('Concurrency Count'), value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                 self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
@@ -247,6 +259,26 @@ class Settings_UI:
                     self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
                     self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
+        
+        with gr.Accordion(i18n('Storage Management'),open=False):
+            self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
+            self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])
+            self.workspaces_archieves_state = gr.State(value=list())
+            self.list_workspaces_btn = gr.Button(value=i18n('List Archives'), variant="primary")
+            self.list_workspaces_btn.click(lambda: Sava_Utils.edit_panel.refworklist()[1:], outputs=[self.workspaces_archieves_state])
+            workspaces_manager_ui_empty_md = f"### <center>{i18n('No Archives Found. Click the <List Archives> button to refresh.')}</center>"
+
+            @gr.render(inputs=self.workspaces_archieves_state)
+            def workspaces_manager_ui(x: list):
+                if len(x) == 0:
+                    gr.Markdown(value=workspaces_manager_ui_empty_md)
+                    return
+                for i in x:
+                    with gr.Row(equal_height=True):
+                        item = gr.Textbox(value=i, show_label=False, interactive=False, scale=8)
+                        b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
+                        b.click(rm_workspace, inputs=[item], outputs=[item, b])
+
         with gr.Accordion(i18n('Submodule Settings'),open=False):
             with gr.Group():
                 gr.Markdown(value="BV2")
@@ -267,8 +299,7 @@ class Settings_UI:
             with gr.Group():
                 gr.Markdown(value=i18n('Translation Module'))
                 self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
-        self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
-        self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])        
+
         self.save_settings_btn = gr.Button(value=i18n('Apply & Save'), variant="primary")
         self.restart_btn = gr.Button(value=i18n('Restart UI'), variant="stop")
 

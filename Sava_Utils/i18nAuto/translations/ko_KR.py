@@ -101,7 +101,7 @@ i18n_dict={
     "The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.":"이 프로그램에서 사용하는 포트 0=자동. 충돌로 인해 시작이 불가능한 경우 -p 매개변수를 사용하여 포트를 지정합니다.",
     "Enable LAN access. Restart to take effect.":"LAN 액세스 활성화. 재시작하여 적용됩니다.",
     "Overwrite history records with files of the same name instead of creating a new project.":"동일한 이름의 파일로 이력 기록을 덮어쓰고 새 프로젝트를 생성하지 않습니다.",
-    "Clear temporary files on each startup (which will also erase history records).":"매번 시작할 때 임시 파일을 지웁니다(합성 이력 기록도 함께 지워짐).",
+    "Clear temporary files on each startup":"매번 시작할 때 임시 파일을 지웁니다",
     "Concurrency Count":"동시에 처리할 수 있는 요청 수",
     "Server Mode can only be enabled by modifying configuration file or startup parameters.":"서비스 모드는 구성 파일 또는 시작 매개변수를 수정하여만 활성화할 수 있습니다.",
     "Minimum voice interval (seconds)":"음성 최소 간격(초)",

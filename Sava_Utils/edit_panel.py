@@ -25,6 +25,7 @@ BTN_VISIBLE_DICT = {
     None: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
 }
 
+
 def show_page(page_start, subtitle_list: Subtitles):
     ret = []
     length = len(subtitle_list)
@@ -49,7 +50,27 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
         ret += btn
     ret += btn  # all regen btn*4
-    return  ret
+    return ret
+
+
+def load_single_line(subtitle_list: Subtitles, index):  # with page slider
+    ret = [gr.update()]
+    i = int(index)
+    if i >=0 and i<len(subtitle_list):
+        ret.append(gr.update(value=i, visible=False))
+        ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].text}", interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle_list[i].speaker}", interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle_list.get_state(i), interactive=False, visible=True))
+    else:
+        ret.append(gr.update(value=-1, visible=False))
+        ret.append(gr.update(value=-1, interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+        ret.append(gr.update(value="None", interactive=False, visible=False))
+        ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
+    return ret
 
 
 def play_audio(idx, subtitle_list):
@@ -63,33 +84,42 @@ def play_audio(idx, subtitle_list):
         yield p
 
 
-def getworklist(value=None):
+def refworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        c = os.listdir(os.path.join(current_path, "SAVAdata", "temp", "workspaces"))
-        return gr.update(choices=c, value=value if value else c[-1])
+        return ["",*os.listdir(os.path.join(current_path, "SAVAdata", "workspaces"))]
     except:
-        if value:
-            c = [value]
-        else:
-            c = [""]
-        return gr.update(choices=c, value=value if value else "")
+        return [""]
+
+
+def getworklist(value=None):
+    if not Sava_Utils.config.server_mode:
+        workspaces_list_choices = refspklist()
+        return gr.update(choices=workspaces_list_choices, value=value if value else workspaces_list_choices[-1])
+    else:
+        c = [value] if value else [""]
+        return gr.update(choices=c, value=c[0])
+
+
+def refspklist():
+    try:
+        return ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
+    except:
+        return ["None"]
 
 
 def getspklist(value="None"):
-    try:
-        c = ["None", *os.listdir(os.path.join(current_path, "SAVAdata", "speakers"))]
-        return gr.update(choices=c, value="None"), gr.update(choices=c, value=value)
-    except:
-        return gr.update(choices=["None"], value="None"), gr.update(choices=["None"], value="None")
+    speaker_list_choices = refspklist()
+    return gr.update(choices=speaker_list_choices, value=value if len(speaker_list_choices) > 1 else "None")
 
 
 def load_work(dirname):
     try:
         if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
-        with open(os.path.join(current_path, "SAVAdata", "temp", "workspaces", dirname, "st.pkl"), 'rb') as f:
+        with open(os.path.join(current_path, "SAVAdata", "workspaces", dirname, "st.pkl"), 'rb') as f:
             subtitles = pickle.load(f)
+            subtitles.dir = dirname
         return subtitles, *load_page(subtitles)
     except Exception as e:
         gr.Warning(f"Error: {str(e)}")
@@ -194,11 +224,11 @@ def apply_spk(speaker, page, subtitles: Subtitles, *args):
     return *checklist, *show_page(page, subtitles)
 
 
-def apply_spkmap2workspace(speaker_map, page, subtitles: Subtitles):
+def apply_spkmap2workspace(spk_map: dict, page, subtitles: Subtitles):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n("There is no subtitle in the current workspace"))
         return show_page(page, Subtitles())
-    spk_dict = {i[0]: i[-1] for i in speaker_map}
+    spk_dict = {key:value for key,value in spk_map.items() if key!=value}
     for i in subtitles:
         key = i.speaker if i.speaker else "None"
         if key in spk_dict:

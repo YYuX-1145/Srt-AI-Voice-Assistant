@@ -101,7 +101,7 @@ i18n_dict = {
     "The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.": "このプログラムが使用するポート 0=自動。起動時に競合が発生する場合は、-pパラメータでポートを指定してください。",
     "Enable LAN access. Restart to take effect.": "LANアクセスを有効にする。再起動して設定を有効にします。",
     "Overwrite history records with files of the same name instead of creating a new project.": "同名のファイルで履歴レコードを上書きし、新しいプロジェクトを作成しないでください。",
-    "Clear temporary files on each startup (which will also erase history records).": "起動時に一時ファイルを削除します（合成履歴も削除されます）。",
+    "Clear temporary files on each startup": "起動時に一時ファイルを削除します",
     "Concurrency Count": "同時に処理できるリクエスト数",
     "Server Mode can only be enabled by modifying configuration file or startup parameters.": "サーバーモードは、設定ファイルまたは起動パラメータを変更することでのみ有効にできます。",
     "Minimum voice interval (seconds)": "音声の最小間隔（秒）",

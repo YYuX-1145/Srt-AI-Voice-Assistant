@@ -140,22 +140,23 @@ class Subtitles:
         self.proj = proj
 
     def set_dir_name(self, dir_name: str):
-        abspath = os.path.join(current_path, "SAVAdata", "temp", "workspaces", dir_name)
-        while os.path.exists(abspath):
+        count = 1
+        self.dir = dir_name
+        while os.path.exists(os.path.join(current_path, "SAVAdata", "workspaces", self.dir)):
             if Sava_Utils.config.overwrite_workspace:
-                shutil.rmtree(abspath)
+                shutil.rmtree(os.path.join(current_path, "SAVAdata", "workspaces", self.dir))
                 break
-            abspath += "(new)"
-        self.dir = os.path.join("SAVAdata", "temp", "workspaces", dir_name)  # relative path
-        os.makedirs(abspath, exist_ok=True)
+            self.dir = f"{dir_name}({count})"
+            count+=1
+        os.makedirs(os.path.join(current_path, "SAVAdata", "workspaces", self.dir), exist_ok=True)
         self.dump()
 
     def get_abs_dir(self):
-        return os.path.join(current_path, self.dir)
+        return os.path.join(current_path, "SAVAdata", "workspaces", self.dir)
 
     def audio_join(self, sr=None):  # -> tuple[int,np.array]
         assert self.dir is not None
-        abs_path = os.path.join(current_path, self.dir)
+        abs_path = self.get_abs_dir()
         audiolist = []
         delayed_list = []
         failed_list = []
@@ -200,7 +201,7 @@ class Subtitles:
             gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
         audio_content = np.concatenate(audiolist)
         self.dump()
-        sf.write(os.path.join(current_path, "SAVAdata", "output", f"{os.path.basename(self.dir)}.wav"), audio_content, sr)
+        sf.write(os.path.join(current_path, "SAVAdata", "output", f"{self.dir}.wav"), audio_content, sr)
         return sr, audio_content
 
     def get_state(self, idx):
@@ -264,8 +265,7 @@ class Subtitles:
                 srt_content.append(i.text + "\n")
             srt_content.append("\n")
         if fp is None:
-            t = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            file_path = os.path.join(current_path, "SAVAdata", "output", f"{t}.srt")
+            file_path = os.path.join(current_path, "SAVAdata", "output", f"{self.dir if self.dir else datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.srt")
         else:
             file_path = fp
         os.makedirs(os.path.dirname(file_path), exist_ok=True)

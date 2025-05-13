@@ -63,22 +63,10 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     fps = positive_int(fps)[0]
     if in_files in [None, []]:
         gr.Info(i18n('Please upload the subtitle file!'))
-        return (
-            None,
-            i18n('Please upload the subtitle file!'),
-            getworklist(),
-            *load_page(Subtitles()),
-            Subtitles(),
-        )
+        return (None, i18n('Please upload the subtitle file!'), getworklist(), *load_page(Subtitles()), Subtitles())
     if Sava_Utils.config.server_mode and len(in_files) > 1:
         gr.Warning(i18n('The current mode does not allow batch processing!'))
-        return (
-            None,
-            i18n('The current mode does not allow batch processing!'),
-            getworklist(),
-            *load_page(Subtitles()),
-            Subtitles(),
-        )
+        return (None, i18n('The current mode does not allow batch processing!'), getworklist(), *load_page(Subtitles()), Subtitles())
     os.makedirs(os.path.join(current_path, "SAVAdata", "output"), exist_ok=True)
     for in_file in in_files:
         try:
@@ -86,13 +74,7 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
         except Exception as e:
             what = str(e)
             gr.Warning(what)
-            return (
-                None,
-                what,
-                getworklist(),
-                *load_page(Subtitles()),
-                Subtitles(),
-            )
+            return (None, what, getworklist(), *load_page(Subtitles()), Subtitles())
         # subtitle_list.sort()
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)

@@ -128,7 +128,7 @@ i18n_dict = {
     "Clear temporary files": "Supprimer immédiatement les fichiers temporaires",
     "Storage Management": "Gestion du Stockage",
     "List Archives": "Lister les Archives",
-    "No Archives Found. Click the <Lister les Archives> button to refresh.": "没有存档，点击<列出所有存档>按钮刷新",
+    "No Archives Found. Click the <Lister les Archives> button to refresh.": "Aucune archive trouvée. Cliquez sur le bouton <Lister les Archives> pour rafraîchir.",
     "Submodule Settings": "Paramètres de Sous-Module",
     "Python Interpreter Path for BV2": "Chemin de l'interpréteur Python pour BV2",
     "Root Path of BV2": "Répertoire racine du projet BV2",

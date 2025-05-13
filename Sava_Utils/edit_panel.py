@@ -87,15 +87,16 @@ def play_audio(idx, subtitle_list):
 def refworklist():
     try:
         assert not Sava_Utils.config.server_mode
-        return ["",*os.listdir(os.path.join(current_path, "SAVAdata", "workspaces"))]
+        return os.listdir(os.path.join(current_path, "SAVAdata", "workspaces"))
     except:
-        return [""]
+        return []
 
 
 def getworklist(value=None):
     if not Sava_Utils.config.server_mode:
         workspaces_list_choices = refworklist()
-        return gr.update(choices=workspaces_list_choices[1:] if len(workspaces_list_choices) > 1 else workspaces_list_choices, value=value if value else workspaces_list_choices[-1])
+        c = workspaces_list_choices if len(workspaces_list_choices) > 0 else [""]
+        return gr.update(choices=c, value=value if value else c[-1])
     else:
         c = [value] if value else [""]
         return gr.update(choices=c, value=c[0])

@@ -265,7 +265,7 @@ class Settings_UI:
             self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])
             self.workspaces_archieves_state = gr.State(value=list())
             self.list_workspaces_btn = gr.Button(value=i18n('List Archives'), variant="primary")
-            self.list_workspaces_btn.click(lambda: Sava_Utils.edit_panel.refworklist()[1:], outputs=[self.workspaces_archieves_state])
+            self.list_workspaces_btn.click(Sava_Utils.edit_panel.refworklist, outputs=[self.workspaces_archieves_state])
             workspaces_manager_ui_empty_md = f"### <center>{i18n('No Archives Found. Click the <List Archives> button to refresh.')}</center>"
 
             @gr.render(inputs=self.workspaces_archieves_state)

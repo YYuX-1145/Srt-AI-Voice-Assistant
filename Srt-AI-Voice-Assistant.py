@@ -382,6 +382,7 @@ def save_spk(name: str, *args, project: str):
 
 if __name__ == "__main__":
     os.environ['GRADIO_TEMP_DIR'] = os.path.join(current_path, "SAVAdata", "temp", "gradio")
+    workspaces_list = refworklist()
     if args.server_port is None:
         server_port = Sava_Utils.config.server_port
     else:
@@ -450,7 +451,7 @@ if __name__ == "__main__":
                         edit_check_list = []
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
-                            worklist = gr.Dropdown(choices=refworklist(), label=i18n('History'), scale=2)
+                            worklist = gr.Dropdown(choices=workspaces_list if len(workspaces_list) > 0 else [""], label=i18n('History'), scale=2)
                             workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
                             workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
                             page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)

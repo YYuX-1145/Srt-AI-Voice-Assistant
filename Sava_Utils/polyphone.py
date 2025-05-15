@@ -41,7 +41,7 @@ class Polyphone(Base_Componment):
                 return
             gr.Markdown(i18n('POLYPHONE_NOTICE'))
             self.language = gr.Dropdown(label=i18n('Choose Language'), value=list(PATH.keys())[1], choices=list(PATH.keys()), interactive=True)
-            self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True)
+            self.tab = gr.DataFrame(datatype=["str", "str"], col_count=(2, 'fixed'), type="numpy", interactive=True, show_search='search')
             self.overwrite = gr.Checkbox(value=False, label=i18n('Overwrite instead of Append'))
             self.language.change(lambda: np.array([['', '']], dtype=str), outputs=[self.tab])
             with gr.Row():

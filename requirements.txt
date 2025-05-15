@@ -1,4 +1,4 @@
-gradio>=4.0
+gradio>=4.44.1
 soundfile
 colorlog
 soxr

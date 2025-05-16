@@ -273,11 +273,12 @@ class Settings_UI:
                 if len(x) == 0:
                     gr.Markdown(value=workspaces_manager_ui_empty_md)
                     return
-                for i in x:
-                    with gr.Row(equal_height=True):
-                        item = gr.Textbox(value=i, show_label=False, interactive=False, scale=8)
-                        b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
-                        b.click(rm_workspace, inputs=[item], outputs=[item, b])
+                with gr.Group():
+                    for i in x:
+                        with gr.Row(equal_height=True):
+                            item = gr.Textbox(value=i, show_label=False, interactive=False, scale=8)
+                            b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
+                            b.click(rm_workspace, inputs=[item], outputs=[item, b])
 
         with gr.Accordion(i18n('Submodule Settings'),open=False):
             with gr.Group():

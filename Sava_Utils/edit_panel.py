@@ -73,15 +73,19 @@ def load_single_line(subtitle_list: Subtitles, index):  # with page slider
     return ret
 
 
-def play_audio(idx, subtitle_list):
-    i = int(idx)
-    p = os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
-    yield None
-    if i == -1 or not os.path.exists(p):
+def play_audio(idx, subtitle_list:Subtitles):
+    i = int(idx)        
+    if i == -1 or not subtitle_list.dir:
         gr.Info(i18n('Not available!'))
-        yield None
+        return None
     else:
-        yield p
+        p = os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
+        if os.path.exists(p):
+            yield None
+            yield p
+        else:
+            gr.Info(i18n('Not available!'))
+            return None
 
 
 def refworklist():

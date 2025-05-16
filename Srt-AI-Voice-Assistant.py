@@ -452,12 +452,12 @@ if __name__ == "__main__":
                         edit_start_end_time_list = []
                         with gr.Row(equal_height=True):
                             worklist = gr.Dropdown(choices=workspaces_list if len(workspaces_list) > 0 else [""], label=i18n('History'), scale=2)
-                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=60, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
-                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=60)
-                            page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=4)
-                            audio_player = gr.Audio(label="", value=None, interactive=False, autoplay=True, scale=4, waveform_options={"show_recording_waveform":False})
-                            recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=60)
-                            export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=60)
+                            workrefbtn = gr.Button(value="🔄️", scale=1, min_width=40, visible=not Sava_Utils.config.server_mode, interactive=not Sava_Utils.config.server_mode)
+                            workloadbtn = gr.Button(value=i18n('Load'), scale=1, min_width=40)
+                            page_slider = gr.Slider(minimum=1, maximum=1, value=1, label="", step=Sava_Utils.config.num_edit_rows, scale=5)
+                            audio_player = gr.Audio(show_label=False, value=None, interactive=False, autoplay=True, scale=4, waveform_options={"show_recording_waveform":False})
+                            recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=100)
+                            export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=100)
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index = gr.Number(show_label=False, visible=False, value=-1, interactive=False)  # real index
                             with gr.Row(equal_height=True, height=55):

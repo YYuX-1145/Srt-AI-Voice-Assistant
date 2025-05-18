@@ -80,6 +80,8 @@ i18n_dict = {
     "Issues": "Erreurs courantes",
     "Help & User guide": "Guide d'utilisation",
     # utils
+    "After completing the generation of the next audio, the task will be aborted.": "Après avoir terminé la génération de l’audio suivant, la tâche sera interrompue.",
+    "No running tasks.": "Aucune tâche en cours.",
     "An error occurred": "Une erreur s'est produite",
     "Server Mode has been enabled!": "Le mode serveur a été activé !",
     "Temporary files cleared successfully!": "Les fichiers temporaires ont été supprimés avec succès !",

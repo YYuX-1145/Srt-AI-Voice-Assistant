@@ -1,7 +1,7 @@
 import os
 import sys
 import io
-import inspect
+# import inspect
 import warnings
 
 if getattr(sys, "frozen", False):
@@ -58,9 +58,9 @@ def custom_api(text):
     raise i18n('You need to load custom API functions!')
 
 
-def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
+def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     t1 = time.time()
-    fps = positive_int(fps)[0]
+    fps = positive_int(fps)
     if in_files in [None, []]:
         gr.Info(i18n('Please upload the subtitle file!'))
         return (None, i18n('Please upload the subtitle file!'), getworklist(), *load_page(Subtitles()), Subtitles())
@@ -81,41 +81,37 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
         Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
         abs_dir = subtitle_list.get_abs_dir()
         if Sava_Utils.config.server_mode:
-            max_workers = 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(
-                tqdm(
-                    executor.map(
-                        lambda x: save(x[0], **x[1]),
-                        [
-                            (
-                                args,
-                                {
-                                    "proj": proj,
-                                    "dir": abs_dir,
-                                    "subtitle": i,
-                                },
-                            )
-                            for i in subtitle_list
-                        ],
-                    ),
+            max_workers = 1        
+        file_list = []
+        with interrupt_event:            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(save, args, proj=proj, dir=abs_dir, subtitle=i) for i in subtitle_list]
+                for future in tqdm(
+                    concurrent.futures.as_completed(futures),
                     total=len(subtitle_list),
                     desc=i18n('Synthesizing single-speaker task'),
-                )
-            )
-        file_list = [i for i in file_list if i is not None]
-        if len(file_list) == 0:
-            shutil.rmtree(abs_dir)
-            if len(in_files) == 1:
-                raise gr.Error(i18n('All subtitle syntheses have failed, please check the API service!'))
-            else:
-                continue
-        sr, audio = subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
+                ):
+                    if interrupt_event.is_set():
+                        executor.shutdown(wait=True, cancel_futures=True)
+                        subtitle_list.dump()
+                        gr.Info("Interrupted.")
+                        break
+                    file_list.append(future.result())
+            if interrupt_event.is_set():
+                sr_audio = None
+                break
+            if len(file_list) == 0:
+                shutil.rmtree(abs_dir)
+                if len(in_files) == 1:
+                    raise gr.Error(i18n('All subtitle syntheses have failed, please check the API service!'))
+                else:
+                    continue
+        sr_audio = subtitle_list.audio_join(sr=Sava_Utils.config.output_sr)
     t2 = time.time()
     m, s = divmod(t2 - t1, 60)
     use_time = "%02d:%02d" % (m, s)
     return (
-        (sr, audio),
+        sr_audio,
         f"{i18n('Done! Time used')}:{use_time}",
         getworklist(value=subtitle_list.dir),
         *load_page(subtitle_list),
@@ -123,15 +119,15 @@ def generate(*args, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     )
 
 
-def generate_preprocess(*args, project=None):
+def generate_preprocess(interrupt_event, *args, project=None):
     try:
         args, kwargs = Projet_dict[project].arg_filter(*args)
     except Exception as e:
         return None, f"{i18n('An error occurred')}: {str(e)}", getworklist(), *load_page(Subtitles()), Subtitles()
-    return generate(*args, **kwargs)
+    return generate(*args, interrupt_event=interrupt_event, **kwargs)
 
 
-def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
+def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False):  # args: page,maxworkers,*args,subtitles
     page = args[0]
     max_workers = int(args[1])
     subtitles: Subtitles = args[-1]
@@ -188,28 +184,24 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             continue
         if Sava_Utils.config.server_mode:
             max_workers = 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            file_list = list(
-                tqdm(
-                    executor.map(
-                        lambda x: save(x[0], **x[1]),
-                        [
-                            (
-                                args,
-                                {
-                                    "proj": project,
-                                    "dir": abs_dir,
-                                    "subtitle": i,
-                                },
-                            )
-                            for i in tasks[key]
-                        ],
-                    ),
+        file_list = []
+        with interrupt_event:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(save, args, proj=project, dir=abs_dir, subtitle=i) for i in tasks[key]]
+                for future in tqdm(
+                    concurrent.futures.as_completed(futures),
                     total=len(todo),
                     initial=progress,
                     desc=f"{i18n('Synthesizing multi-speaker task, the current speaker is')} :{spk}",
-                )
-            )
+                ):
+                    if interrupt_event.is_set():
+                        executor.shutdown(wait=True, cancel_futures=True)
+                        gr.Info("Interrupted.")
+                        ok = False
+                        break
+                    file_list.append(future.result())
+                if interrupt_event.is_set():
+                    break     
         file_list = [i for i in file_list if i is not None]
         progress += len(file_list)
         if len(file_list) == 0:
@@ -222,8 +214,9 @@ def gen_multispeaker(*args, remake=False):  # page,maxworkers,*args,subtitles
             gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
         subtitles.dump()
         return show_page(page, subtitles)
-    audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
-    return *show_page(page, subtitles), audio
+    else:
+        sr_audio = subtitles.audio_join(sr=Sava_Utils.config.output_sr)
+    return *show_page(page, subtitles), sr_audio
 
 
 def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
@@ -389,6 +382,7 @@ if __name__ == "__main__":
         server_port = args.server_port
     with gr.Blocks(title="Srt-AI-Voice-Assistant-WebUI", theme=Sava_Utils.config.theme, analytics_enabled=False) as app:
         STATE = gr.State(value=Subtitles())
+        INTERRUPT_EVENT = gr.State(value=Sava_Utils.utils.Flag())
         gr.Markdown(value=MANUAL.getInfo("title"))
         with gr.Tabs():
             with gr.TabItem(i18n('Subtitle Dubbing')):
@@ -436,6 +430,8 @@ if __name__ == "__main__":
                         input_file = gr.File(label=i18n('Upload file (Batch mode only supports one speaker at a time)'), file_types=['.csv', '.srt', '.txt'], file_count='multiple')
                         gen_textbox_output_text = gr.Textbox(label=i18n('Output Info'), interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
+                        stop_btn = gr.Button(value=i18n('Stop'),variant="stop")
+                        stop_btn.click(lambda x:gr.Info(x.set()),inputs=[INTERRUPT_EVENT])
                         if not Sava_Utils.config.server_mode:
                             with gr.Accordion(i18n('API Launcher')):
                                 start_hiyoriui_btn = gr.Button(value="HiyoriUI")
@@ -513,10 +509,10 @@ if __name__ == "__main__":
                             edit_rows.append(all_regen_btn_mstts)
                             all_regen_btn_custom = gr.Button(value=i18n('Continue Generation'), variant="primary", visible=False, interactive=True, min_width=50)
                             edit_rows.append(all_regen_btn_custom)
-                            all_regen_btn_bv2.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *BV2_ARGS, STATE], outputs=edit_rows)
-                            all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
-                            all_regen_btn_mstts.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, *MSTTS_ARGS, STATE], outputs=edit_rows)
-                            all_regen_btn_custom.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=edit_rows)
+                            all_regen_btn_bv2.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[INTERRUPT_EVENT, page_slider, workers, *BV2_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_gsv.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[INTERRUPT_EVENT, page_slider, workers, *GSV_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_mstts.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[INTERRUPT_EVENT, page_slider, workers, *MSTTS_ARGS, STATE], outputs=edit_rows)
+                            all_regen_btn_custom.click(lambda *args: gen_multispeaker(*args, remake=True), inputs=[INTERRUPT_EVENT, page_slider, workers, CUSTOM.choose_custom_api, STATE], outputs=edit_rows)
 
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
@@ -556,7 +552,7 @@ if __name__ == "__main__":
                         del_spk_list_btn = gr.Button(value="🗑️", min_width=60, scale=0)
                         del_spk_list_btn.click(del_spk, inputs=[speaker_list], outputs=[speaker_list])
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
-                        start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[page_slider, workers, STATE], outputs=edit_rows + [audio_output])
+                        start_gen_multispeaker_btn.click(gen_multispeaker, inputs=[INTERRUPT_EVENT, page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
                 for i in componments[2]:
                     i.getUI(input_file)
@@ -586,10 +582,10 @@ if __name__ == "__main__":
         update_spkmap_btn_upload.click(get_speaker_map_from_file, inputs=[input_file], outputs=[speaker_map_set,speaker_map_dict])
         update_spkmap_btn_current.click(get_speaker_map_from_sub, inputs=[STATE], outputs=[speaker_map_set, speaker_map_dict])
         create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode,speaker_map_dict, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
-        BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
-        GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
-        MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
-        CUSTOM.gen_btn4.click(lambda *args: generate_preprocess(*args, project="custom"), inputs=[input_file, fps, offset, workers, CUSTOM.choose_custom_api], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
+        BV2.gen_btn1.click(lambda *args: generate_preprocess(*args, project="bv2"), inputs=[INTERRUPT_EVENT, input_file, fps, offset, workers, *BV2_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
+        GSV.gen_btn2.click(lambda *args: generate_preprocess(*args, project="gsv"), inputs=[INTERRUPT_EVENT, input_file, fps, offset, workers, *GSV_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
+        MSTTS.gen_btn3.click(lambda *args: generate_preprocess(*args, project="mstts"), inputs=[INTERRUPT_EVENT, input_file, fps, offset, workers, *MSTTS_ARGS], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
+        CUSTOM.gen_btn4.click(lambda *args: generate_preprocess(*args, project="custom"), inputs=[INTERRUPT_EVENT, input_file, fps, offset, workers, CUSTOM.choose_custom_api], outputs=[audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE])
 
     app.queue(default_concurrency_limit=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
         share=args.share,

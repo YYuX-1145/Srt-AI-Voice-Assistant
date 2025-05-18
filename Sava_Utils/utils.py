@@ -11,21 +11,43 @@ import shutil
 import platform
 import Sava_Utils
 
+
 current_path = os.environ.get("current_path")
 system = platform.system()
 LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 
+class Flag:
+    def __init__(self):
+        self.stop = False
+        self.using = False
+
+    def set(self):
+        if self.using:
+            self.stop = True
+            return i18n('After completing the generation of the next audio, the task will be aborted.')
+        else:
+            return i18n('No running tasks.')
+
+    def clear(self):
+        self.stop = False
+        self.using = False
+
+    def is_set(self):
+        return self.stop
+
+    def __enter__(self):
+        self.stop = False
+        self.using = True
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.clear()
+
+
 def positive_int(*a):
-    r = []
-    for x in a:
-        if x is None:
-            r.append(None)
-            continue
-        if x < 0:
-            x = 0
-        r.append(int(x))
-    return r
+    r = [max(0,int(x)) for x in a]
+    return r if len(r)>1 else r[0]
 
 
 def clear_cache():

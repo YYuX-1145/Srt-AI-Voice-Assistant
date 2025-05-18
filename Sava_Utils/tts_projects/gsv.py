@@ -154,7 +154,7 @@ class GSV(TTSProjet):
 
     def save_action(self, *args, text: str = None):
         artts_proj, text_language, port, refer_wav_path, aux_refer_wav_path, prompt_text, prompt_language, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps,parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
-        port = positive_int(port)[0]
+        port = positive_int(port)
         audio = self.api(
             port,
             artts_name=artts_proj,

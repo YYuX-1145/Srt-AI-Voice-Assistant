@@ -81,6 +81,8 @@ i18n_dict = {
     "Issues": "常见错误",
     "Help & User guide": "使用指南",
     # utils
+    "After completing the generation of the next audio, the task will be aborted.": "完成下一条音频生成后中止任务...",
+    "No running tasks.": "没有进行中的任务",
     "An error occurred": "出现错误",
     "Server Mode has been enabled!": "服务模式已启用！",
     "Temporary files cleared successfully!": "成功清除临时文件！",

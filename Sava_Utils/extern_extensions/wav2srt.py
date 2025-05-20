@@ -81,7 +81,10 @@ class WAV2SRT(Base_Componment):
         msg=""
         for input in inputs:
             msg+=f"{i18n('Processing')}: {os.path.basename(input.name)}\n"
-            output_path=f"{os.path.join(out_dir,os.path.basename(input.name))}.srt"
+            if self.server_mode:
+                output_path = f"{os.path.join(os.path.dirname(input.name),os.path.basename(input.name))}.srt"
+            else:
+                output_path=f"{os.path.join(out_dir,os.path.basename(input.name))}.srt"
             command=f'"{pydir}" tools\\wav2srt.py -input_dir "{input.name}" -output_dir "{output_path}" -engine {engine} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}  {args}'
             x=rc_bg(command=command,dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
             pid=next(x)
@@ -99,4 +102,4 @@ class WAV2SRT(Base_Componment):
 
 
 def send(fp_list):
-     return [i.name for i in fp_list] if fp_list is not None else fp_list
+     return [i.name for i in fp_list if i.name.endswith(".srt")] if fp_list is not None else fp_list

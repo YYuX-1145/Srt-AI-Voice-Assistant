@@ -1,5 +1,6 @@
 import faster_whisper
 import os 
+import shutil
 from io import BytesIO
 import librosa
 import soundfile as sf
@@ -23,7 +24,7 @@ parser.add_argument("-engine", default="whisper", type=str)
 parser.add_argument("--uvr_model", default=None, type=str)
 parser.add_argument("--whisper_size", default="large-v3", type=str)
 parser.add_argument("--threshold", default=-40, type=float)
-parser.add_argument("--min_length", default=5000, type=int)
+parser.add_argument("--min_length", default=2000, type=int)
 parser.add_argument("--min_interval", default=300, type=int)
 parser.add_argument("--hop_size", default=20, type=int)
 parser.add_argument("--max_sil_kept", default=1000, type=int)
@@ -155,19 +156,21 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
             )
         ret = []
         for input_path in input_paths:
-            need_reformat = 1
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
-            done = 0
-            if need_reformat == 1:
-                tmp_path = f"{os.path.basename(input_path)}_reformatted.wav"
-                os.system(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y')
-                input_path = tmp_path
+            tmp_path = f"{os.path.basename(input_path)}_reformatted.wav"
+            os.system(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y')
             try:
-                if done == 0:
-                    pre_fun._path_audio_(input_path, save_path, save_path, format0, is_hp3)
+                pre_fun._path_audio_(tmp_path , save_path, save_path, format0, is_hp3)
+                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")
+                # ins/vocal_audio.wav|_10_reformatted.wav.wav"     17 + 4 + len(agg)
+                x = -22 if agg < 10 else -23
+                shutil.move(out_p, out_p[:x])
+                out_p = os.path.join(save_path, f"instrument_{os.path.basename(tmp_path)}_{agg}.wav")
+                shutil.move(out_p, out_p[:x])
+                ret.append(os.path.join(save_path,f"vocal_{os.path.basename(input_path)}"))
             except Exception as e:
                 print(e)
-        ret.append(os.path.join(save_path,f"vocal_{os.path.basename(input_path)}_{agg}.wav"))
+
     except Exception as e:
         print(e)
     finally:

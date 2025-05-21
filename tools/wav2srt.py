@@ -31,6 +31,9 @@ parser.add_argument("--hop_size", default=20, type=int)
 parser.add_argument("--max_sil_kept", default=1000, type=int)
 args = parser.parse_args()
 
+def basename_no_ext(path:str):
+    return os.path.basename(os.path.splitext(path)[0])
+
 def init_ASRmodels():
     global args,model
     if args.engine=="whisper":
@@ -129,7 +132,11 @@ def transcribe(wav_paths,save_root):
             srt_content.append("\n")
 
         save_path = save_root if save_root is not None else os.path.dirname(audio_path)
-        with open(os.path.join(save_path,f"{os.path.basename(audio_path)}.srt"),"w",encoding="utf-8") as f:
+        if os.path.basename(audio_path).startswith('vocal_'):
+            savename = os.path.join(save_path, f"{basename_no_ext(audio_path)[6:]}.srt")
+        else:
+            savename = os.path.join(save_path, f"{basename_no_ext(audio_path)}.srt")
+        with open(savename, "w", encoding="utf-8") as f:
             f.writelines(srt_content)
 
 
@@ -158,17 +165,17 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
         ret = []
         for input_path in input_paths:
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
-            tmp_path = f"{os.path.basename(input_path)}_reformatted.wav"
+            tmp_path = f"{basename_no_ext(input_path)}_reformatted.wav"
             os.system(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y')
             try:
                 pre_fun._path_audio_(tmp_path , save_path, save_path, format0, is_hp3)
                 out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")
-                # ins/vocal_audio.wav|_10_reformatted.wav.wav"     17 + 4 + len(agg)
+                # (ins/vocal)_audio|_10_reformatted.wav.wav"     17 + 4 + len(agg)
                 x = -22 if agg < 10 else -23
-                shutil.move(out_p, out_p[:x])
+                shutil.move(out_p, out_p[:x] + '.wav')
                 out_p = os.path.join(save_path, f"instrument_{os.path.basename(tmp_path)}_{agg}.wav")
-                shutil.move(out_p, out_p[:x])
-                ret.append(os.path.join(save_path,f"vocal_{os.path.basename(input_path)}"))
+                shutil.move(out_p, out_p[:x] + '.wav')
+                ret.append(os.path.join(save_path,f"vocal_{basename_no_ext(input_path)}.wav"))
             except Exception as e:
                 print(e)
     except Exception as e:

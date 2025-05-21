@@ -235,7 +235,7 @@ i18n_dict = {
         "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support": "ASRモデルを選択。funasrは中国語のみサポートしますが、はるかに高速です。faster whisperは多言語をサポートしています",
         "(ms)Minimum length of each segment": "(ms)各セグメントの最小長さ",
         "(ms)Minium slice interval": "(ms)最短のスライス間隔",
-        "(ms)Minium silence length": "(ms)切り取った後の最大無音長",
+        "(ms)Maxium silence length": "(ms)切り取った後の最大無音長",
         "Other Parameters": "その他のパラメータ",
         "Start": "開始",
         "Stop": "停止",
@@ -245,10 +245,6 @@ i18n_dict = {
         "Tasks are terminated due to an error in": "タスクがエラーで終了: ",
         "Finished": "タスク終了",
         "WAV2SRT_INFO":"""
-            この機能は直接GPT-SoVITS統合パッケージで使用できます。それ以外の場合は、独自に対応する依存関係をインストールする必要があります。<br>
-            # その他のパラメータ：
-            `--whisper_size` デフォルト:large-v3 | faster whisperを使用するときにモデルを指定<br>
-            `--threshold` デフォルト:-40 | 音量がこの値未満の場合、無音の候補切り取り点とみなします<br>
-            `--hop_size` デフォルト:20 | 音量曲線の計算方法。値が小さいほど精度が高くなり、計算量も増えます（精度が高いほど必ずしも良い結果になるとは限りません）<br>
+            ### この機能は直接GPT-SoVITS統合パッケージで使用できます。それ以外の場合は、独自に対応する依存関係をインストールする必要があります。<br>
             """
 } 

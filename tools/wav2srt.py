@@ -4,6 +4,7 @@ import shutil
 from io import BytesIO
 import librosa
 import soundfile as sf
+import scipy
 import argparse
 import torch
 import ffmpeg
@@ -86,8 +87,8 @@ def whisper_transcribe(audio,sr):
 
 def funasr_transcribe(audio,sr):
     b = BytesIO()
-    sf.write(b,audio,sr)
-    text = model.generate(input=b)[0]["text"]
+    scipy.io.wavfile.write(b,sr,audio)
+    text = model.generate(input=b.getvalue())[0]["text"]
     del b
     return text
 
@@ -170,7 +171,6 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 ret.append(os.path.join(save_path,f"vocal_{os.path.basename(input_path)}"))
             except Exception as e:
                 print(e)
-
     except Exception as e:
         print(e)
     finally:

@@ -50,6 +50,10 @@ def positive_int(*a):
     return r if len(r)>1 else r[0]
 
 
+def basename_no_ext(path: str):
+    return os.path.basename(os.path.splitext(path)[0])
+
+
 def clear_cache():
     dir = os.path.join(current_path, "SAVAdata", "temp")
     if os.path.exists(dir):

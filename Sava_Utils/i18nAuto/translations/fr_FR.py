@@ -225,6 +225,11 @@ i18n_dict = {
     "No custom API code file found.": "Aucun préréglage d'API personnalisée trouvé",
     "Please select a valid custom API code file!": "Veuillez sélectionner un fichier de configuration d'API valide !",
     # Subtitle Translation
+    "Subtitle Merge Tool": "Outil de fusion des sous-titres",
+    "When uploading multiple files, the number of files and the filenames must match.": "Lors du téléchargement de plusieurs fichiers, le nombre de fichiers et les noms des fichiers doivent correspondre.",
+    "Main Subtitle": "Sous-titre principal",
+    "Secondary Subtitle": "Sous-titre secondaire",
+    "The number of files must match!": "Le nombre de fichiers doit correspondre !",
     "Start Translating": "Commencer la traduction",
     "Translating": "Traduction en cours",
     "Failed to translate": "Échec de la traduction",
@@ -233,6 +238,7 @@ i18n_dict = {
     "Send output files to Main Page": "Envoyer les fichiers de sortie à la page principale",
     "Send output files to Translator": "Envoyer les fichiers de sortie à la page de traduction",
     "Specify Target Language": "Choisissez la langue cible",
+    "Generate merged subtitles": "Générer le fichier de sous-titres fusionnés",
     "File Output Path": "Chemin de sortie du fichier",
     "Select Translator": "Choisissez le traducteur",
     # Ollama

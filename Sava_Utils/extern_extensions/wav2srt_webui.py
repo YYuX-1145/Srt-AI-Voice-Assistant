@@ -1,16 +1,12 @@
 import gradio as gr
 from ..import i18n
-from ..utils import rc_bg,kill_process
+from ..utils import rc_bg,kill_process,basename_no_ext
 from ..base_componment import Base_Componment
 import os
 
 
 current_path = os.environ.get("current_path")
 OUT_DIR_DEFAULT=os.path.join(current_path,"SAVAdata","output")
-
-
-def basename_no_ext(path: str):
-    return os.path.basename(os.path.splitext(path)[0])
 
 
 class WAV2SRT(Base_Componment):

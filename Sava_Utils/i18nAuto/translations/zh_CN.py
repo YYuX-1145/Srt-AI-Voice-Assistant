@@ -226,6 +226,11 @@ i18n_dict = {
     "No custom API code file found.": "当前没有自定义API预设",
     "Please select a valid custom API code file!": "请选择有效的API配置文件！",
     # Subtitle Translation
+    "Subtitle Merge Tool": "字幕合并工具",
+    "When uploading multiple files, the number of files and the filenames must match.": "上传多个文件时，文件数量和文件名需要匹配",
+    "Main Subtitle": "主字幕",
+    "Secondary Subtitle": "副字幕",
+    "The number of files must match!": "文件数量必须匹配！",
     "Start Translating": "开始翻译",
     "Translating": "正在翻译",
     "Failed to translate": "翻译失败",
@@ -234,6 +239,7 @@ i18n_dict = {
     "Send output files to Main Page": "发送至主页面",
     "Send output files to Translator": "发送至翻译页面",
     "Specify Target Language": "选择目标语言",
+    "Generate merged subtitles": "输出合并的字幕文件",
     "File Output Path": "文件输出路径",
     "Select Translator": "选择翻译器",
     # Ollama

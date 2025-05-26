@@ -411,7 +411,6 @@ if __name__ == "__main__":
                                         v = gr.Dropdown(value=i, choices=c, show_label=False, allow_custom_value=True)
                                         v.change(modify_spkmap, inputs=[speaker_map_dict,k,v])
                                 gr.Button(value="🗑️",variant="stop").click(lambda:(set(),dict()),outputs=[speaker_map_set,speaker_map_dict])
-
                             with gr.Accordion(i18n('Identify Original Speakers'),open=True):
                                 update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))
                                 update_spkmap_btn_current = gr.Button(value=i18n('From Workspace'))

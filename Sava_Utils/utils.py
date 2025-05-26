@@ -76,12 +76,10 @@ def rc_open_window(command, dir=current_path):
     time.sleep(0.1)
 
 
-def rc_bg(command, dir=current_path, get_id=True):
-    process = subprocess.Popen(command, cwd=dir, shell=True)
+def rc_bg(command, dir=current_path):
+    process = subprocess.Popen(command, cwd=dir,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
     logger.info(f"{i18n('Execute command')}:{command}")
-    if get_id:
-        yield process.pid
-    yield process.wait()
+    return process
 
 
 def kill_process(pid):

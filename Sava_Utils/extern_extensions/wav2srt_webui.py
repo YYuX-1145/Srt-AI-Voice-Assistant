@@ -94,10 +94,22 @@ class WAV2SRT(Base_Componment):
         input_str = '"' + '" "'.join([i.name for i in inputs]) + '"'
         output_dir_str = f' -output_dir "{out_dir}"' if not self.server_mode else ""
         command=f'"{pydir}" tools\\wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
-        x=rc_bg(command=command,dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
-        pid=next(x)
+        process = rc_bg(command=command,dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
+        pid = process.pid
         yield pid,msg,output_list
-        exit_code=next(x)
+        progress_line = ''
+        for line in process.stdout:
+            if r"it/s" in line or r"s/it" in line:
+                progress_line = line
+            elif line.strip():
+                msg += line
+            if progress_line:
+                yield pid, msg + '\n' + progress_line, output_list
+            else:
+                yield pid, msg, output_list
+        process.communicate()
+        yield -1, msg, output_list
+        exit_code = process.returncode
         if exit_code==0:
             msg+=f"{i18n('Done!')}\n"
             if self.server_mode:

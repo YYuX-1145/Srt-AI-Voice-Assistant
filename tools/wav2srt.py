@@ -2,12 +2,13 @@ import faster_whisper
 import os 
 import shutil
 from io import BytesIO
+import subprocess
+from tqdm import tqdm
 import librosa
 import soundfile as sf
 import scipy
 import argparse
 import torch
-import ffmpeg
 from tools.slicer2 import Slicer
 from faster_whisper import WhisperModel
 from funasr import AutoModel
@@ -40,11 +41,11 @@ def init_ASRmodels():
         model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
         os.makedirs(model_path,exist_ok=True)
         if os.listdir(model_path)==[]:         
-            print("downloading...")
+            print("Downloading faster whisper model...")
             os.makedirs(model_path,exist_ok=True)
             faster_whisper.download_model(size_or_id=args.whisper_size,output_dir=model_path)    
         try:
-            print("loading faster whisper model:",model_path)
+            print("Loading faster whisper model:",model_path)
             model = WhisperModel(model_path, device='cuda')
         except Exception as e:
             print(e) 
@@ -52,6 +53,7 @@ def init_ASRmodels():
         if args.whisper_size=="large-v3":
             model.feature_extractor.mel_filters = model.feature_extractor.get_mel_filters(model.feature_extractor.sampling_rate, model.feature_extractor.n_fft, n_mels=128)
     else :
+        print("Loading FunASR models...")
         path_asr = 'tools/asr/models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         path_asr = path_asr if os.path.exists(path_asr) else "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
         model_revision="v2.0.4" 
@@ -98,7 +100,7 @@ def funasr_transcribe(audio,sr):
 
 def transcribe(wav_paths,save_root):
     global model
-    for audio_path in wav_paths:
+    for audio_path in tqdm(wav_paths,desc='Transcribing...'):
         audio,sr=librosa.load(audio_path,sr=None)
         slicer=Slicer(
             sr=sr,
@@ -163,10 +165,13 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 is_half=True,
             )
         ret = []
-        for input_path in input_paths:
+        for input_path in tqdm(input_paths,desc='Denoising...'):
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
             tmp_path = f"{basename_no_ext(input_path)}_reformatted.wav"
-            os.system(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y')
+            try:
+                assert subprocess.run(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y', stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0
+            except:
+                print(f"FFmpeg Error: {input_path}")
             try:
                 pre_fun._path_audio_(tmp_path , save_path, save_path, format0, is_hp3)
                 out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")

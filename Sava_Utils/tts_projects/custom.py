@@ -18,7 +18,7 @@ class Custom(TTSProjet):
         return func(text)
 
     def _UI(self):
-        with gr.TabItem(i18n('Custom API')):
+        with gr.TabItem(i18n('Custom API'), visible=False):
             with gr.Column():
                 gr.Markdown(value=MANUAL.getInfo("help_custom"))                
                 self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False, scale=4)

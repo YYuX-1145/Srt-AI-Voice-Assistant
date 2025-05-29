@@ -22,7 +22,9 @@ class WAV2SRT(Base_Componment):
 
     def _UI(self, file_main, file_tr):
         available = False
-        if os.path.exists(os.path.join(current_path, "tools", "wav2srt.py")):
+        gr.Markdown('施工中...在线版暂不可用')
+        if False:
+        #if os.path.exists(os.path.join(current_path, "tools", "wav2srt.py")):
             available = True
             with gr.TabItem(i18n('Audio/Video Transcribe')):
                 with gr.Row():

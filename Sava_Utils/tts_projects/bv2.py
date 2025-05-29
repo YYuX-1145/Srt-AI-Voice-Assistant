@@ -54,7 +54,7 @@ class BV2(TTSProjet):
             return gr.update(label="Speaker_ID", value=0, visible=False, interactive=True), gr.update(label="Speaker_Name", visible=True, value="", interactive=True)
 
     def _UI(self):
-        with gr.TabItem("Bert-VITS2-HiyoriUI"):
+        with gr.TabItem("Bert-VITS2-HiyoriUI", visible=False):
             with gr.Row():
                 with gr.Column():
                     self.spkchoser = gr.Radio(label=i18n('Select Speaker ID or Speaker Name'), choices=['Speaker_ID', 'Speaker_Name'], value="Speaker_ID")

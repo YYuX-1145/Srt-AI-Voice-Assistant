@@ -75,7 +75,7 @@ class Ollama(Traducteur):
                 request_data["messages"].pop(0)
                 request_data["messages"].pop(0)
 
-            #print(request_data)
+            # print(request_data)
             batch = result.split("\n\n")
             d = len(task) - len(batch)
             if d:
@@ -91,7 +91,8 @@ class Ollama(Traducteur):
         from ..subtitle_translation import start_translation
 
         if self.server_mode:
-            self.get_models("")
+            self.models = []
+            # self.get_models("")
         with gr.Column():
             gr.Markdown(i18n('OLLAMA_NOTICE'))
             self.select_model = gr.Dropdown(label=i18n('Select Your Model'), choices=self.models, allow_custom_value=False)

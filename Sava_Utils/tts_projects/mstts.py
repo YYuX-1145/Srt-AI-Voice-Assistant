@@ -115,7 +115,7 @@ class MSTTS(TTSProjet):
             return None
 
     def _UI(self):
-        with gr.TabItem("Azure-TTS(Microsoft)"):
+        with gr.TabItem("Azure-TTS(Microsoft)",visible=False):
             with gr.Column():
                 self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
                 if self.ms_speaker_info == {}:

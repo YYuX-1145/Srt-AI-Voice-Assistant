@@ -589,6 +589,6 @@ if __name__ == "__main__":
         share=args.share,
         server_port=server_port if server_port > 0 else None,
         inbrowser=True,
-        server_name='0.0.0.0' if Sava_Utils.config.LAN_access else '127.0.0.1',
+        server_name='0.0.0.0' if Sava_Utils.config.LAN_access or args.LAN_access else '127.0.0.1',
         show_api=not Sava_Utils.config.server_mode,
     )

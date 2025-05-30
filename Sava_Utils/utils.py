@@ -67,8 +67,7 @@ def clear_cache():
 
 def rc_open_window(command, dir=current_path):
     if system != "Windows":
-        gr.Warning("This function is only available on Windows!")
-        logger.warning("This function is only available on Windows!")
+        subprocess.Popen(command, cwd=dir, shell=True)
         return
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)

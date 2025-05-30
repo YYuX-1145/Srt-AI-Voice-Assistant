@@ -106,6 +106,8 @@ class Settings:
         if self.bv2_pydir != "":
             if os.path.exists(self.bv2_pydir):
                 self.bv2_pydir = os.path.abspath(self.bv2_pydir)
+            elif self.bv2_pydir == 'python':
+                pass
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir}")
                 self.bv2_pydir = ""
@@ -119,6 +121,8 @@ class Settings:
         if self.gsv_pydir != "":
             if os.path.exists(self.gsv_pydir):
                 self.gsv_pydir = os.path.abspath(self.gsv_pydir)
+            elif self.gsv_pydir == 'python':
+                pass
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
                 self.gsv_pydir = ""

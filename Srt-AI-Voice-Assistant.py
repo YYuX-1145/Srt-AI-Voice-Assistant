@@ -2,6 +2,7 @@ import os
 import sys
 import io
 # import inspect
+import base64
 import warnings
 
 if getattr(sys, "frozen", False):
@@ -12,6 +13,9 @@ elif __file__:
     os.environ["exe"] = 'False'
 os.environ["current_path"] = current_path
 
+with open(os.path.join(current_path,'assets','AD.jpg'), "rb") as f:
+    data = f.read()
+    base64_data = base64.b64encode(data).decode()
 import shutil
 
 import gradio as gr
@@ -392,6 +396,13 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         textbox_intput_text = gr.TextArea(label=i18n('File content'), value="", interactive=False)
+                        gr.HTML(
+                            f"""
+            <a href="https://www.compshare.cn/images/compshareImage-1cis3a4ir3c9?referral_code=IHlncJt4RcQDdxKLEZ6pAY&ytag=GPU_srtonline" target="_blank">
+                <img src="data:image/jpeg;base64,{base64_data}" style="width:100%; max-width:600px; border-radius: 12px;" />
+            </a>
+        """
+                        )
                         with gr.Accordion(i18n('Speaker Map'), open=False):
                             use_labled_text_mode = gr.Checkbox(label=i18n('Enable Marking Mode'))
                             speaker_map_set = gr.State(value=set())

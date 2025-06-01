@@ -276,7 +276,7 @@ class GSV(TTSProjet):
             else:
                 sr, wav = refer_audio
                 assert 3 * sr <= wav.shape[-1] and wav.shape[-1] <= 10 * sr, '参考音频必须在3-10秒之间'
-            assert not refer_text.strip(), '参考音频文本不得为空'
+            assert refer_text.strip(), '参考音频文本不得为空'
         if refer_audio is not None:
             refer_audio_path = temp_ra(refer_audio)
         else:

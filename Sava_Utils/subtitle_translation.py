@@ -109,16 +109,15 @@ class Translation_module(Base_Componment):
 
     def _UI(self, file_main):
         with gr.TabItem(i18n('Subtitle Translation')):
-            gr.Markdown('需要更多算力...待时机成熟后开放')
-            with gr.Accordion(i18n('Subtitle Merge Tool'), open=True):
-                gr.Markdown(value=i18n('When uploading multiple files, the number of files and the filenames must match.'))
-                with gr.Row():
-                    self.merge_upload1 = gr.File(label=i18n('Main Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
-                    self.merge_upload2 = gr.File(label=i18n('Secondary Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
-                self.merge_btn = gr.Button(value=i18n('Merge'), variant='primary')
-            with gr.Row(visible=False):
+            with gr.Row():
                 with gr.Column():
                     self.translation_upload = gr.File(label=i18n('Upload your subtitle files (multiple allowed).'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
+                    with gr.Accordion(i18n('Subtitle Merge Tool'), open=False):
+                        gr.Markdown(value=i18n('When uploading multiple files, the number of files and the filenames must match.'))
+                        with gr.Row():
+                            self.merge_upload1 = gr.File(label=i18n('Main Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
+                            self.merge_upload2 = gr.File(label=i18n('Secondary Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
+                        self.merge_btn = gr.Button(value=i18n('Merge'), variant='primary')
                     self.result = gr.Text(interactive=False, value="", label=i18n('Output Info'))
                     self.translation_output = gr.File(label=i18n('Generate merged subtitles'), file_count="multiple", interactive=False)
                     self.send_btn = gr.Button(value=i18n('Send output files to Main Page'), interactive=True)
@@ -140,4 +139,4 @@ class Translation_module(Base_Componment):
                             v = False
                         self.menu.append(x)
                 self.translation_target_language.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
-            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output,self.result])
+            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output, self.result])

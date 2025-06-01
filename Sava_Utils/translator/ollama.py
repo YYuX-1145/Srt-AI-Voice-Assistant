@@ -92,7 +92,7 @@ class Ollama(Traducteur):
 
         if self.server_mode:
             self.models = []
-            # self.get_models("")
+            self.get_models("")
         with gr.Column():
             gr.Markdown(i18n('OLLAMA_NOTICE'))
             self.select_model = gr.Dropdown(label=i18n('Select Your Model'), choices=self.models, allow_custom_value=False)

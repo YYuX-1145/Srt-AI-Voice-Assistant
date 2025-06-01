@@ -125,7 +125,9 @@ def generate_preprocess(interrupt_event, *args, project=None):
     try:
         args, kwargs = Projet_dict[project].arg_filter(*args)
     except Exception as e:
-        return None, f"{i18n('An error occurred')}: {str(e)}", getworklist(), *load_page(Subtitles()), Subtitles()
+        info = f"{i18n('An error occurred')}: {str(e)}"
+        gr.Warning(info)
+        return None, info, getworklist(), *load_page(Subtitles()), Subtitles()
     return generate(*args, interrupt_event=interrupt_event, **kwargs)
 
 

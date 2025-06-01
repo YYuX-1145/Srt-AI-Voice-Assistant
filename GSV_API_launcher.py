@@ -31,10 +31,12 @@ if __name__ == "__main__":
         if preset["port"] not in process_tab:
             command = f"""
             "{sava_config['gsv_pydir']}" "{os.path.join(sava_config['gsv_dir'],apath)}" -c {os.path.abspath(yml_temp_dir)} -p {preset["port"]}
-            """
+            """.strip()
             process_tab[preset["port"]] = subprocess.Popen(command, cwd=sava_config['gsv_dir'], shell=True)
+            print(f'Run {preset["port"]}')
         count += 1
         if count >= MAX_P:
             break
+    print('Launched.')
     while True:
         time.sleep(200)

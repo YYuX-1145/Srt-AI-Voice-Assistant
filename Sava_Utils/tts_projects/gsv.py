@@ -114,7 +114,7 @@ class GSV(TTSProjet):
                         "sample_steps": kwargs["sample_steps"],
                     }
                     API_URL = f"http://127.0.0.1:{port}/"
-                #print(data_json)
+                # print(data_json)
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content
@@ -273,6 +273,10 @@ class GSV(TTSProjet):
             if refer_audio is None:
                 gr.Warning(i18n('You must upload Main Reference Audio'))
                 raise Exception(i18n('You must upload Main Reference Audio'))
+            else:
+                sr, wav = refer_audio
+                assert 3 * sr <= wav.shape[-1] and wav.shape[-1] <= 10 * sr, '参考音频必须在3-10秒之间'
+            assert not refer_text.strip(), '参考音频文本不得为空'
         if refer_audio is not None:
             refer_audio_path = temp_ra(refer_audio)
         else:

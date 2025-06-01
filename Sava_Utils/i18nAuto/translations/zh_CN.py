@@ -23,7 +23,7 @@ i18n_dict = {
     "You must specify the speakers while using multi-speaker dubbing!": "使用多角色配音时，必须指定说话人！",
     "Audio re-generation was successful! Click the <Reassemble Audio> button.": "重新合成成功！点击重新拼接内容。",
     "Audio re-generation failed!": "重新合成失败！",
-    "Reassemble successfully!": "重新合成完毕！",
+    "Reassemble successfully!": "重新拼接完毕！",
     "This function has been disabled!": "当前功能已被禁用！",
     "Please enter a valid name!": "请输入有效的名称！",
     "Saved successfully": "保存成功",

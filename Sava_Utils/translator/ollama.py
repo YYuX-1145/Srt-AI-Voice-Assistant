@@ -21,7 +21,7 @@ class Ollama(Traducteur):
     def get_models(self, url):
         try:
             if self.server_mode:
-                result = subprocess.run("ollama list", capture_output=True, text=True)  # consider using awk
+                result = subprocess.run("ollama list", capture_output=True, text=True, shell=True)  # consider using awk
                 lines = result.stdout.strip().split("\n")[1:]
                 self.models = [i.split()[0] for i in lines]
                 # print(self.models)

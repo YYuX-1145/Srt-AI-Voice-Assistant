@@ -49,7 +49,7 @@ def start_translation(in_files, language: str, batch_size: float, merge: bool, o
                 s_merged.export(fp=op, open_explorer=False, raw=True)
                 output_list.append(op)
         except Exception as e:
-            err = f"{i18n('Failed to translate')} {in_file.name} :{str(e)}"
+            err = f"{i18n('Failed to translate')} {os.path.basename(in_file.name)} :{str(e)}"
             gr.Warning(err)
             message += err + "\n"
             continue

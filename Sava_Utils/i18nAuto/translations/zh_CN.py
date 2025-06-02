@@ -68,6 +68,8 @@ i18n_dict = {
     "Replace With": "替换为",
     "Enable Regular Expression": "使用正则表达式",
     "Find and Replace": "查找和替换",
+    "Find Next": "查找下一个",
+    "No more results": "已查找完毕",
     "Replace All": "全部替换",
     "You must enter the text to find.": "你必须输入查找目标文本！",
     "Multi-speaker dubbing": "多角色配音",
@@ -107,6 +109,7 @@ i18n_dict = {
     "Failed to synthesize the following subtitles or they were not synthesized": "以下字幕合成失败或未合成",
     # Settings
     "Failed to load settings, reset to default": "设置加载失败，恢复默认",
+    "was removed successfully.": "成功删除",
     "Error, Invalid Path": "错误，无效的路径",
     "Env detected": "已检测到环境",
     "Restarting...": "正在重启...",

@@ -105,4 +105,4 @@ class Ollama(Traducteur):
             self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
             self.num_history = gr.Slider(label=i18n('History Message Limit'), value=2, minimum=0, maximum=10, step=1)
             self.translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
-            self.translate_btn.click(lambda progress=gr.Progress(track_tqdm=True),*args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history], outputs=[output_info, output_files])
+            self.translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history], outputs=[output_info, output_files])

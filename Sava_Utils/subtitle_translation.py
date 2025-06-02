@@ -49,7 +49,7 @@ def start_translation(in_files, language: str, batch_size: float, merge: bool, o
                 s_merged.export(fp=op, open_explorer=False, raw=True)
                 output_list.append(op)
         except Exception as e:
-            err = f"{i18n('Failed to translate')} {in_file.name} :{str(e)}"
+            err = f"{i18n('Failed to translate')} {os.path.basename(in_file.name)} :{str(e)}"
             gr.Warning(err)
             message += err + "\n"
             continue
@@ -138,5 +138,5 @@ class Translation_module(Base_Componment):
                                 TRANSLATORS[i].getUI(*Base_args, output_info=self.result, output_files=self.translation_output)
                             v = False
                         self.menu.append(x)
-                self.translation_target_language.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
+                self.translator.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
             self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output,self.result])

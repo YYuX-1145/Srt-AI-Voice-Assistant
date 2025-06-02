@@ -138,5 +138,5 @@ class Translation_module(Base_Componment):
                                 TRANSLATORS[i].getUI(*Base_args, output_info=self.result, output_files=self.translation_output)
                             v = False
                         self.menu.append(x)
-                self.translation_target_language.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
-            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output, self.result])
+                self.translator.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
+            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output,self.result])

@@ -1,7 +1,8 @@
 # Srt-AI-Voice-Assistant
 ### 本项目可利用多个AI-TTS为你的字幕或文本文件配音。<br>并提供包括字幕识别、翻译在内的多种便捷的辅助功能。
 
-### 在线体验网址（试运营中）：[srt-ai-voice-assistant-onlinedemo.work](https://srt-ai-voice-assistant-onlinedemo.work/)  
+### 在线体验网址（试运营中）：[srt-ai-voice-assistant-onlinedemo.work](https://srt-ai-voice-assistant-onlinedemo.work/)
+### 在线版算力支持：[优云智算(点此注册账号并实名赠送10元算力金)](https://passport.compshare.cn/register?referral_code=IHlncJt4RcQDdxKLEZ6pAY&ytag=GPU_srtonline)  
 如遇到bug或者有什么建议，可以在 [Issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues) 上反馈  
 
 ## 特性

@@ -262,12 +262,13 @@ def modify_spkmap(map: dict, k: str, v: str):
 
 def read_file(file_name, fps=30, offset=0):
     if Sava_Utils.config.server_mode:
-        assert os.stat(file_name).st_size < 65536, i18n('Error: File too large')  # 64KB
+        assert os.stat(file_name).st_size < 16384, i18n('Error: File too large')  # 16KB
     if file_name[-4:].lower() == ".csv":
         subtitle_list = read_prcsv(file_name, fps, offset)
     elif file_name[-4:].lower() == ".srt":
         subtitle_list = read_srt(file_name, offset)
     elif file_name[-4:].lower() == ".txt":
+        assert os.stat(file_name).st_size < 8192, i18n('Error: File too large')  # 8KB
         subtitle_list = read_txt(file_name)
     else:
         raise ValueError(i18n('Unknown format. Please ensure the extension name is correct!'))

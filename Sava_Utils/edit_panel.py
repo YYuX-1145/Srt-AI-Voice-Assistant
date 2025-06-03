@@ -3,6 +3,7 @@ import os
 import pickle
 import re
 from . import i18n
+from itertools import islice
 from .subtitle import Subtitles, Subtitle
 import Sava_Utils
 
@@ -257,6 +258,46 @@ def del_spk(name):
 
 def switch_spk_proj(name):
     return BTN_VISIBLE_DICT[name]
+
+
+def match_text(text: str, target: str | re.Pattern):
+    if isinstance(target, str):
+        return target in text
+    else:
+        return target.search(text)
+
+
+def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_index: int = 1, *checkbox_list_and_real_index_list):
+    checkbox_list = checkbox_list_and_real_index_list[: Sava_Utils.config.num_edit_rows]
+    real_index_list = checkbox_list_and_real_index_list[Sava_Utils.config.num_edit_rows :]
+    ck = [False for _ in range(Sava_Utils.config.num_edit_rows)]
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n('There is no subtitle in the current workspace'))
+        return *ck, *load_page(Subtitles())
+    if text_to_find == '':
+        gr.Warning(i18n('You must enter the text to find.'))
+        return *ck, *[gr.update() for _ in range(10 * Sava_Utils.config.num_edit_rows + 1 + 4)]
+    current_index = real_index_list[checkbox_list.index(True)] if any(checkbox_list) else real_index_list[0] - 1
+    if enable_re:
+        try:
+            pat = re.compile(text_to_find)
+        except Exception as e:
+            gr.Warning(f"Error: {str(e)}")
+            return *ck, *load_page(subtitles, 1)
+    else:
+        pat = text_to_find
+    for index, item in enumerate(islice(subtitles,current_index + 1,None), current_index + 1):
+        if match_text(item.text, pat):
+            next_index = index
+            ck[next_index % Sava_Utils.config.num_edit_rows] = True
+            target_page = (next_index // Sava_Utils.config.num_edit_rows) * Sava_Utils.config.num_edit_rows + 1
+            if target_page != page_index:
+                page_content = load_page(subtitles, target_page)
+            else:
+                page_content = [gr.update() for _ in range(10 * Sava_Utils.config.num_edit_rows + 1 + 4)]
+            return *ck, *page_content
+    gr.Info(i18n('No more results'))
+    return *ck, *load_page(subtitles, 1)
 
 
 def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, exec_code:str, enable_re: bool, page_index:int=1):

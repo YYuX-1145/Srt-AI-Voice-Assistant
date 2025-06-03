@@ -68,6 +68,8 @@ i18n_dict = {
     "Enable Regular Expression": "Utiliser les expressions régulières",
     "Find and Replace": "Rechercher et remplacer",
     "Replace All": "Remplacer Tout",
+    "Find Next": "Rechercher Suivant",
+    "No more results": "Aucun autre résultat",
     "You must enter the text to find.": "Vous devez entrer le texte cible.",
     "Multi-speaker dubbing": "Doublage à plusieurs locuteurs",
     "Select/Create Speaker": "Sélectionner/Créer un locuteur",
@@ -106,6 +108,7 @@ i18n_dict = {
     "Failed to synthesize the following subtitles or they were not synthesized": "Les sous-titres suivants n'ont pas pu être synthétisés ou n'ont pas été synthétisés",
     # Settings
     "Failed to load settings, reset to default": "Échec du chargement des paramètres du logiciel, réinitialisation aux valeurs par défaut",
+    "was removed successfully.": "a été supprimé avec succès.",
     "Error, Invalid Path": "Erreur, chemin invalide",
     "Env detected": "Environnement détecté",
     "Restarting...": "Redémarrage en cours...",

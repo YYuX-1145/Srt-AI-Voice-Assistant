@@ -69,7 +69,7 @@ i18n_dict = {
     "Enable Regular Expression": "使用正则表达式",
     "Find and Replace": "查找和替换",
     "Find Next": "查找下一个",
-    "No more results": "已查找完毕",
+    "No more results": "没有更多结果了",
     "Replace All": "全部替换",
     "You must enter the text to find.": "你必须输入查找目标文本！",
     "Multi-speaker dubbing": "多角色配音",

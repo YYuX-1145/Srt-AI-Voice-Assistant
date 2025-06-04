@@ -66,13 +66,15 @@ def temp_aux_ra(a: bytes):
     return dir
 
 
-S2_MODEL_PATH = ["SoVITS_weights", "SoVITS_weights_v2", "SoVITS_weights_v3", "SoVITS_weights_v4"]
+S2_MODEL_PATH = ["SoVITS_weights", "SoVITS_weights_v2", "SoVITS_weights_v2Pro", "SoVITS_weights_v2ProPlus", "SoVITS_weights_v3", "SoVITS_weights_v4"]
 S2_PRETRAINED = [
     "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth",
     "GPT_SoVITS/pretrained_models/s2Gv3.pth",
     "GPT_SoVITS/pretrained_models/gsv-v4-pretrained/s2Gv4.pth",
+    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2Pro.pth",
+    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2ProPlus.pth",    
 ]
-S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v3", "GPT_weights_v4"]
+S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v2Pro", "GPT_weights_v2ProPlus", "GPT_weights_v3", "GPT_weights_v4"]
 S1_PRETRAINED = [
     "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
     "GPT_SoVITS/pretrained_models/s1v3.ckpt",

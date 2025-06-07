@@ -1,17 +1,11 @@
-import faster_whisper
 import os
 import shutil
-from io import BytesIO
 import subprocess
 from tqdm import tqdm
 import librosa
-import soundfile as sf
-import scipy
 import argparse
 import torch
 from tools.slicer2 import Slicer
-from faster_whisper import WhisperModel
-from funasr import AutoModel
 
 try:
     from tools.uvr5.mdxnet import MDXNetDereverb
@@ -43,6 +37,8 @@ def basename_no_ext(path: str):
 def init_ASRmodels():
     global args, model
     if args.engine == "whisper":
+        import faster_whisper
+        from faster_whisper import WhisperModel
         model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
         os.makedirs(model_path, exist_ok=True)
         if os.listdir(model_path) == []:
@@ -58,6 +54,7 @@ def init_ASRmodels():
         if args.whisper_size == "large-v3":
             model.feature_extractor.mel_filters = model.feature_extractor.get_mel_filters(model.feature_extractor.sampling_rate, model.feature_extractor.n_fft, n_mels=128)
     else:
+        from funasr import AutoModel
         print("Loading FunASR models...")
         path_asr = 'tools/asr/models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         path_asr = path_asr if os.path.exists(path_asr) else "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
@@ -79,12 +76,13 @@ def init_ASRmodels():
 
 
 def whisper_transcribe(audio, sr):
+    global model
     audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-    #lang = ['zh', 'ja', 'en']
+    # lang = ['zh', 'ja', 'en']
     try:
         segments, info = model.transcribe(audio=audio, beam_size=5, vad_filter=False, language=None)
         text = ""
-        #assert info.language in lang
+        # assert info.language in lang
         for seg in segments:
             text += seg.text
         return text
@@ -93,15 +91,13 @@ def whisper_transcribe(audio, sr):
 
 
 def funasr_transcribe(audio, sr):
-    b = BytesIO()
-    scipy.io.wavfile.write(b, sr, audio)
-    text = model.generate(input=b.getvalue())[0]["text"]
-    del b
+    global model
+    audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+    text = model.generate(input=audio)[0]["text"]
     return text
 
 
 def transcribe(wav_paths, save_root):
-    global model
     for audio_path in tqdm(wav_paths, desc='Transcribing...'):
         audio, sr = librosa.load(audio_path, sr=None)
         slicer = Slicer(

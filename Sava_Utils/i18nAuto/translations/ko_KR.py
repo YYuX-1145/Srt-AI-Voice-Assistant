@@ -235,7 +235,7 @@ i18n_dict={
         "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support":"ASR 모델 선택, funasr은 중국어만 지원하지만 더 빠르고 정확하며, faster whisper는 다중 언어 지원",
         "(ms)Minimum length of each segment":"(ms)각 분절의 최소 길이",
         "(ms)Minium slice interval":"(ms)최소 슬라이스 간격",
-        "(ms)Minium silence length":"(ms)자른 후 최대 정지 시간",
+        "(ms)Maxium silence length":"(ms)자른 후 최대 정지 시간",
         "Other Parameters":"다른 매개변수",
         "Start":"시작",
         "Stop":"중지",
@@ -245,10 +245,6 @@ i18n_dict={
         "Tasks are terminated due to an error in":"작업 중 에러로 인해 작업이 종료됨:",
         "Finished":"작업 종료",
         "WAV2SRT_INFO":"""
-            이 기능은 GPT-SoVITS 통합 팩에 직접 사용할 수 있으며, 그렇지 않으면 해당 종속성을 직접 설치해야 합니다. <br>
-            # 다른 매개변수:
-            `--whisper_size` 기본값:large-v3 | faster whisper를 사용할 때 모델 지정<br>
-            `--threshold` 기본값:-40 | 음량이 이 값보다 작으면 정지된 상태로 간주하여 대체 분할 지점으로 간주<br>
-            `--hop_size` 기본값:20 | 음량 곡선을 계산하는 방법. 값이 작을수록 정확도가 높아지고 계산량이 증가합니다(정확도가 높을수록效果이 좋지는 않습니다)<br>
+            ### 이 기능은 GPT-SoVITS 통합 팩에 직접 사용할 수 있으며, 그렇지 않으면 해당 종속성을 직접 설치해야 합니다. <br>
             """,
 }

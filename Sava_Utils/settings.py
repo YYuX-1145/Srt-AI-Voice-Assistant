@@ -104,26 +104,30 @@ class Settings:
         self.ollama_url = ollama_url
         # detect python envs####
         if self.bv2_pydir != "":
-            if os.path.exists(self.bv2_pydir):
+            if os.path.isfile(self.bv2_pydir):
                 self.bv2_pydir = os.path.abspath(self.bv2_pydir)
+            elif self.bv2_pydir == 'python':
+                pass
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.bv2_pydir}")
                 self.bv2_pydir = ""
         else:
-            if os.path.exists(os.path.join(current_path, "venv\\python.exe")) and "VITS2" in current_path.upper():
+            if os.path.isfile(os.path.join(current_path, "venv\\python.exe")) and "VITS2" in current_path.upper():
                 self.bv2_pydir = os.path.join(current_path, "venv\\python.exe")
                 logger.info(f"{i18n('Env detected')}: Bert-VITS2")
             else:
                 self.bv2_pydir = ""
 
         if self.gsv_pydir != "":
-            if os.path.exists(self.gsv_pydir):
+            if os.path.isfile(self.gsv_pydir):
                 self.gsv_pydir = os.path.abspath(self.gsv_pydir)
+            elif self.gsv_pydir == 'python':
+                pass
             else:
                 gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
                 self.gsv_pydir = ""
         else:
-            if os.path.exists(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper():
+            if os.path.isfile(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper():
                 self.gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
                 logger.info(f"{i18n('Env detected')}: GPT-SoVITS")
             else:

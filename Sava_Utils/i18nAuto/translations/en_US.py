@@ -35,11 +35,6 @@ i18n_dict={
 
         #WAV2SRT
         "WAV2SRT_INFO":"""
-            This function can be directly used in the GPT-SoVITS integrated package; otherwise, you need to install the corresponding dependencies yourself.  
-
-            # Other Parameters:
-            `--whisper_size` Default:large-v3 | Specifies the model when using faster whisper.  
-            `--threshold` Default:-40 | Volume less than this value is considered as a mute alternative cutting point.  
-            `--hop_size` Default:20 | How to calculate the volume curve; the smaller the value, the higher the precision and computation (Note: Higher precision does not always mean better quality).  
+            ### This function can be directly used in the GPT-SoVITS integrated package; otherwise, you need to install the corresponding dependencies yourself.  
             """
 }

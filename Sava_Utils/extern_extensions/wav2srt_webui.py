@@ -43,7 +43,7 @@ class WAV2SRT(Base_Componment):
                             label=i18n('Select UVR model. If vocal separation is not needed, set the value to None.'),
                         )
                         self.wav2srt_engine = gr.Radio(choices=["whisper", "funasr"], value="whisper", label=i18n('Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support'), interactive=True)
-                        self.wav2srt_whisper_size = gr.Radio(choices=["small", "medium", "large-v3"], value="large-v3", label=i18n('Whisper Size'), interactive=True)
+                        self.wav2srt_whisper_size = gr.Radio(choices=["small", "medium", "large-v3-turbo"], value="large-v3-turbo", label=i18n('Whisper Size'), interactive=True)
                         self.wav2srt_engine.change(lambda x: gr.update(visible=x == "whisper"), inputs=[self.wav2srt_engine], outputs=[self.wav2srt_whisper_size])
                         self.wav2srt_min_length = gr.Slider(label=i18n('(ms)Minimum length of each segment'), minimum=0, maximum=10000, step=100, value=3000)
                         self.wav2srt_min_interval = gr.Slider(label=i18n('(ms)Minium slice interval'), minimum=0, maximum=5000, step=10, value=300)

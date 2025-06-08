@@ -4,6 +4,7 @@ import subprocess
 from tqdm import tqdm
 import librosa
 import argparse
+import numpy as np
 import torch
 from tools.slicer2 import Slicer
 
@@ -21,7 +22,7 @@ parser.add_argument("-input", nargs='+', default=None, type=str)
 parser.add_argument("-output_dir", default=None, type=str)
 parser.add_argument("-engine", default="whisper", type=str)
 parser.add_argument("--uvr_model", default=None, type=str)
-parser.add_argument("--whisper_size", default="large-v3", type=str)
+parser.add_argument("--whisper_size", default="large-v3-turbo", type=str)
 parser.add_argument("--threshold", default=-40, type=float)
 parser.add_argument("--min_length", default=2000, type=int)
 parser.add_argument("--min_interval", default=300, type=int)
@@ -80,7 +81,7 @@ def whisper_transcribe(audio, sr):
     audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
     # lang = ['zh', 'ja', 'en']
     try:
-        segments, info = model.transcribe(audio=audio, beam_size=5, vad_filter=False, language=None)
+        segments, info = model.transcribe(audio=audio.astype(np.float32), beam_size=5, vad_filter=False, language=None)
         text = ""
         # assert info.language in lang
         for seg in segments:

@@ -13,7 +13,14 @@ i18n_dict = {
         "Multi-Language Mix": "auto",
         "Multi-Language Mix (Cantonese)": "auto_yue",
     },
-    "CUT_METHOD": {"No cutting": "cut0", "Slice once every 4 sentences": "cut1", "Slice per 50 characters": "cut2", "Slice by Chinese punct": "cut3", "Slice by English punct": "cut4", "Slice by every punct": "cut5"},
+    "CUT_METHOD": {
+        "No cutting": "cut0",
+        "Slice once every 4 sentences": "cut1",
+        "Slice per 50 characters": "cut2",
+        "Slice by Chinese punct": "cut3",
+        "Slice by English punct": "cut4",
+        "Slice by every punct": "cut5",
+    },
     # MSTTS
     "MSTTS_NOTICE": """Microsoft TTS needs Internet Connection. You should fill in your key and specify the server region before gengerating audios. Please pay attention to the monthly free quota.<br>[【To Get Your Key】](https://learn.microsoft.com/en-US/azure/ai-services/speech-service/get-started-text-to-speech)""",
     # Subtitle Translation

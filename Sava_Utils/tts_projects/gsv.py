@@ -124,7 +124,7 @@ class GSV(TTSProjet):
                 if kwargs["ref_audio_path"] == '':
                     print("使用预训练音色模式...")
                     data_json = {
-                        "spk_id": kwargs["spk_id"],
+                        "spk_id": kwargs["prompt_text"],
                         "tts_text": kwargs["text"],
                         "speed": kwargs["speed_factor"],
                     }

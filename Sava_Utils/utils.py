@@ -76,7 +76,7 @@ def rc_open_window(command, dir=current_path):
 
 
 def rc_bg(command, dir=current_path):
-    process = subprocess.Popen(command, cwd=dir,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
+    process = subprocess.Popen(command, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
     logger.info(f"{i18n('Execute command')}:{command}")
     return process
 

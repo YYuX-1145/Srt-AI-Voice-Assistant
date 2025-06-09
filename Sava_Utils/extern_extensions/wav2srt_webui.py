@@ -1,6 +1,6 @@
 import gradio as gr
 from .. import i18n
-from ..utils import rc_bg, kill_process, basename_no_ext
+from ..utils import rc_bg, kill_process, basename_no_ext,logger
 from ..base_componment import Base_Componment
 import os
 import subprocess
@@ -62,19 +62,19 @@ class WAV2SRT(Base_Componment):
                         # self.wav2srt_args = gr.Textbox(value="", label=i18n('Other Parameters'), interactive=True)
                     with gr.Column():
                         gr.Markdown(i18n('WAV2SRT_INFO'))
-                        with gr.Accordion(i18n('视频合并工具'), open=False):
+                        with gr.Accordion(i18n('Video Merge Tool'), open=False):
                             with gr.Group():
                                 with gr.Row():
-                                    self.video_merge_inputvid = gr.Dropdown(label=i18n('原视频路径'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.video_merge_sub = gr.Dropdown(label=i18n('硬字幕(可选)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                    self.video_merge_inputvid = gr.Dropdown(label=i18n('Original video path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                    self.video_merge_sub = gr.Dropdown(label=i18n('Hard subtitles (optional)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
                                 with gr.Row():
-                                    self.video_merge_inst = gr.Dropdown(label=i18n('背景音(可选，覆盖原视频声音)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.inst_vol = gr.Slider(label=i18n('音量'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
+                                    self.video_merge_inst = gr.Dropdown(label=i18n('Background audio (optional, override the original video audio)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                    self.inst_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
                                 with gr.Row():
-                                    self.video_merge_audio = gr.Dropdown(label=i18n('配音音频路径'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.audio_vol = gr.Slider(label=i18n('音量'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
+                                    self.video_merge_audio = gr.Dropdown(label=i18n('Dubbed audio path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                    self.audio_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
                             with gr.Row():
-                                self.merge_video_btn = gr.Button(value='合并视频', variant='primary')
+                                self.merge_video_btn = gr.Button(value=i18n('Start Merging Video'), variant='primary')
                                 self.merge_video_ref_btn = gr.Button(value='🔄️', variant='secondary')
                         self.wav2srt_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
                         self.wav2srt_output_status = gr.Textbox(label=i18n('Output Info'), value="", interactive=False)
@@ -91,7 +91,11 @@ class WAV2SRT(Base_Componment):
                         inputs=[worklist, self.wav2srt_input, self.wav2srt_output, TR_MODULE.translation_output, file_main],
                         outputs=[self.video_merge_inputvid, self.video_merge_sub, self.video_merge_inst, self.video_merge_audio],
                     )
-                    self.merge_video_btn.click(self.run_merge_vid,inputs=[self.wav2srt_output,self.video_merge_inputvid,self.video_merge_sub,self.video_merge_inst,self.inst_vol,self.video_merge_audio,self.audio_vol])
+                    self.merge_video_btn.click(
+                        self.run_merge_vid,
+                        inputs=[self.wav2srt_output, self.video_merge_inputvid, self.video_merge_sub, self.video_merge_inst, self.inst_vol, self.video_merge_audio, self.audio_vol],
+                        outputs=[self.wav2srt_output_status, self.wav2srt_output],
+                    )
                     self.wav2srt_run.click(
                         self.run_wav2srt,
                         inputs=[self.wav2srt_input, self.wav2srt_out_dir, self.wav2srt_pydir, self.wav2srt_uvr_models, self.wav2srt_engine, self.wav2srt_whisper_size, self.wav2srt_min_length, self.wav2srt_min_interval, self.wav2srt_sil],
@@ -179,19 +183,31 @@ class WAV2SRT(Base_Componment):
                 bg_list.append((os.path.basename(file.name), file.name))
             elif ext == '.srt':
                 sub_list.append((os.path.basename(file.name), file.name))
-        op = os.path.join(current_path, 'SAVAdata', 'output')
-        if not self.server_mode:
-            db_list += [(i, os.path.join(op, i)) for i in os.listdir(op) if i.endswith('.wav')]
-        elif current_audio and os.path.exists(os.path.join(op, f'{current_audio}.wav')):
-            db_list = [(f'{current_audio}.wav', os.path.join(op, f'{current_audio}.wav'))]
-        return gr.update(choices=vid_list, value=vid_list[-1][1]), gr.update(choices=sub_list, value=sub_list[-1][1]), gr.update(choices=bg_list, value=bg_list[-1][1]), gr.update(choices=db_list, value=db_list[-1][1])
+        current_audio_path = ''
+        if current_audio and os.path.exists(os.path.join(OUT_DIR_DEFAULT, f'{current_audio}.wav')):
+            current_audio_path = os.path.join(OUT_DIR_DEFAULT, f'{current_audio}.wav')
+        if self.server_mode and current_audio_path:
+            db_list = [(f'{current_audio}.wav', current_audio_path)]
+        elif not self.server_mode:
+            db_list += [(i, os.path.join(OUT_DIR_DEFAULT, i)) for i in os.listdir(OUT_DIR_DEFAULT) if i.endswith('.wav')]
+        return (
+            gr.update(choices=vid_list, value=vid_list[-1][1]),
+            gr.update(choices=sub_list, value=sub_list[-1][1]),
+            gr.update(choices=bg_list, value=bg_list[-1][1]),
+            gr.update(choices=db_list, value=current_audio_path if current_audio_path else db_list[-1][1]),
+        )
 
-    def run_merge_vid(self,file_list,video,sub,bg,bg_vol,db,db_vol):
-        if video is None or (sub is None and db is None):
-            gr.Info()
-            return file_list
+    def run_merge_vid(self, file_list: list, video: str, sub: str, bg: str, bg_vol: float, db: str, db_vol: float):
         if file_list is None:
             file_list = []
+        NULL = [None, '', 'None']
+        if video in NULL or (sub in NULL and db in NULL):
+            gr.Info(i18n('You must specify the original video along with audio or subtitles.'))
+            return None,file_list
+        video = video.strip('"')
+        sub = sub.strip('"')
+        bg = bg.strip('"')
+        db = db.strip('"')
         input_args = ['-i', video]
         filter_complex = []
         map_args = []
@@ -217,7 +233,7 @@ class WAV2SRT(Base_Componment):
         elif bg:
             audio_filters += audio_inputs
             audio_filters.append('[db]anull[aout]')
-            map_args += ['-map', '0:v', '-map', '[aout]']            
+            map_args += ['-map', '0:v', '-map', '[aout]']
         elif db:
             audio_filters += audio_inputs
             map_args += ['-map', '0:v', '-map', '[db]']
@@ -231,20 +247,22 @@ class WAV2SRT(Base_Componment):
             filter_complex = ['-filter_complex', ';'.join(audio_filters)]
 
         if self.server_mode:
-            output = os.path.join(os.path.dirname(video),f'merged_{os.path.basename(video)}')
+            output = os.path.join(os.path.dirname(video), f'merged_{os.path.basename(video)}')
         else:
-            output = os.path.join(current_path, 'SAVAdata', 'output',f'merged_{os.path.basename(video)}')
+            output = os.path.join(OUT_DIR_DEFAULT, f'merged_{os.path.basename(video)}')
 
         cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'nvenc_h264', '-c:a', 'aac', output]
+        logger.info(f"{i18n('Execute command')}:{cmd}")
 
-        print("Executing command:", ' '.join(cmd))
         try:
-            subprocess.run(cmd, cwd=current_path,check=True, shell=True)
+            p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
             file_list.append(output)
+            msg = 'OK'
         except:
-            pass
-        return file_list
-    # ffmpeg -i input.mp4 -vf "subtitles=subtitle.srt" -c:v libx264 -c:a aac output.mp4
+            gr.Warning('Failed to run ffmpeg')
+            msg = p.stdout
+        return msg, file_list
+
 
 def send(fp_list):
     return [i.name for i in fp_list if i.name.endswith(".srt")] if fp_list is not None else fp_list

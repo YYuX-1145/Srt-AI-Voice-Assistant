@@ -275,10 +275,19 @@ i18n_dict = {
     "Stop": "停止",
     "Please upload audio or video!": "请上传音频文件！",
     "Please specify Python Interpreter!": "请指定解释器！",
+    "Select UVR model. If vocal separation is not needed, set the value to None.": "选择UVR模型，如不需要人声分离，保持选项为None",
     "Processing": "正在进行",
     "Tasks are terminated due to an error in": "任务出错,终止:",
     "Finished": "任务结束",
+    "Video Merge Tool": "视频合并工具",
+    "Original video path": "原视频路径",
+    "Volume": "音量",
+    "Hard subtitles (optional)": "硬字幕(可选)",
+    "Background audio (optional, override the original video audio)": "背景音(可选，覆盖原视频声音)",
+    "Dubbed audio path": "配音音频路径",
+    "Start Merging Video": "合并视频",
+    "You must specify the original video along with audio or subtitles.":"你必须上传原视频，以及硬字幕或配音音频！",
     "WAV2SRT_INFO": """
-            ### 本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
+            ### 本功能可直接用于GPT-SoVITS整合包和ffmpeg，否则需要自己安装对应依赖。<br>
             """,
 }

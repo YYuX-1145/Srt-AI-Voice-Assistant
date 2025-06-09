@@ -274,10 +274,19 @@ i18n_dict = {
     "Stop": "Arrêter",
     "Please upload audio or video!": "Veuillez télécharger un fichier audio ou vidéo !",
     "Please specify Python Interpreter!": "Veuillez spécifier l'interpréteur Python !",
+    "Select UVR model. If vocal separation is not needed, set the value to None.": "Choisissez le modèle UVR. Si la séparation vocale n'est pas nécessaire, fixez la valeur à None.",
     "Processing": "Traitement en cours",
     "Tasks are terminated due to an error in": "La tâche a été interrompue en raison d'une erreur dans :",
     "Finished": "Tâche terminée",
+    "Video Merge Tool": "Outil de Fusion Vidéo",
+    "Original video path": "Chemin de la vidéo originale",
+    "Volume": "Volume",
+    "Hard subtitles (optional)": "Sous-titres incrustés (optionnels)",
+    "Background audio (optional, override the original video audio)": "Audio de fond (optionnel, remplace l'audio original de la vidéo)",
+    "Dubbed audio path": "Chemin de l'audio doublé",
+    "Start Merging Video": "Démarrer la fusion de la vidéo",
+    "You must specify the original video along with audio or subtitles.": "Vous devez spécifier la vidéo originale ainsi que des sous-titres incrustés ou un audio doublé.",
     "WAV2SRT_INFO": """
-            ### Cette fonction peut être utilisée directement avec le package intégré GPT - SoVITS. Sinon, vous devez installer les dépendances correspondantes vous - même. <br>
+            ### Cette fonction peut être utilisée directement avec le package intégré GPT-SoVITS et ffmpeg est nécessaire. Sinon, vous devez installer les dépendances correspondantes vous-même. <br>
             """,
 }

@@ -119,7 +119,7 @@ class Translation_module(Base_Componment):
                             self.merge_upload2 = gr.File(label=i18n('Secondary Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
                         self.merge_btn = gr.Button(value=i18n('Merge'), variant='primary')
                     self.result = gr.Text(interactive=False, value="", label=i18n('Output Info'))
-                    self.translation_output = gr.File(label=i18n('Generate merged subtitles'), file_count="multiple", interactive=False)
+                    self.translation_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
                     self.send_btn = gr.Button(value=i18n('Send output files to Main Page'), interactive=True)
                     self.send_btn.click(lambda x: [i.name for i in x if not i.name.endswith('_merged.srt')] if x is not None else x, inputs=[self.translation_output], outputs=[file_main])
                 with gr.Column():

@@ -52,7 +52,6 @@ help = r"""
 * **V.** The last assigned speaker becomes the default speaker (applies to unassigned subtitles in multi-speaker projects).
 
 * **VI.** Click Generate Multi-Speaker Dubbing to start generation.
-* ⚠️ If you are using and creating GSV speakers in a different language, the GSV speakers will not work properly.
 
 ### Regenerating Specific Lines
 * **I.** Locate the target subtitle using the slider in the editing page.

@@ -22,5 +22,5 @@ class Traducteur(Base_Componment):
         return tasks
 
     @abstractmethod
-    def api(self, *args, file_name: str = "", **kwargs):
+    def api(self, tasks, target_lang, interrupt_flag, *args, file_name: str = "", **kwargs):
         raise NotImplementedError

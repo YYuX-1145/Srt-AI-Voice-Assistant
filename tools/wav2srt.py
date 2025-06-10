@@ -1,17 +1,12 @@
-import faster_whisper
 import os
 import shutil
-from io import BytesIO
 import subprocess
 from tqdm import tqdm
 import librosa
-import soundfile as sf
-import scipy
 import argparse
+import numpy as np
 import torch
 from tools.slicer2 import Slicer
-from faster_whisper import WhisperModel
-from funasr import AutoModel
 
 try:
     from tools.uvr5.mdxnet import MDXNetDereverb
@@ -27,8 +22,8 @@ parser.add_argument("-input", nargs='+', default=None, type=str)
 parser.add_argument("-output_dir", default=None, type=str)
 parser.add_argument("-engine", default="whisper", type=str)
 parser.add_argument("--uvr_model", default=None, type=str)
-parser.add_argument("--whisper_size", default="large-v3", type=str)
-parser.add_argument("--threshold", default=-40, type=float)
+parser.add_argument("--whisper_size", default="large-v3-turbo", type=str)
+parser.add_argument("--threshold", default=-27, type=float)
 parser.add_argument("--min_length", default=2000, type=int)
 parser.add_argument("--min_interval", default=300, type=int)
 parser.add_argument("--hop_size", default=20, type=int)
@@ -43,6 +38,8 @@ def basename_no_ext(path: str):
 def init_ASRmodels():
     global args, model
     if args.engine == "whisper":
+        import faster_whisper
+        from faster_whisper import WhisperModel
         model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
         os.makedirs(model_path, exist_ok=True)
         if os.listdir(model_path) == []:
@@ -58,6 +55,7 @@ def init_ASRmodels():
         if args.whisper_size == "large-v3":
             model.feature_extractor.mel_filters = model.feature_extractor.get_mel_filters(model.feature_extractor.sampling_rate, model.feature_extractor.n_fft, n_mels=128)
     else:
+        from funasr import AutoModel
         print("Loading FunASR models...")
         path_asr = 'tools/asr/models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         path_asr = path_asr if os.path.exists(path_asr) else "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
@@ -79,12 +77,13 @@ def init_ASRmodels():
 
 
 def whisper_transcribe(audio, sr):
+    global model
     audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-    #lang = ['zh', 'ja', 'en']
+    # lang = ['zh', 'ja', 'en']
     try:
-        segments, info = model.transcribe(audio=audio, beam_size=5, vad_filter=False, language=None)
+        segments, info = model.transcribe(audio=audio.astype(np.float32), beam_size=5, vad_filter=False, language=None)
         text = ""
-        #assert info.language in lang
+        # assert info.language in lang
         for seg in segments:
             text += seg.text
         return text
@@ -93,15 +92,13 @@ def whisper_transcribe(audio, sr):
 
 
 def funasr_transcribe(audio, sr):
-    b = BytesIO()
-    scipy.io.wavfile.write(b, sr, audio)
-    text = model.generate(input=b.getvalue())[0]["text"]
-    del b
+    global model
+    audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+    text = model.generate(input=audio)[0]["text"]
     return text
 
 
 def transcribe(wav_paths, save_root):
-    global model
     for audio_path in tqdm(wav_paths, desc='Transcribing...'):
         audio, sr = librosa.load(audio_path, sr=None)
         slicer = Slicer(
@@ -172,7 +169,7 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
         ret = []
         for input_path in tqdm(input_paths, desc='Denoising...'):
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
-            tmp_path = f"{basename_no_ext(input_path)}_reformatted.wav"
+            tmp_path = f"TEMP/{basename_no_ext(input_path)}_reformatted.wav"
             try:
                 assert subprocess.run(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y', stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0
             except:
@@ -180,13 +177,14 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 continue
             try:
                 pre_fun._path_audio_(tmp_path, save_path, save_path, format0, is_hp3)
-                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")
+                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")                
                 # (ins/vocal)_audio|_10_reformatted.wav.wav"     17 + 4 + len(agg)
                 x = -22 if agg < 10 else -23
                 shutil.move(out_p, out_p[:x] + '.wav')
                 out_p = os.path.join(save_path, f"instrument_{os.path.basename(tmp_path)}_{agg}.wav")
                 shutil.move(out_p, out_p[:x] + '.wav')
                 ret.append(os.path.join(save_path, f"vocal_{basename_no_ext(input_path)}.wav"))
+                os.remove(tmp_path)
             except Exception as e:
                 print(e)
     except Exception as e:

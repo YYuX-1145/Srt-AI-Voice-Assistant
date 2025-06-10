@@ -52,7 +52,6 @@ help = r"""
 * **V.** Le dernier locuteur attribué devient le locuteur par défaut (s'applique aux sous-titres non attribués dans les projets avec plusieurs locuteurs).
 
 * **VI.** Cliquez sur `Lancer la synthèse à plusieurs locuteurs` pour commencer la génération.
-* ⚠️ Si vous utilisez et créez des locuteurs GSV dans une autre langue, les locuteurs GSV ne fonctionneront pas correctement.
 
 ### Regénérer des lignes spécifiques
 * **I.** Localisez le sous-titre cible à l'aide du curseur sur la page d'édition.

@@ -14,6 +14,7 @@ changelog = r"""
 8. (4.3) Automatic audio acceleration & silence removing; Creating multi-speaker dubbing project from labeled texts.  
 9. (4.3.1) Add Find and Replace; add a one-click regeneration button.  
 10. (4.4) Polyphone editing for GPT-SoVITS and automatic model detection; Allow custom prompt for Ollama; Export subtitles with speaker names using customizable templates  
+11.(4.5) The translation module now supports merging bilingual subtitles; The audio-video transcription module adds support for the UVR vocal separation model and Video merging.  
 
 ### 250214 Update:
 1. Supports reading historical projects  

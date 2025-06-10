@@ -25,7 +25,7 @@ class Flag:
     def set(self):
         if self.using:
             self.stop = True
-            return i18n('After completing the generation of the next audio, the task will be aborted.')
+            return i18n('After completing the generation of the next item, the task will be aborted.')
         else:
             return i18n('No running tasks.')
 
@@ -49,6 +49,10 @@ def positive_int(*a):
     r = [max(0,int(x)) for x in a]
     return r if len(r)>1 else r[0]
 
+NULL = [None, '', 'None']
+def fix_null(*a):
+    r = [None if x in NULL else x for x in a]
+    return r if len(r) > 1 else r[0]
 
 def basename_no_ext(path: str):
     return os.path.basename(os.path.splitext(path)[0])
@@ -76,7 +80,7 @@ def rc_open_window(command, dir=current_path):
 
 
 def rc_bg(command, dir=current_path):
-    process = subprocess.Popen(command, cwd=dir,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
+    process = subprocess.Popen(command, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
     logger.info(f"{i18n('Execute command')}:{command}")
     return process
 

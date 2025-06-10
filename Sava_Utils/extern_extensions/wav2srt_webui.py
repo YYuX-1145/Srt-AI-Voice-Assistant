@@ -47,6 +47,7 @@ class WAV2SRT(Base_Componment):
                             choices=[
                                 'None',
                                 'HP2_all_vocals',
+                                'HP5_only_main_vocal',
                                 'model_bs_roformer_ep_317_sdr_12.9755',
                                 'onnx_dereverb_By_FoxJoy',
                             ],

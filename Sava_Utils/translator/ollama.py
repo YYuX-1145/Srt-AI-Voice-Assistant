@@ -44,7 +44,7 @@ class Ollama(Traducteur):
             return None
         rc_open_window(f"ollama stop {model} && exit")
 
-    def api(self, tasks, target_lang, model_name, url, custom_prompt, num_history, file_name: str = ""):
+    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, file_name: str = ""):
         num_history = int(num_history)
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
@@ -58,6 +58,8 @@ class Ollama(Traducteur):
             "stream": False,
         }
         for task in tqdm(tasks, desc=f"{i18n('Translating')}: {file_name}", total=len(tasks)):
+            if interrupt_flag.is_set():
+                break
             text = "\n\n".join(task)
             if custom_prompt:
                 prompt = custom_prompt + '\n' + text
@@ -75,7 +77,7 @@ class Ollama(Traducteur):
                 request_data["messages"].pop(0)
                 request_data["messages"].pop(0)
 
-            #print(request_data)
+            # print(request_data)
             batch = result.split("\n\n")
             d = len(task) - len(batch)
             if d:

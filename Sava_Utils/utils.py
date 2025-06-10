@@ -25,7 +25,7 @@ class Flag:
     def set(self):
         if self.using:
             self.stop = True
-            return i18n('After completing the generation of the next audio, the task will be aborted.')
+            return i18n('After completing the generation of the next item, the task will be aborted.')
         else:
             return i18n('No running tasks.')
 

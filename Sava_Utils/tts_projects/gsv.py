@@ -42,7 +42,7 @@ except:
         "Slice by English punct": "cut4",
         "Slice by every punct": "cut5",
     }
-dict_language_rev = {val: key for key, val in dict_language.items()}
+# dict_language_rev = {val: key for key, val in dict_language.items()}
 # cut_method_rev={val:key for key,val in cut_method.items()}
 
 
@@ -66,13 +66,15 @@ def temp_aux_ra(a: bytes):
     return dir
 
 
-S2_MODEL_PATH = ["SoVITS_weights", "SoVITS_weights_v2", "SoVITS_weights_v3", "SoVITS_weights_v4"]
+S2_MODEL_PATH = ["SoVITS_weights", "SoVITS_weights_v2", "SoVITS_weights_v2Pro", "SoVITS_weights_v2ProPlus", "SoVITS_weights_v3", "SoVITS_weights_v4"]
 S2_PRETRAINED = [
     "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth",
     "GPT_SoVITS/pretrained_models/s2Gv3.pth",
     "GPT_SoVITS/pretrained_models/gsv-v4-pretrained/s2Gv4.pth",
+    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2Pro.pth",
+    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2ProPlus.pth",    
 ]
-S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v3", "GPT_weights_v4"]
+S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v2Pro", "GPT_weights_v2ProPlus", "GPT_weights_v3", "GPT_weights_v4"]
 S1_PRETRAINED = [
     "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
     "GPT_SoVITS/pretrained_models/s1v3.ckpt",
@@ -114,7 +116,7 @@ class GSV(TTSProjet):
                         "sample_steps": kwargs["sample_steps"],
                     }
                     API_URL = f"http://127.0.0.1:{port}/"
-                #print(data_json)
+                # print(data_json)
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content
@@ -185,13 +187,13 @@ class GSV(TTSProjet):
     def _UI(self):
         with gr.TabItem("AR-TTS"):
             self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
-            self.language2 = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
+            self.language2 = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Reference Audio'), open=True):                
                 self.refer_audio = gr.Audio(label=i18n('Main Reference Audio'))
                 self.aux_ref_audio = gr.File(label=i18n('Auxiliary Reference Audios'), file_types=['.wav'], file_count="multiple", type="binary")
                 with gr.Row():
                     self.refer_text = gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription | Pretrained Speaker (Cosy)'))
-                    self.refer_lang = gr.Dropdown(choices=list(dict_language.keys()), value=list(dict_language.keys())[0], label=i18n('Language of Main Reference Audio'), interactive=True, allow_custom_value=False)
+                    self.refer_lang = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[-2], label=i18n('Language of Main Reference Audio'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode):
                 self.sovits_path = gr.Dropdown(value="", label=f"Sovits {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
                 self.gpt_path = gr.Dropdown(value="", label=f"GPT {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
@@ -215,7 +217,7 @@ class GSV(TTSProjet):
                 with gr.Row():
                     self.parallel_infer = gr.Checkbox(label="Parallel_Infer", value=True, interactive=True, show_label=True)
                     self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)                
-                self.how_to_cut = gr.Radio(label=i18n('How to cut'), choices=list(cut_method.keys()), value=list(cut_method.keys())[0], interactive=True)
+                self.how_to_cut = gr.Radio(label=i18n('How to cut'), choices=list(cut_method.items()), value=list(cut_method.values())[0], interactive=True)
             with gr.Accordion(i18n('Presets'), open=False):
                 self.choose_presets = gr.Dropdown(label="", value="None", choices=self.presets_list, interactive=True, allow_custom_value=True)
                 self.desc_presets = gr.Textbox(label="", placeholder=i18n('(Optional) Description'), interactive=True)
@@ -278,7 +280,7 @@ class GSV(TTSProjet):
         else:
             refer_audio_path = ''
         aux_ref_audio_path = [temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []
-        pargs = (artts_proj, dict_language[language], port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language[refer_lang], batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps),parallel_infer, split_bucket, cut_method[text_split_method], gpt_path, sovits_path)
+        pargs = (artts_proj, dict_language.get(language,language), port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language.get(refer_lang,refer_lang), batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps),parallel_infer, split_bucket, cut_method.get(text_split_method,text_split_method), gpt_path, sovits_path)
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': "gsv", 'max_workers': max_workers}
         return pargs, kwargs
 
@@ -442,15 +444,15 @@ class ARPreset:
         self.port = int(port)
         self.reference_audio_path = reference_audio_path
         self.reference_audio_text = reference_audio_text
-        self.reference_audio_lang = dict_language[reference_audio_lang] if reference_audio_lang not in dict_language_rev else reference_audio_lang
+        self.reference_audio_lang = reference_audio_lang
         self.auxiliary_audios = auxiliary_audios
         self.sovits_path = sovits_path.strip('"')
         self.gpt_path = gpt_path.strip('"')
 
     def to_list(self):
         val = self.to_dict()
-        val["reference_audio_lang"] = dict_language_rev[val["reference_audio_lang"]]
-        return [val[x] for x in val.keys()]
+        #return [val[x] for x in val.keys()]
+        return list(val.values())
 
     def to_dict(self):
         return self.__dict__

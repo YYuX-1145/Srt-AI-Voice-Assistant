@@ -21,7 +21,7 @@ class Ollama(Traducteur):
     def get_models(self, url):
         try:
             if self.server_mode:
-                result = subprocess.run("ollama list", capture_output=True, text=True)  # consider using awk
+                result = subprocess.run("ollama list", capture_output=True, text=True, shell=True)  # consider using awk
                 lines = result.stdout.strip().split("\n")[1:]
                 self.models = [i.split()[0] for i in lines]
                 # print(self.models)
@@ -44,7 +44,7 @@ class Ollama(Traducteur):
             return None
         rc_open_window(f"ollama stop {model} && exit")
 
-    def api(self, tasks, target_lang, model_name, url, custom_prompt, num_history, file_name: str = ""):
+    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, file_name: str = ""):
         num_history = int(num_history)
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
@@ -58,6 +58,8 @@ class Ollama(Traducteur):
             "stream": False,
         }
         for task in tqdm(tasks, desc=f"{i18n('Translating')}: {file_name}", total=len(tasks)):
+            if interrupt_flag.is_set():
+                break
             text = "\n\n".join(task)
             if custom_prompt:
                 prompt = custom_prompt + '\n' + text
@@ -75,7 +77,7 @@ class Ollama(Traducteur):
                 request_data["messages"].pop(0)
                 request_data["messages"].pop(0)
 
-            #print(request_data)
+            # print(request_data)
             batch = result.split("\n\n")
             d = len(task) - len(batch)
             if d:
@@ -105,4 +107,4 @@ class Ollama(Traducteur):
             self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
             self.num_history = gr.Slider(label=i18n('History Message Limit'), value=2, minimum=0, maximum=10, step=1)
             self.translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
-            self.translate_btn.click(lambda *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history], outputs=[output_info, output_files])
+            self.translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history], outputs=[output_info, output_files])

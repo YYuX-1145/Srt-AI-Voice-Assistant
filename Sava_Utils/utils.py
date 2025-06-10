@@ -25,7 +25,7 @@ class Flag:
     def set(self):
         if self.using:
             self.stop = True
-            return i18n('After completing the generation of the next audio, the task will be aborted.')
+            return i18n('After completing the generation of the next item, the task will be aborted.')
         else:
             return i18n('No running tasks.')
 
@@ -50,6 +50,10 @@ def positive_int(*a):
     return r if len(r)>1 else r[0]
 
 
+def basename_no_ext(path: str):
+    return os.path.basename(os.path.splitext(path)[0])
+
+
 def clear_cache():
     dir = os.path.join(current_path, "SAVAdata", "temp")
     if os.path.exists(dir):
@@ -63,8 +67,7 @@ def clear_cache():
 
 def rc_open_window(command, dir=current_path):
     if system != "Windows":
-        gr.Warning("This function is only available on Windows!")
-        logger.warning("This function is only available on Windows!")
+        subprocess.Popen(command, cwd=dir, shell=True)
         return
     command = f'start cmd /k "{command}"'
     subprocess.Popen(command, cwd=dir, shell=True)
@@ -72,12 +75,10 @@ def rc_open_window(command, dir=current_path):
     time.sleep(0.1)
 
 
-def rc_bg(command, dir=current_path, get_id=True):
-    process = subprocess.Popen(command, cwd=dir, shell=True)
+def rc_bg(command, dir=current_path):
+    process = subprocess.Popen(command, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True)
     logger.info(f"{i18n('Execute command')}:{command}")
-    if get_id:
-        yield process.pid
-    yield process.wait()
+    return process
 
 
 def kill_process(pid):

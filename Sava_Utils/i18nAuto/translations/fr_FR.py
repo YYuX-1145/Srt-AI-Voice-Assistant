@@ -68,6 +68,8 @@ i18n_dict = {
     "Enable Regular Expression": "Utiliser les expressions régulières",
     "Find and Replace": "Rechercher et remplacer",
     "Replace All": "Remplacer Tout",
+    "Find Next": "Rechercher Suivant",
+    "No more results": "Aucun autre résultat",
     "You must enter the text to find.": "Vous devez entrer le texte cible.",
     "Multi-speaker dubbing": "Doublage à plusieurs locuteurs",
     "Select/Create Speaker": "Sélectionner/Créer un locuteur",
@@ -80,7 +82,7 @@ i18n_dict = {
     "Issues": "Erreurs courantes",
     "Help & User guide": "Guide d'utilisation",
     # utils
-    "After completing the generation of the next audio, the task will be aborted.": "Après avoir terminé la génération de l’audio suivant, la tâche sera interrompue.",
+    "After completing the generation of the next item, the task will be aborted.": "Après avoir terminé la génération de l'article suivant, la tâche sera interrompue.",
     "No running tasks.": "Aucune tâche en cours.",
     "An error occurred": "Une erreur s'est produite",
     "Server Mode has been enabled!": "Le mode serveur a été activé !",
@@ -106,6 +108,7 @@ i18n_dict = {
     "Failed to synthesize the following subtitles or they were not synthesized": "Les sous-titres suivants n'ont pas pu être synthétisés ou n'ont pas été synthétisés",
     # Settings
     "Failed to load settings, reset to default": "Échec du chargement des paramètres du logiciel, réinitialisation aux valeurs par défaut",
+    "was removed successfully.": "a été supprimé avec succès.",
     "Error, Invalid Path": "Erreur, chemin invalide",
     "Env detected": "Environnement détecté",
     "Restarting...": "Redémarrage en cours...",
@@ -225,6 +228,11 @@ i18n_dict = {
     "No custom API code file found.": "Aucun préréglage d'API personnalisée trouvé",
     "Please select a valid custom API code file!": "Veuillez sélectionner un fichier de configuration d'API valide !",
     # Subtitle Translation
+    "Subtitle Merge Tool": "Outil de fusion des sous-titres",
+    "When uploading multiple files, the number of files and the filenames must match.": "Lors du téléchargement de plusieurs fichiers, le nombre de fichiers et les noms des fichiers doivent correspondre.",
+    "Main Subtitle": "Sous-titre principal",
+    "Secondary Subtitle": "Sous-titre secondaire",
+    "The number of files must match!": "Le nombre de fichiers doit correspondre !",
     "Start Translating": "Commencer la traduction",
     "Translating": "Traduction en cours",
     "Failed to translate": "Échec de la traduction",
@@ -233,6 +241,7 @@ i18n_dict = {
     "Send output files to Main Page": "Envoyer les fichiers de sortie à la page principale",
     "Send output files to Translator": "Envoyer les fichiers de sortie à la page de traduction",
     "Specify Target Language": "Choisissez la langue cible",
+    "Generate merged subtitles": "Générer le fichier de sous-titres fusionnés",
     "File Output Path": "Chemin de sortie du fichier",
     "Select Translator": "Choisissez le traducteur",
     # Ollama
@@ -259,20 +268,25 @@ i18n_dict = {
     "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support": "Choisissez le modèle de reconnaissance vocale (ASR). Funasr ne prend en charge que le chinois (mais est beaucoup plus rapide), tandis que Faster - Whisper prend en charge plusieurs langues",
     "(ms)Minimum length of each segment": "(ms)Longueur minimale de chaque segment",
     "(ms)Minium slice interval": "(ms)Intervalle de découpe minimal",
-    "(ms)Minium silence length": "(ms)Longueur maximale du silence après la découpe",
+    "(ms)Maxium silence length": "(ms)Longueur minimale du silence après la découpe",
     "Other Parameters": "Autres paramètres",
     "Start": "Commencer",
     "Stop": "Arrêter",
     "Please upload audio or video!": "Veuillez télécharger un fichier audio ou vidéo !",
     "Please specify Python Interpreter!": "Veuillez spécifier l'interpréteur Python !",
+    "Select UVR model. If vocal separation is not needed, set the value to None.": "Choisissez le modèle UVR. Si la séparation vocale n'est pas nécessaire, fixez la valeur à None.",
     "Processing": "Traitement en cours",
     "Tasks are terminated due to an error in": "La tâche a été interrompue en raison d'une erreur dans :",
     "Finished": "Tâche terminée",
+    "Video Merge Tool": "Outil de Fusion Vidéo",
+    "Original video path": "Chemin de la vidéo originale",
+    "Volume": "Volume",
+    "Hard subtitles (optional)": "Sous-titres incrustés (optionnels)",
+    "Background audio (optional, override the original video audio)": "Audio de fond (optionnel, remplace l'audio original de la vidéo)",
+    "Dubbed audio path": "Chemin de l'audio doublé",
+    "Start Merging Video": "Démarrer la fusion de la vidéo",
+    "You must specify the original video along with audio or subtitles.": "Vous devez spécifier la vidéo originale ainsi que des sous-titres incrustés ou un audio doublé.",
     "WAV2SRT_INFO": """
-            Cette fonction peut être utilisée directement avec le package intégré GPT - SoVITS. Sinon, vous devez installer les dépendances correspondantes vous - même. <br>
-            # Autres paramètres :
-            `--whisper_size` par défaut : large - v3 | Spécifiez le modèle lors de l'utilisation de Faster Whisper<br>
-            `--threshold` par défaut : - 40 | Les points de découpe potentiels où le volume est inférieur à cette valeur sont considérés comme des silences<br>
-            `--hop_size` par défaut : 20 | Comment calculer la courbe de volume. Plus cette valeur est petite, plus la précision est élevée, mais plus la charge de calcul est importante (une précision élevée n'implique pas toujours un meilleur résultat)<br>
+            ### Cette fonction peut être utilisée directement avec le package intégré GPT-SoVITS et ffmpeg est nécessaire. Sinon, vous devez installer les dépendances correspondantes vous-même. <br>
             """,
 }

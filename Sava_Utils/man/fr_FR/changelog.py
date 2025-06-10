@@ -14,6 +14,7 @@ changelog = r"""
 8. (4.3) Accélération automatique de l'audio et suppression du silence; Création de projets de doublage à plusieurs locuteurs à partir de textes étiquetés.  
 9. (4.3.1) Ajouter la fonction de Recherche et de Remplacement; ajouter un bouton de régénération en un clic.  
 10. (4.4) Permet l'édition des caractères polyphoniques pour GPT-SoVITS ainsi que la détection automatique des modèles; Autorise les invites personnalisées pour Ollama; Permet d'exporter des sous-titres avec les noms des locuteurs selon un modèle personnalisable.  
+11.(4.5) Le module de traduction permet de fusionner des sous-titres bilingues; le module de transcription audio-vidéo prend en charge le modèle de séparation vocale UVR et une fonction de fusion vidéo en un clic a été ajoutée.  
 
 ### Mise à jour du 140225 :
 1. Prise en charge de la lecture de projets historiques

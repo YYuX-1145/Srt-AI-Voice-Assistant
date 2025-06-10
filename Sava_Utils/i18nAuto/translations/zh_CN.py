@@ -23,7 +23,7 @@ i18n_dict = {
     "You must specify the speakers while using multi-speaker dubbing!": "使用多角色配音时，必须指定说话人！",
     "Audio re-generation was successful! Click the <Reassemble Audio> button.": "重新合成成功！点击重新拼接内容。",
     "Audio re-generation failed!": "重新合成失败！",
-    "Reassemble successfully!": "重新合成完毕！",
+    "Reassemble successfully!": "重新拼接完毕！",
     "This function has been disabled!": "当前功能已被禁用！",
     "Please enter a valid name!": "请输入有效的名称！",
     "Saved successfully": "保存成功",
@@ -68,6 +68,8 @@ i18n_dict = {
     "Replace With": "替换为",
     "Enable Regular Expression": "使用正则表达式",
     "Find and Replace": "查找和替换",
+    "Find Next": "查找下一个",
+    "No more results": "没有更多结果了",
     "Replace All": "全部替换",
     "You must enter the text to find.": "你必须输入查找目标文本！",
     "Multi-speaker dubbing": "多角色配音",
@@ -81,7 +83,7 @@ i18n_dict = {
     "Issues": "常见错误",
     "Help & User guide": "使用指南",
     # utils
-    "After completing the generation of the next audio, the task will be aborted.": "完成下一条音频生成后中止任务...",
+    "After completing the generation of the next item, the task will be aborted.": "完成下一条项生成后中止任务...",
     "No running tasks.": "没有进行中的任务",
     "An error occurred": "出现错误",
     "Server Mode has been enabled!": "服务模式已启用！",
@@ -107,6 +109,7 @@ i18n_dict = {
     "Failed to synthesize the following subtitles or they were not synthesized": "以下字幕合成失败或未合成",
     # Settings
     "Failed to load settings, reset to default": "设置加载失败，恢复默认",
+    "was removed successfully.": "成功删除",
     "Error, Invalid Path": "错误，无效的路径",
     "Env detected": "已检测到环境",
     "Restarting...": "正在重启...",
@@ -226,6 +229,11 @@ i18n_dict = {
     "No custom API code file found.": "当前没有自定义API预设",
     "Please select a valid custom API code file!": "请选择有效的API配置文件！",
     # Subtitle Translation
+    "Subtitle Merge Tool": "字幕合并工具",
+    "When uploading multiple files, the number of files and the filenames must match.": "上传多个文件时，文件数量和文件名需要匹配",
+    "Main Subtitle": "主字幕",
+    "Secondary Subtitle": "副字幕",
+    "The number of files must match!": "文件数量必须匹配！",
     "Start Translating": "开始翻译",
     "Translating": "正在翻译",
     "Failed to translate": "翻译失败",
@@ -234,6 +242,7 @@ i18n_dict = {
     "Send output files to Main Page": "发送至主页面",
     "Send output files to Translator": "发送至翻译页面",
     "Specify Target Language": "选择目标语言",
+    "Generate merged subtitles": "输出合并的字幕文件",
     "File Output Path": "文件输出路径",
     "Select Translator": "选择翻译器",
     # Ollama
@@ -260,20 +269,25 @@ i18n_dict = {
     "Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support": "选择ASR模型，funasr只支持中文但更快更准，faster whisper支持多语言",
     "(ms)Minimum length of each segment": "(ms)每段最小多长",
     "(ms)Minium slice interval": "(ms)最短切割间隔",
-    "(ms)Minium silence length": "(ms)切完后静音最多留多长",
+    "(ms)Maxium silence length": "(ms)切完后静音最多留多长",
     "Other Parameters": "其他参数",
     "Start": "开始",
     "Stop": "停止",
     "Please upload audio or video!": "请上传音频文件！",
     "Please specify Python Interpreter!": "请指定解释器！",
+    "Select UVR model. If vocal separation is not needed, set the value to None.": "选择UVR模型，如不需要人声分离，保持选项为None",
     "Processing": "正在进行",
     "Tasks are terminated due to an error in": "任务出错,终止:",
     "Finished": "任务结束",
+    "Video Merge Tool": "视频合并工具",
+    "Original video path": "原视频路径",
+    "Volume": "音量",
+    "Hard subtitles (optional)": "硬字幕(可选)",
+    "Background audio (optional, override the original video audio)": "背景音(可选，覆盖原视频声音)",
+    "Dubbed audio path": "配音音频路径",
+    "Start Merging Video": "合并视频",
+    "You must specify the original video along with audio or subtitles.":"你必须上传原视频，以及硬字幕或配音音频！",
     "WAV2SRT_INFO": """
-            本功能可直接用于GPT-SoVITS整合包，否则需要自己安装对应依赖。<br>
-            # 其他参数：
-            `--whisper_size` 默认:large-v3 | 使用faster whisper时指定模型<br>
-            `--threshold` 默认:-40 | 音量小于这个值视作静音的备选切割点<br>
-            `--hop_size` 默认:20 | 怎么算音量曲线，越小精度越大计算量越高（不是精度越大效果越好）<br>
+            ### 本功能可直接用于GPT-SoVITS整合包和ffmpeg，否则需要自己安装对应依赖。<br>
             """,
 }

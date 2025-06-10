@@ -1,6 +1,6 @@
 import gradio as gr
 from .. import i18n
-from ..utils import rc_bg, kill_process, basename_no_ext,logger
+from ..utils import rc_bg, kill_process, basename_no_ext,fix_null,logger
 from ..base_componment import Base_Componment
 import os
 import subprocess
@@ -201,8 +201,8 @@ class WAV2SRT(Base_Componment):
     def run_merge_vid(self, file_list: list, video: str, sub: str, bg: str, bg_vol: float, db: str, db_vol: float):
         if file_list is None:
             file_list = []
-        NULL = [None, '', 'None']
-        if video in NULL or (sub in NULL and db in NULL):
+        video, sub, bg, db = fix_null(video, sub, bg, db)
+        if video is None or (sub is None and db is None):
             gr.Info(i18n('You must specify the original video along with audio or subtitles.'))
             return None,file_list
         video = video.strip('"')

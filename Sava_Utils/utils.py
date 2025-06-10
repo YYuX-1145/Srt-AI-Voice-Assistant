@@ -49,6 +49,10 @@ def positive_int(*a):
     r = [max(0,int(x)) for x in a]
     return r if len(r)>1 else r[0]
 
+NULL = [None, '', 'None']
+def fix_null(*a):
+    r = [None if x in NULL else x for x in a]
+    return r if len(r) > 1 else r[0]
 
 def basename_no_ext(path: str):
     return os.path.basename(os.path.splitext(path)[0])

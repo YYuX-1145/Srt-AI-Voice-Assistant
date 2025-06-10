@@ -169,7 +169,7 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
         ret = []
         for input_path in tqdm(input_paths, desc='Denoising...'):
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
-            tmp_path = f"{basename_no_ext(input_path)}_reformatted.wav"
+            tmp_path = f"TEMP/{basename_no_ext(input_path)}_reformatted.wav"
             try:
                 assert subprocess.run(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y', stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0
             except:
@@ -177,13 +177,14 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 continue
             try:
                 pre_fun._path_audio_(tmp_path, save_path, save_path, format0, is_hp3)
-                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")
+                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")                
                 # (ins/vocal)_audio|_10_reformatted.wav.wav"     17 + 4 + len(agg)
                 x = -22 if agg < 10 else -23
                 shutil.move(out_p, out_p[:x] + '.wav')
                 out_p = os.path.join(save_path, f"instrument_{os.path.basename(tmp_path)}_{agg}.wav")
                 shutil.move(out_p, out_p[:x] + '.wav')
                 ret.append(os.path.join(save_path, f"vocal_{basename_no_ext(input_path)}.wav"))
+                os.remove(tmp_path)
             except Exception as e:
                 print(e)
     except Exception as e:

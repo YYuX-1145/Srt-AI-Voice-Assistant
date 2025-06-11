@@ -16,7 +16,7 @@ if __name__ == "__main__":
         gsv_yml = {
             "custom": {
                 "device": "cuda",
-                "is_half": False,
+                "is_half": True,
                 "version": "v2",
                 "t2s_weights_path": preset["gpt_path"],
                 "vits_weights_path": preset["sovits_path"],

@@ -410,11 +410,12 @@ if __name__ == "__main__":
                                 with gr.Row():
                                     gr.Markdown(value=edit_map_ui_md2)
                                     gr.Markdown(value=edit_map_ui_md3)
-                                for i in x:
-                                    with gr.Row():
-                                        k = gr.Textbox(value=i,show_label=False,interactive=False)
-                                        v = gr.Dropdown(value=i, choices=c, show_label=False, allow_custom_value=True)
-                                        v.change(modify_spkmap, inputs=[speaker_map_dict,k,v])
+                                with gr.Group():
+                                    for i in x:
+                                        with gr.Row():
+                                            k = gr.Textbox(value=i,show_label=False,interactive=False)
+                                            v = gr.Dropdown(value=i, choices=c, show_label=False, allow_custom_value=True)
+                                            v.change(modify_spkmap, inputs=[speaker_map_dict,k,v])
                                 gr.Button(value="🗑️",variant="stop").click(lambda:(set(),dict()),outputs=[speaker_map_set,speaker_map_dict])
                             with gr.Accordion(i18n('Identify Original Speakers'),open=True):
                                 update_spkmap_btn_upload = gr.Button(value=i18n('From Upload File'))

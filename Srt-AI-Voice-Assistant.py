@@ -493,9 +493,9 @@ if __name__ == "__main__":
                         export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=50)
-                            all_selection_btn.click(None, inputs=[], outputs=edit_check_list, js=f"() => [{", ".join(["true" for i in range(Sava_Utils.config.num_edit_rows)])}]")
+                            all_selection_btn.click(None, inputs=[], outputs=edit_check_list, js=f"() => Array({Sava_Utils.config.num_edit_rows}).fill(true)")
                             reverse_selection_btn = gr.Button(value=i18n('Reverse Selection'), interactive=True, min_width=50)
-                            reverse_selection_btn.click(lambda *args: [not i for i in args], inputs=edit_check_list, outputs=edit_check_list)
+                            reverse_selection_btn.click(None, inputs=edit_check_list, outputs=edit_check_list, js="(...vals) => vals.map(v => !v)")
                             clear_selection_btn = gr.ClearButton(value=i18n('Clear Selection'), interactive=True, min_width=50)
                             clear_selection_btn.add(edit_check_list)
                             apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)

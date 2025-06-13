@@ -461,7 +461,7 @@ if __name__ == "__main__":
                         for x in range(Sava_Utils.config.num_edit_rows):
                             edit_real_index = gr.Number(show_label=False, visible=False, value=-1, interactive=False)  # real index
                             with gr.Row(equal_height=True, height=55):
-                                edit_check = gr.Checkbox(value=False, interactive=True, min_width=40, label="", scale=0)
+                                edit_check = gr.Checkbox(value=False, interactive=True, min_width=40, show_label=False, label="", scale=0)
                                 edit_check_list.append(edit_check)
                                 edit_rows.append(edit_real_index)  # real index
                                 edit_real_index_list.append(edit_real_index)
@@ -492,11 +492,11 @@ if __name__ == "__main__":
                         export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=50)
-                            all_selection_btn.click(lambda: [True for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
+                            all_selection_btn.click(None, inputs=[], outputs=edit_check_list, js=f"() => [{", ".join(["true" for i in range(Sava_Utils.config.num_edit_rows)])}]")
                             reverse_selection_btn = gr.Button(value=i18n('Reverse Selection'), interactive=True, min_width=50)
                             reverse_selection_btn.click(lambda *args: [not i for i in args], inputs=edit_check_list, outputs=edit_check_list)
-                            clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=50)
-                            clear_selection_btn.click(lambda: [False for i in range(Sava_Utils.config.num_edit_rows)], inputs=[], outputs=edit_check_list)
+                            clear_selection_btn = gr.ClearButton(value=i18n('Clear Selection'), interactive=True, min_width=50)
+                            clear_selection_btn.add(edit_check_list)
                             apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
                             apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
                             copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)

@@ -12,6 +12,7 @@ try:
     from tools.uvr5.mdxnet import MDXNetDereverb
     from tools.uvr5.vr import AudioPre, AudioPreDeEcho
     from tools.uvr5.bsroformer import Roformer_Loader
+
     UVR5_AVAILABLE = True
 except ImportError:
     UVR5_AVAILABLE = False
@@ -40,6 +41,7 @@ def init_ASRmodels():
     if args.engine == "whisper":
         import faster_whisper
         from faster_whisper import WhisperModel
+
         model_path = f'tools/asr/models/faster-whisper-{args.whisper_size}'
         os.makedirs(model_path, exist_ok=True)
         if os.listdir(model_path) == []:
@@ -56,6 +58,7 @@ def init_ASRmodels():
             model.feature_extractor.mel_filters = model.feature_extractor.get_mel_filters(model.feature_extractor.sampling_rate, model.feature_extractor.n_fft, n_mels=128)
     else:
         from funasr import AutoModel
+
         print("Loading FunASR models...")
         path_asr = 'tools/asr/models/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch'
         path_asr = path_asr if os.path.exists(path_asr) else "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
@@ -167,6 +170,7 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 is_half=True,
             )
         ret = []
+        os.makedirs("TEMP", exist_ok=True)
         for input_path in tqdm(input_paths, desc='Denoising...'):
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
             tmp_path = f"TEMP/{basename_no_ext(input_path)}_reformatted.wav"
@@ -177,7 +181,7 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
                 continue
             try:
                 pre_fun._path_audio_(tmp_path, save_path, save_path, format0, is_hp3)
-                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")                
+                out_p = os.path.join(save_path, f"vocal_{os.path.basename(tmp_path)}_{agg}.wav")
                 # (ins/vocal)_audio|_10_reformatted.wav.wav"     17 + 4 + len(agg)
                 x = -22 if agg < 10 else -23
                 shutil.move(out_p, out_p[:x] + '.wav')

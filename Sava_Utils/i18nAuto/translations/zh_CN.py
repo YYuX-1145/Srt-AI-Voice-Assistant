@@ -288,6 +288,6 @@ i18n_dict = {
     "Start Merging Video": "合并视频",
     "You must specify the original video along with audio or subtitles.":"你必须上传原视频，以及硬字幕或配音音频！",
     "WAV2SRT_INFO": """
-            ### 本功能可直接用于GPT-SoVITS整合包和ffmpeg，否则需要自己安装对应依赖。<br>
+            ### 本功能可直接用于GPT-SoVITS整合包且需要安装ffmpeg，否则需要自己安装对应依赖。<br>
             """,
 }

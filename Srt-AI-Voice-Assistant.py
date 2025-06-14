@@ -490,7 +490,7 @@ if __name__ == "__main__":
                                     edit_rows.append(msttsregenbtn)
                                     edit_rows.append(customregenbtn)                                    
                         workrefbtn.click(getworklist, inputs=[], outputs=[worklist])
-                        export_btn.click(lambda x: x.export(), inputs=[STATE], outputs=[input_file])
+                        export_btn.click(lambda file_list, x: ([i.name for i in file_list] if file_list else []) + ([o] if (o:=x.export()) else []), inputs=[input_file, STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):
                             all_selection_btn = gr.Button(value=i18n('Select All'), interactive=True, min_width=50)
                             all_selection_btn.click(None, inputs=[], outputs=edit_check_list, js=f"() => Array({Sava_Utils.config.num_edit_rows}).fill(true)")

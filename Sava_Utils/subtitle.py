@@ -273,4 +273,4 @@ class Subtitles:
             f.writelines(srt_content)
         if open_explorer and not Sava_Utils.config.server_mode:
             os.system(f'explorer /select, {file_path}')
-        return [file_path]
+        return file_path

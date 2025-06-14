@@ -101,7 +101,7 @@ class WAV2SRT(Base_Componment):
                         self.run_wav2srt,
                         inputs=[self.wav2srt_input, self.wav2srt_out_dir, self.wav2srt_pydir, self.wav2srt_uvr_models, self.wav2srt_engine, self.wav2srt_whisper_size, self.wav2srt_min_length, self.wav2srt_min_interval, self.wav2srt_sil],
                         outputs=[self.wav2srt_pid, self.wav2srt_output_status, self.wav2srt_output],
-                        max_batch_size=2,
+                        concurrency_limit=1,
                     )
         return available
 

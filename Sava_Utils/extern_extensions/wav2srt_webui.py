@@ -4,8 +4,9 @@ from ..utils import rc_bg, kill_process, basename_no_ext,fix_null,logger
 from ..base_componment import Base_Componment
 import os
 import subprocess
-
-
+import platform
+if platform.system() != "Windows":
+    import shlex
 current_path = os.environ.get("current_path")
 OUT_DIR_DEFAULT = os.path.join(current_path, "SAVAdata", "output")
 
@@ -253,11 +254,14 @@ class WAV2SRT(Base_Componment):
         else:
             output = os.path.join(OUT_DIR_DEFAULT, f'merged_{os.path.basename(video)}')
 
-        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'nvenc_h264', '-c:a', 'aac', output]
+        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'h264_nvenc', '-c:a', 'aac', output]
         logger.info(f"{i18n('Execute command')}:{cmd}")
 
         try:
-            p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
+            if platform.system() == "Windows":
+                p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
+            else:
+                p = subprocess.run(' '.join(shlex.quote(c) for c in cmd), cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
             file_list.append(output)
             msg = 'OK'
         except:

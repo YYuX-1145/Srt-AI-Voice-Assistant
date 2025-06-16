@@ -129,7 +129,7 @@ class WAV2SRT(Base_Componment):
         msg = f"{i18n('Processing')}\n"
         input_str = '"' + '" "'.join([i.name for i in inputs]) + '"'
         output_dir_str = f' -output_dir "{out_dir}"' if not self.server_mode else ""
-        command = f'"{pydir}" tools\\wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
+        command = f'"{pydir}" tools/wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
         process = rc_bg(command=command, dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
         pid = process.pid
         yield pid, msg, output_list

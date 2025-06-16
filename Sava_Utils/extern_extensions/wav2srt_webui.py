@@ -4,8 +4,9 @@ from ..utils import rc_bg, kill_process, basename_no_ext,fix_null,logger
 from ..base_componment import Base_Componment
 import os
 import subprocess
-
-
+import platform
+if platform.system() != "Windows":
+    import shlex
 current_path = os.environ.get("current_path")
 OUT_DIR_DEFAULT = os.path.join(current_path, "SAVAdata", "output")
 
@@ -103,7 +104,7 @@ class WAV2SRT(Base_Componment):
                         self.run_wav2srt,
                         inputs=[self.wav2srt_input, self.wav2srt_out_dir, self.wav2srt_pydir, self.wav2srt_uvr_models, self.wav2srt_engine, self.wav2srt_whisper_size, self.wav2srt_min_length, self.wav2srt_min_interval, self.wav2srt_sil],
                         outputs=[self.wav2srt_pid, self.wav2srt_output_status, self.wav2srt_output],
-                        max_batch_size=2,
+                        concurrency_limit=1,
                     )
         return available
 
@@ -128,10 +129,11 @@ class WAV2SRT(Base_Componment):
             out_dir = OUT_DIR_DEFAULT
         output_list = []
         out_dir = out_dir.strip('"')
+        os.makedirs(out_dir, exist_ok=True)
         msg = f"{i18n('Processing')}\n"
         input_str = '"' + '" "'.join([i.name for i in inputs]) + '"'
         output_dir_str = f' -output_dir "{out_dir}"' if not self.server_mode else ""
-        command = f'"{pydir}" tools\\wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
+        command = f'"{pydir}" tools/wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
         process = rc_bg(command=command, dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
         pid = process.pid
         yield pid, msg, output_list
@@ -203,14 +205,14 @@ class WAV2SRT(Base_Componment):
     def run_merge_vid(self, file_list: list, video: str, sub: str, bg: str, bg_vol: float, db: str, db_vol: float):
         if file_list is None:
             file_list = []
+        video = video.strip('"')
+        sub = sub.strip('"')
+        bg = bg.strip('"')
+        db = db.strip('"')            
         video, sub, bg, db = fix_null(video, sub, bg, db)
         if video is None or (sub is None and db is None):
             gr.Info(i18n('You must specify the original video along with audio or subtitles.'))
             return None,file_list
-        video = video.strip('"')
-        sub = sub.strip('"')
-        bg = bg.strip('"')
-        db = db.strip('"')
         input_args = ['-i', video]
         filter_complex = []
         map_args = []
@@ -254,11 +256,14 @@ class WAV2SRT(Base_Componment):
         else:
             output = os.path.join(OUT_DIR_DEFAULT, f'merged_{os.path.basename(video)}')
 
-        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'nvenc_h264', '-c:a', 'aac', output]
+        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'h264_nvenc' if platform.system() == "Windows" else "libx264", '-c:a', 'aac', output]
         logger.info(f"{i18n('Execute command')}:{cmd}")
 
         try:
-            p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
+            if platform.system() == "Windows":
+                p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
+            else:
+                p = subprocess.run(' '.join(shlex.quote(c) for c in cmd), cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
             file_list.append(output)
             msg = 'OK'
         except:

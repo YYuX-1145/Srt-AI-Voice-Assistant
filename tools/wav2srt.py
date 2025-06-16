@@ -175,7 +175,7 @@ def uvr(model_name, input_paths, save_root, agg=10, format0='wav'):
             save_path = save_root if save_root is not None else os.path.dirname(input_path)
             tmp_path = f"TEMP/{basename_no_ext(input_path)}_reformatted.wav"
             try:
-                assert subprocess.run(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y', stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0
+                assert subprocess.run(f'ffmpeg -i "{input_path}" -vn -acodec pcm_s16le -ac 2 -ar 44100 "{tmp_path}" -y', shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0
             except:
                 print(f"FFmpeg Error: {input_path}")
                 continue

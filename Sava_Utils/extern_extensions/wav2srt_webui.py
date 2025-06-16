@@ -202,14 +202,14 @@ class WAV2SRT(Base_Componment):
     def run_merge_vid(self, file_list: list, video: str, sub: str, bg: str, bg_vol: float, db: str, db_vol: float):
         if file_list is None:
             file_list = []
+        video = video.strip('"')
+        sub = sub.strip('"')
+        bg = bg.strip('"')
+        db = db.strip('"')            
         video, sub, bg, db = fix_null(video, sub, bg, db)
         if video is None or (sub is None and db is None):
             gr.Info(i18n('You must specify the original video along with audio or subtitles.'))
             return None,file_list
-        video = video.strip('"')
-        sub = sub.strip('"')
-        bg = bg.strip('"')
-        db = db.strip('"')
         input_args = ['-i', video]
         filter_complex = []
         map_args = []

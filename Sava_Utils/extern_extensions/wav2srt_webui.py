@@ -254,7 +254,7 @@ class WAV2SRT(Base_Componment):
         else:
             output = os.path.join(OUT_DIR_DEFAULT, f'merged_{os.path.basename(video)}')
 
-        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'h264_nvenc', '-c:a', 'aac', output]
+        cmd = ['ffmpeg', '-y'] + input_args + filter_complex + map_args + ['-c:v', 'h264_nvenc' if platform.system() == "Windows" else "libx264", '-c:a', 'aac', output]
         logger.info(f"{i18n('Execute command')}:{cmd}")
 
         try:

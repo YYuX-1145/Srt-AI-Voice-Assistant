@@ -126,6 +126,7 @@ class WAV2SRT(Base_Componment):
             out_dir = OUT_DIR_DEFAULT
         output_list = []
         out_dir = out_dir.strip('"')
+        os.makedirs(out_dir, exist_ok=True)
         msg = f"{i18n('Processing')}\n"
         input_str = '"' + '" "'.join([i.name for i in inputs]) + '"'
         output_dir_str = f' -output_dir "{out_dir}"' if not self.server_mode else ""

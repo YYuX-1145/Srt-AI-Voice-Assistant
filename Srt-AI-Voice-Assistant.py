@@ -58,6 +58,7 @@ def custom_api(text):
     raise i18n('You need to load custom API functions!')
 
 
+#single speaker
 def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[], fps=30, offset=0, max_workers=1):
     t1 = time.time()
     fps = positive_int(fps)

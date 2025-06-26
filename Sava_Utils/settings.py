@@ -262,7 +262,7 @@ class Settings_UI:
                 with gr.Row():
                     self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
                     self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
-            self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
+            self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True, allow_custom_value=True)
         
         with gr.Accordion(i18n('Storage Management'),open=False):
             self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")

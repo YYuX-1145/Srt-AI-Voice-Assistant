@@ -88,7 +88,7 @@ class Settings:
         self.max_accelerate_ratio = max_accelerate_ratio
         self.output_sr = int(output_sr)
         self.remove_silence = remove_silence
-        self.num_edit_rows = int(num_edit_rows)
+        self.num_edit_rows = max(int(num_edit_rows),1)
         self.export_spk_pattern = export_spk_pattern
         self.theme = theme
         self.bv2_pydir = bv2_pydir.strip('"')
@@ -260,7 +260,7 @@ class Settings_UI:
                     self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
                     self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
                 with gr.Row():
-                    self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=20, value=Sava_Utils.config.num_edit_rows)
+                    self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
                     self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
             self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True)
         

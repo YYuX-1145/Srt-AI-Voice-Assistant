@@ -233,7 +233,6 @@ def get_speaker_map_from_file(in_files):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return speakers, dict()
-    yield speakers, dict()
     filename = in_files[0].name
     subtitles = read_labeled_file(filename, spk_dict={}, fps=30, offset=0)
     for i in subtitles:
@@ -242,21 +241,20 @@ def get_speaker_map_from_file(in_files):
         else:
             speakers.add("None")
     speakers_dict = {i:i for i in speakers}        
-    yield speakers,speakers_dict
+    return speakers,speakers_dict
 
 def get_speaker_map_from_sub(subtitles:Subtitles):
     speakers = set()
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return speakers, dict()
-    yield speakers,dict()
     for i in subtitles:
         if i.speaker:
             speakers.add(i.speaker)
         else:
             speakers.add("None")
     speakers_dict = {i: i for i in speakers}
-    yield speakers, speakers_dict
+    return speakers, speakers_dict
 
 
 def modify_spkmap(map: dict, k: str, v: str):

@@ -195,6 +195,8 @@ async def tts_handle(req: dict):
             audio_data = buffer.getvalue()
             return Response(audio_data, media_type=f"audio/{media_type}")
     except Exception as e:
+        print("Error:",e)
+        traceback.print_exc()
         return JSONResponse(status_code=400, content={"message": "tts failed", "Exception": str(e)})
 
 

@@ -293,7 +293,7 @@ def remake(*args):
     args = args[1:]
     idx = int(idx)
     if idx == -1:
-        gr.Info("Not available!")
+        gr.Info(i18n('Not available!'))
         return fp, *load_single_line(subtitle_list, idx)
     if Sava_Utils.config.server_mode and len(s_txt) > 512:
         gr.Warning("too long!")

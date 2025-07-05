@@ -1,12 +1,13 @@
-from . import TTSProjet
 import requests
 import gradio as gr
-from ..utils import positive_int
-from .. import logger, i18n
+
+def positive_int(*a):
+    r = [max(0, int(x)) for x in a]
+    return r if len(r) > 1 else r[0]
 
 
 class BV2(TTSProjet):
-    def __init__(self, config):
+    def __init__(self, config=None):
         super().__init__("bv2", config, title="Bert-VITS2-HiyoriUI")
 
     def api(self, text, mid, spk_name, sid, lang, length, noise, noisew, sdp, emotion, split, style_text, style_weight, port):

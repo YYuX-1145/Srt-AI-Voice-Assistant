@@ -1,7 +1,7 @@
 from ..base_componment import Base_Componment
 from abc import ABC, abstractmethod
 from ..extension_loader import load_ext_from_dir
-from .. import i18n
+from .. import i18n, logger
 import gradio as gr
 
 
@@ -37,17 +37,24 @@ class TTSProjet(Base_Componment):
 
 
 import Sava_Utils
-from . import bv2, gsv, mstts, custom
+from . import gsv, mstts
 
 
 class TTS_UI_Loader(Base_Componment):
     def __init__(self) -> None:
-        BV2 = bv2.BV2(Sava_Utils.config)
+        # BV2 = bv2.BV2(Sava_Utils.config)
         GSV = gsv.GSV(Sava_Utils.config)
         MSTTS = mstts.MSTTS(Sava_Utils.config)
-        CUSTOM = custom.Custom(Sava_Utils.config)
-        self.components: list[TTSProjet] = [GSV, BV2, MSTTS, CUSTOM]
-        self.components += load_ext_from_dir(["Sava_Utils/tts_projects/custom"])
+        # CUSTOM = custom.Custom(Sava_Utils.config)
+        self.components: list[TTSProjet] = [GSV, MSTTS]
+        self.components += load_ext_from_dir(
+            ["Sava_Extensions/custom_api"],
+            {
+                "TTSProjet": TTSProjet,
+                "i18n":i18n,
+                "logger":logger,
+            },
+        )
         self.project_dict = {i.name: i for i in self.components}
         super().__init__()
 
@@ -59,9 +66,9 @@ class TTS_UI_Loader(Base_Componment):
 
     def get_btn_visible_dict(self):
         BTN_VISIBLE_DICT = {}
-        for idx,item in enumerate(self.components):
-            BTN_VISIBLE_DICT[item.name]=[gr.update(visible=(idx==j)) for j in range(len(self.components))]
-        BTN_VISIBLE_DICT[None]=BTN_VISIBLE_DICT[item.name]
+        for idx, item in enumerate(self.components):
+            BTN_VISIBLE_DICT[item.name] = [gr.update(visible=(idx == j)) for j in range(len(self.components))]
+        BTN_VISIBLE_DICT[None] = BTN_VISIBLE_DICT[item.name]
         return BTN_VISIBLE_DICT
 
     def get_regenbtn(self, inputs, outputs, remake):
@@ -86,13 +93,14 @@ class TTS_UI_Loader(Base_Componment):
     def get_save_spk_btn(self, speaker_dropdown, save_spk):
         def make_handler(project_name):
             return lambda *args, process=gr.Progress(track_tqdm=True): save_spk(*args, project=project_name)
+
         visible = True
         ret = []
         for item, ARGS in zip(self.components, self.TTS_ARGS):
             save_spk_btn = gr.Button(value="💾", min_width=60, scale=0, visible=visible)
             ret.append(save_spk_btn)
             save_spk_btn.click(make_handler(item.name), [speaker_dropdown] + ARGS, speaker_dropdown)
-            visible=False
+            visible = False
         return ret
 
     def activate(self, inputs, outputs, generate_preprocess):

@@ -17,7 +17,7 @@ class MSTTS(TTSProjet):
         self.cfg_ms_region = None
         self.cfg_ms_key = None
         self.ms_lang_option = ""
-        super().__init__("mstts", config)
+        super().__init__("mstts", config, title="Azure-TTS(Microsoft)")
         self.ms_refresh()
 
     def update_cfg(self, config):
@@ -115,29 +115,28 @@ class MSTTS(TTSProjet):
             return None
 
     def _UI(self):
-        with gr.TabItem("Azure-TTS(Microsoft)"):
-            with gr.Column():
-                self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
-                if self.ms_speaker_info == {}:
-                    self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                    self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                else:
-                    choices = list(self.ms_speaker_info.keys())
-                    self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=choices[0], choices=choices, allow_custom_value=False, interactive=True)
-                    choices = list(self.ms_speaker_info[choices[0]].keys())
-                    self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=choices, allow_custom_value=False, interactive=True)
-                    del choices
-                with gr.Row():
-                    self.ms_style = gr.Dropdown(label=i18n('Style'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                    self.ms_role = gr.Dropdown(label=i18n('Role'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                self.ms_speed = gr.Slider(minimum=0.2, maximum=2, step=0.01, label=i18n('Speed'), value=1, interactive=True)
-                self.ms_pitch = gr.Slider(minimum=0.5, maximum=1.5, step=0.01, label=i18n('Pitch'), value=1, interactive=True)
-                gr.Markdown(value=i18n('MSTTS_NOTICE'))
-                self.gen_btn3 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
-                self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
-                self.ms_languages.change(self.display_ms_spk, inputs=[self.ms_languages], outputs=[self.ms_speaker])
-                self.ms_speaker.change(self.display_style_role, inputs=[self.ms_languages, self.ms_speaker], outputs=[self.ms_style, self.ms_role])
-                MSTTS_ARGS = [self.ms_languages, self.ms_speaker, self.ms_style, self.ms_role, self.ms_speed, self.ms_pitch]
+        with gr.Column():
+            self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
+            if self.ms_speaker_info == {}:
+                self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=None, choices=[], allow_custom_value=False, interactive=True)
+                self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=[], allow_custom_value=False, interactive=True)
+            else:
+                choices = list(self.ms_speaker_info.keys())
+                self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=choices[0], choices=choices, allow_custom_value=False, interactive=True)
+                choices = list(self.ms_speaker_info[choices[0]].keys())
+                self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=choices, allow_custom_value=False, interactive=True)
+                del choices
+            with gr.Row():
+                self.ms_style = gr.Dropdown(label=i18n('Style'), value=None, choices=[], allow_custom_value=False, interactive=True)
+                self.ms_role = gr.Dropdown(label=i18n('Role'), value=None, choices=[], allow_custom_value=False, interactive=True)
+            self.ms_speed = gr.Slider(minimum=0.2, maximum=2, step=0.01, label=i18n('Speed'), value=1, interactive=True)
+            self.ms_pitch = gr.Slider(minimum=0.5, maximum=1.5, step=0.01, label=i18n('Pitch'), value=1, interactive=True)
+            gr.Markdown(value=i18n('MSTTS_NOTICE'))
+            self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+            self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
+            self.ms_languages.change(self.display_ms_spk, inputs=[self.ms_languages], outputs=[self.ms_speaker])
+            self.ms_speaker.change(self.display_style_role, inputs=[self.ms_languages, self.ms_speaker], outputs=[self.ms_style, self.ms_role])
+            MSTTS_ARGS = [self.ms_languages, self.ms_speaker, self.ms_style, self.ms_role, self.ms_speed, self.ms_pitch]
         return MSTTS_ARGS
 
     def save_action(self, *args, text: str = None):

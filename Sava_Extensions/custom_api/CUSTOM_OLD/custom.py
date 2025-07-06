@@ -1,32 +1,29 @@
-from . import TTSProjet
 import requests
 import gradio as gr
-from .. import logger, i18n, MANUAL
 import time
 import os
-
+from . import *
 current_path = os.environ.get("current_path")
 
 
 class Custom(TTSProjet):
-    def __init__(self, config):
+    def __init__(self, config=None):
         self.custom_api_list = []
         self.refresh_custom_api_list()
-        super().__init__("custom", config)
+        super().__init__("custom", config, title=i18n('Custom API'))
 
     def api(self, func, text):
         return func(text)
 
     def _UI(self):
-        with gr.TabItem(i18n('Custom API')):
-            with gr.Column():
-                gr.Markdown(value=MANUAL.getInfo("help_custom"))                
-                self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False, scale=4)
-                with gr.Row():
-                    self.gen_btn4 = gr.Button(value=i18n('Generate Audio'), variant="primary", scale=8)
-                    self.refresh_custom_btn = gr.Button(value="🔄️", scale=1, min_width=40)                    
-                self.refresh_custom_btn.click(self.refresh_custom_api_list, outputs=[self.choose_custom_api])
-        return []
+        with gr.Column():
+            gr.Markdown(value=MANUAL.getInfo("help_custom"))                
+            self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False, scale=4)
+            with gr.Row():
+                self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", scale=8)
+                self.refresh_custom_btn = gr.Button(value="🔄️", scale=1, min_width=40)                    
+            self.refresh_custom_btn.click(self.refresh_custom_api_list, outputs=[self.choose_custom_api])
+        return [self.choose_custom_api]
 
     def before_gen_action(self, custom_api_path, temp_namesp, **kwargs):
         # print(args)

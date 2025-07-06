@@ -88,7 +88,7 @@ class GSV(TTSProjet):
         self.current_sovits_model = dict()
         self.current_gpt_model = dict()
         self.refresh_presets_list()
-        super().__init__("gsv", config)
+        super().__init__("gsv", config, title="AR-TTS")
 
     def update_cfg(self, config):
         self.gsv_fallback = config.gsv_fallback
@@ -185,7 +185,7 @@ class GSV(TTSProjet):
         return audio
 
     def _UI(self):
-        with gr.TabItem("AR-TTS"):
+        with gr.Column():
             self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
             self.language2 = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Reference Audio'), open=True):                
@@ -241,7 +241,7 @@ class GSV(TTSProjet):
                 ]
                 self.save_presets_btn.click(self.save_preset, inputs=preset_args, outputs=[self.choose_presets])
             with gr.Row():
-                self.gen_btn2 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+                self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
             self.switch_gsvmodel_btn.click(self.switch_gsvmodel, inputs=[self.sovits_path, self.gpt_path, self.api_port2], outputs=[])
             self.choose_presets.change(self.load_preset, inputs=[self.choose_presets], outputs=preset_args[1:])
         GSV_ARGS = [

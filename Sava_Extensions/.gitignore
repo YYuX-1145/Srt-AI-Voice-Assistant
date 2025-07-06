@@ -1,3 +1,7 @@
 *
 !.gitignore
-!custom_api
+!tts_engine/
+!tts_engine/BV2/
+!tts_engine/BV2/*
+!tts_engine/CUSTOM_OLD/
+!tts_engine/CUSTOM_OLD/*

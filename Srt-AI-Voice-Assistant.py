@@ -259,14 +259,14 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
         return None
 
 
-def start_hiyoriui():
-    if Sava_Utils.config.bv2_pydir == "":
-        gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
-        return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
-    command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
-    rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
-    time.sleep(0.1)
-    return f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}"
+# def start_hiyoriui():
+#     if Sava_Utils.config.bv2_pydir == "":
+#         gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
+#         return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
+#     command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
+#     rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
+#     time.sleep(0.1)
+#     return f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}"
 
 
 def start_gsv():
@@ -311,14 +311,18 @@ def remake(*args):
         try:
             with open(os.path.join(current_path, "SAVAdata", "speakers", spk), 'rb') as f:
                 info = pickle.load(f)
+            args = info["raw_data"]
+            proj = info["project"]
+            args, kwargs = Projet_dict[proj].arg_filter(*args)
+        except KeyError:
+            logger.error(f"{i18n('TTS engine not found')}: {proj}")
+            gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
+            return fp, *load_single_line(subtitle_list, idx)
         except FileNotFoundError:
             logger.error(f"{i18n('Speaker archive not found')}: {spk}")
             gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
             return fp, *load_single_line(subtitle_list, idx)
-        args = info["raw_data"]
-        proj = info["project"]
-        args, kwargs = Projet_dict[proj].arg_filter(*args)
-        # Projet_dict[proj].before_gen_action(*args,notify=False,force=True)
+
     else:
         if subtitle_list.proj is None:
             gr.Info(i18n('You must specify the speakers while using multi-speaker dubbing!'))
@@ -327,6 +331,10 @@ def remake(*args):
         try:
             proj = subtitle_list.proj
             args, kwargs = Projet_dict[proj].arg_filter(*args)
+        except KeyError:
+            logger.error(f"{i18n('TTS engine not found')}: {proj}")
+            gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
+            return fp, *load_single_line(subtitle_list, idx)
         except Exception as e:
             # print(e)
             return fp, *load_single_line(subtitle_list, idx)
@@ -430,9 +438,9 @@ if __name__ == "__main__":
                         stop_btn.click(lambda x:gr.Info(x.set()),inputs=[INTERRUPT_EVENT])
                         if not Sava_Utils.config.server_mode:
                             with gr.Accordion(i18n('API Launcher')):
-                                start_hiyoriui_btn = gr.Button(value="HiyoriUI")
+                                #start_hiyoriui_btn = gr.Button(value="HiyoriUI")
                                 start_gsv_btn = gr.Button(value="GPT-SoVITS")
-                                start_hiyoriui_btn.click(start_hiyoriui, outputs=[gen_textbox_output_text])
+                                #start_hiyoriui_btn.click(start_hiyoriui, outputs=[gen_textbox_output_text])
                                 start_gsv_btn.click(start_gsv, outputs=[gen_textbox_output_text])
                         input_file.change(file_show, inputs=[input_file], outputs=[textbox_intput_text])
 

@@ -1,6 +1,6 @@
 from ..base_componment import Base_Componment
 from abc import ABC, abstractmethod
-from .. import i18n
+from .. import i18n,ext_tab
 import gradio as gr
 
 
@@ -46,7 +46,7 @@ class TTS_UI_Loader(Base_Componment):
         MSTTS = mstts.MSTTS(Sava_Utils.config)
         # CUSTOM = custom.Custom(Sava_Utils.config)
         self.components: list[TTSProjet] = [GSV, MSTTS]
-        self.components += extension_loader.load_ext_from_dir(["Sava_Extensions/custom_api"])
+        self.components += extension_loader.load_ext_from_dir(["Sava_Extensions/tts_engine"], ext_enabled_dict=ext_tab["tts_engine"])
         self.project_dict = {i.name: i for i in self.components}
         super().__init__()
 

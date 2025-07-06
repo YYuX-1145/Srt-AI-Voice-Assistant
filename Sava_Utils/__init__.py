@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 import os
 import json
 
@@ -32,6 +33,12 @@ except ImportError:
     logger.addHandler(handler)
 
 from .i18nAuto import I18n
+
+ext_tab_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
+if os.path.exists(ext_tab_path):
+    ext_tab = json.load(open(ext_tab_path, encoding="utf-8"))
+else:
+    ext_tab = defaultdict(dict)
 
 config_path = os.path.join(current_path, "SAVAdata", "config.json")
 try:

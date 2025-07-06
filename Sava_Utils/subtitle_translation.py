@@ -96,6 +96,7 @@ class Translation_module(Base_Componment):
     def __init__(self, config):
         self.ui = False
         self.config = config
+        self.TRANSLATORS = TRANSLATORS
         self.menu = []
 
     def update_cfg(self, config):

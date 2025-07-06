@@ -4,7 +4,7 @@ import traceback
 import importlib.util
 from . import i18n, logger, MANUAL
 from . import utils
-from .tts_projects import Base_Componment,TTSProjet
+from .tts_projects import Base_Componment, TTSProjet
 
 current_path = os.environ.get("current_path")
 
@@ -21,13 +21,16 @@ def _load_package_from_dir(dir_path: str):
     return module
 
 
-def load_ext_from_dir(roots: list[str]):
+def load_ext_from_dir(roots: list[str], ext_enabled_dict:dict[str:bool]):
     loaded_ext = []
     for extension_root in roots:
         if not os.path.isdir(extension_root):
             # does not exist
             continue
         for entry in os.listdir(extension_root):
+            ext_enabled = ext_enabled_dict.get(entry, True)
+            if not ext_enabled:
+                continue
             entry_path = os.path.join(current_path, extension_root, entry)
             try:
                 if not os.path.isdir(entry_path):
@@ -36,15 +39,16 @@ def load_ext_from_dir(roots: list[str]):
                 assert hasattr(module, "register"), f"entry register() not found"
                 extension_instance = module.register(
                     {
-                        "Base_Componment":Base_Componment,
+                        "Base_Componment": Base_Componment,
                         "TTSProjet": TTSProjet,
-                        "utils":utils,
+                        "utils": utils,
                         "i18n": i18n,
-                        "MANUAL":MANUAL,
+                        "MANUAL": MANUAL,
                         "logger": logger,
                     },
                 )
                 assert extension_instance is not None
+                setattr(extension_instance, "dirname", entry)
                 loaded_ext.append(extension_instance)
                 logger.info(f"Loaded extension: {entry}")
             except Exception as e:

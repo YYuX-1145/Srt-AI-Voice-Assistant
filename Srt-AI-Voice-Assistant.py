@@ -508,7 +508,8 @@ if __name__ == "__main__":
                 with gr.Accordion(label=i18n('Multi-speaker dubbing')):
                     with gr.Row(equal_height=True):
                         speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=refspklist(), allow_custom_value=not Sava_Utils.config.server_mode, scale=4)
-                        select_spk_projet = gr.Dropdown(choices=['bv2', 'gsv', 'mstts', 'custom'], value='gsv', interactive=True, label=i18n('TTS Project'))
+                        tts_projet_namelist = list(TTS_UI_LOADER.project_dict.keys())
+                        select_spk_projet = gr.Dropdown(choices=tts_projet_namelist, value=tts_projet_namelist[0], interactive=True, label=i18n('TTS Project'))
                         refresh_spk_list_btn = gr.Button(value="🔄️", min_width=60, scale=0)
                         refresh_spk_list_btn.click(getspklist, inputs=[], outputs=[speaker_list])
                         apply_btn = gr.Button(value="✅", min_width=60, scale=0)

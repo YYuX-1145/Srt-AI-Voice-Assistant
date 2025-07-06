@@ -1,7 +1,6 @@
 from ..base_componment import Base_Componment
 from abc import ABC, abstractmethod
-from ..extension_loader import load_ext_from_dir
-from .. import i18n, logger
+from .. import i18n
 import gradio as gr
 
 
@@ -38,23 +37,16 @@ class TTSProjet(Base_Componment):
 
 import Sava_Utils
 from . import gsv, mstts
-
+from .. import extension_loader
 
 class TTS_UI_Loader(Base_Componment):
-    def __init__(self) -> None:
+    def __init__(self):
         # BV2 = bv2.BV2(Sava_Utils.config)
         GSV = gsv.GSV(Sava_Utils.config)
         MSTTS = mstts.MSTTS(Sava_Utils.config)
         # CUSTOM = custom.Custom(Sava_Utils.config)
         self.components: list[TTSProjet] = [GSV, MSTTS]
-        self.components += load_ext_from_dir(
-            ["Sava_Extensions/custom_api"],
-            {
-                "TTSProjet": TTSProjet,
-                "i18n":i18n,
-                "logger":logger,
-            },
-        )
+        self.components += extension_loader.load_ext_from_dir(["Sava_Extensions/custom_api"])
         self.project_dict = {i.name: i for i in self.components}
         super().__init__()
 

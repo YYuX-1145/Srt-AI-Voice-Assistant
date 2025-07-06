@@ -1,4 +1,4 @@
-from .custom import Custom
-
-def register():
+def register(context):
+    globals().update(context)
+    from .custom import Custom
     return Custom()

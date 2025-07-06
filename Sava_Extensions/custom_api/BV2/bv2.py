@@ -1,9 +1,6 @@
 import requests
 import gradio as gr
-
-def positive_int(*a):
-    r = [max(0, int(x)) for x in a]
-    return r if len(r) > 1 else r[0]
+from . import *
 
 
 class BV2(TTSProjet):
@@ -25,7 +22,7 @@ class BV2(TTSProjet):
 
     def save_action(self, *args, text: str = None):
         language, port, mid, sid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emotion_text = args
-        sid, port, mid = positive_int(sid, port, mid)
+        sid, port, mid = utils.positive_int(sid, port, mid)
         if speaker_name is not None and speaker_name != "":
             audio = self.api(text=text, mid=mid, spk_name=speaker_name, sid=None, lang=language, length=length_scale, noise=noise_scale, noisew=noise_scale_w, sdp=sdp_ratio, split=False, style_text=None, style_weight=0, port=port, emotion=emotion_text)
         else:

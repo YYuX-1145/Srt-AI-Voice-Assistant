@@ -21,6 +21,7 @@ def load_page(subtitle_list, target_index=1):
 
 
 BTN_VISIBLE_DICT = TTS_UI_LOADER.get_btn_visible_dict()
+NUM_PROJ = len(TTS_UI_LOADER.components)
 
 
 def show_page(page_start, subtitle_list: Subtitles):
@@ -272,7 +273,7 @@ def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_ind
         return *ck, *load_page(Subtitles())
     if text_to_find == '':
         gr.Warning(i18n('You must enter the text to find.'))
-        return *ck, *[gr.update() for _ in range(10 * Sava_Utils.config.num_edit_rows + 1 + 4)]  # needs to be modified.
+        return *ck, *[gr.update() for _ in range((6 + NUM_PROJ) * Sava_Utils.config.num_edit_rows + 1 + NUM_PROJ)]
     current_index = real_index_list[checkbox_list.index(True)] if any(checkbox_list) else real_index_list[0] - 1
     if enable_re:
         try:

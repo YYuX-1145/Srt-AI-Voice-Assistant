@@ -2,7 +2,7 @@ import requests
 import gradio as gr
 import time
 import os
-
+from . import *
 current_path = os.environ.get("current_path")
 
 
@@ -17,7 +17,7 @@ class Custom(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            #gr.Markdown(value=MANUAL.getInfo("help_custom"))                
+            gr.Markdown(value=MANUAL.getInfo("help_custom"))                
             self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False, scale=4)
             with gr.Row():
                 self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", scale=8)

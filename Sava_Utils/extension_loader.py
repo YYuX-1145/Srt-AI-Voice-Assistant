@@ -30,8 +30,10 @@ def load_ext_from_dir(roots: list[str]):
         for entry in os.listdir(extension_root):
             entry_path = os.path.join(current_path, extension_root, entry)
             try:
+                if not os.path.isdir(entry_path):
+                    continue
                 module = _load_package_from_dir(entry_path)
-                assert hasattr(module, "register"), f"function register() not found"
+                assert hasattr(module, "register"), f"entry register() not found"
                 extension_instance = module.register(
                     {
                         "Base_Componment":Base_Componment,
@@ -44,8 +46,8 @@ def load_ext_from_dir(roots: list[str]):
                 )
                 assert extension_instance is not None
                 loaded_ext.append(extension_instance)
-                print(f"ok: {getattr(extension_instance, 'name', entry)}")
+                logger.info(f"Loaded extension: {entry}")
             except Exception as e:
-                print(f"error| {entry}: {e}")
+                logger.warning(f"Failed to load extension: {entry}")
                 traceback.print_exc()
     return loaded_ext

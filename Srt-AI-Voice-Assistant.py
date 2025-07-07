@@ -511,8 +511,8 @@ if __name__ == "__main__":
             with gr.TabItem(i18n('Auxiliary Functions')):
                 for i in componments[2]:
                     i.getUI(input_file)
-            # with gr.TabItem(i18n('Extended Contents')):
-            #     available = False
+            with gr.TabItem(i18n('Extended Contents')):
+                available = False
             #     from Sava_Utils.extern_extensions.wav2srt_webui import WAV2SRT
             #     WAV2SRT = WAV2SRT(Sava_Utils.config)
             #     componments[3].append(WAV2SRT)

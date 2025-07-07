@@ -234,7 +234,11 @@ class Settings_Manager:
 
     def get_ext_tab(self):
         rows = []
-        comp_dict = {"tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")], "translator": list(self.componments[2][0].TRANSLATORS.keys()), "extension": []}
+        comp_dict = {
+            "tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")],
+            "translator": [i.dirname for i in self.componments[2][0].TRANSLATORS.values() if hasattr(i, "dirname")],
+            "extension": [i.dirname for i in self.componments[3] if hasattr(i, "dirname")],
+        }
         config_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
             ext_config = defaultdict(dict, json.load(open(config_path, encoding="utf-8")))
@@ -249,7 +253,6 @@ class Settings_Manager:
     def save_ext_tab(self, tab):
         cfg = defaultdict(dict)
         for i in tab:
-            print(i[-1], type(i[-1]))
             cfg[i[1]][i[0]] = True if i[-1] in [True, 'True', 'true'] else False  # gradio bug
         with open(os.path.join(current_path, "Sava_Extensions/extensions_config.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
@@ -363,7 +366,7 @@ class Settings_Manager:
                 static_columns=[0, 1, 2],
                 interactive=True,
             )
-            save_ext_table_btn = gr.Button(i18n('Save'))
+            save_ext_table_btn = gr.Button(i18n('Save'), variant="primary")
             save_ext_table_btn.click(self.save_ext_tab, inputs=[ext_mgr_table], outputs=[ext_mgr_table])
 
         self.save_settings_btn.click(self.save_settngs, inputs=componments_list, outputs=componments_list)

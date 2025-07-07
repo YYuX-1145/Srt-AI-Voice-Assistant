@@ -5,7 +5,7 @@ import re
 from . import i18n
 from itertools import islice
 from .subtitle import Subtitles, Subtitle
-from .tts_projects import TTS_UI_LOADER
+from .tts_engines import TTS_UI_LOADER
 import Sava_Utils
 
 current_path = os.environ.get("current_path")

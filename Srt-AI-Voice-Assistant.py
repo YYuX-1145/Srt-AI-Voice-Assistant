@@ -37,7 +37,7 @@ from Sava_Utils.subtitle import Base_subtitle, Subtitle, Subtitles
 from Sava_Utils.subtitle_translation import Translation_module
 from Sava_Utils.polyphone import Polyphone
 
-from Sava_Utils.tts_projects import TTS_UI_LOADER
+from Sava_Utils.tts_engines import TTS_UI_LOADER
 
 TRANSLATION_MODULE = Translation_module()
 POLYPHONE = Polyphone()

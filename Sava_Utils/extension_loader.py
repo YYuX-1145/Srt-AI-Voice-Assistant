@@ -4,7 +4,7 @@ import traceback
 import importlib.util
 from . import i18n, logger, MANUAL
 from . import utils
-from .tts_projects import Base_Componment, TTSProjet
+from .tts_engines import Base_Componment, TTSProjet
 from .translator import Traducteur
 from .settings import Settings,Shared_Options
 

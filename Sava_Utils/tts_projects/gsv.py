@@ -4,7 +4,7 @@ import gradio as gr
 from ..utils import positive_int
 from .. import logger
 from .. import i18n
-from ..settings import Shared_Options,Settings
+from ..settings import Shared_Options, Settings
 import os
 import hashlib
 import soundfile as sf
@@ -91,7 +91,7 @@ class GSV(TTSProjet):
         self.refresh_presets_list()
         super().__init__("AR-TTS", title="AR-TTS")
 
-    def update_cfg(self, config:Settings):
+    def update_cfg(self, config: Settings):
         self.gsv_fallback = config.query("gsv_fallback")
         self.gsv_dir = config.query("gsv_dir")
         super().update_cfg(config)
@@ -177,7 +177,7 @@ class GSV(TTSProjet):
             split_bucket,
             text_split_method,
             gpt_path,
-            sovits_path
+            sovits_path,
         ) = args
         port = positive_int(port)
         audio = self.api(
@@ -294,7 +294,9 @@ class GSV(TTSProjet):
 
     def register_settings(self):
         options = []
-        def auto_env_detect(gsv_pydir:str,config:Settings):
+
+        def auto_env_detect(gsv_pydir: str, config: Settings):
+            gsv_pydir = gsv_pydir.strip('"')
             if gsv_pydir != "":
                 if os.path.isfile(gsv_pydir):
                     gsv_pydir = os.path.abspath(gsv_pydir)
@@ -310,10 +312,10 @@ class GSV(TTSProjet):
                 else:
                     gsv_pydir = ""
             ###################
-            if gsv_pydir != "" and config.query("gsv_dir","") == "":
+            if gsv_pydir != "" and config.query("gsv_dir", "") == "":
                 config.shared_opts["gsv_dir"] = os.path.dirname(os.path.dirname(gsv_pydir))
             return gsv_pydir
-        
+
         options.append(
             Shared_Options(
                 "gsv_fallback",
@@ -329,7 +331,7 @@ class GSV(TTSProjet):
                 "",
                 gr.Textbox,
                 auto_env_detect,
-                label=i18n('Python Interpreter Path for GPT-SoVITS'),                
+                label=i18n('Python Interpreter Path for GPT-SoVITS'),
                 interactive=True,
             )
         )
@@ -338,6 +340,7 @@ class GSV(TTSProjet):
                 "gsv_dir",
                 "",
                 gr.Textbox,
+                lambda v, c: v.strip('"'),
                 label=i18n('Root Path of GPT-SoVITS'),
                 interactive=True,
             )
@@ -364,7 +367,7 @@ class GSV(TTSProjet):
         else:
             refer_audio_path = ''
         aux_ref_audio_path = [temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []
-        pargs = (artts_proj, dict_language.get(language,language), port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language.get(refer_lang,refer_lang), batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps),parallel_infer, split_bucket, cut_method.get(text_split_method,text_split_method), gpt_path, sovits_path)
+        pargs = (artts_proj, dict_language.get(language, language), port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language.get(refer_lang, refer_lang), batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps), parallel_infer, split_bucket, cut_method.get(text_split_method, text_split_method), gpt_path, sovits_path)
         return pargs
 
     def before_gen_action(self, *args, **kwargs):

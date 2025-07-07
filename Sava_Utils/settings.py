@@ -210,7 +210,7 @@ class Settings_Manager:
         for key, value in zip(reversed(self.shared_opts_info), reversed(args)):
             shared_opts_dict[key] = value  # new value
         old_opts = Sava_Utils.config.shared_opts
-        Sava_Utils.config = shared_opts_dict
+        Sava_Utils.config.shared_opts = shared_opts_dict
         for key, value in self.shared_opts_validators.items():
             try:
                 shared_opts_dict[key] = value(shared_opts_dict[key], Sava_Utils.config)
@@ -224,8 +224,8 @@ class Settings_Manager:
             Sava_Utils.config.num_edit_rows = current_edit_rows
         self._apply_to_componments()
         logger.info(i18n('Settings saved successfully!'))
-        gr.Info(i18n('Settings saved successfully!'))
-        all_vals = [*Sava_Utils.config.to_list()[:-1], *args[-len(self.shared_opts_info) :]]
+        gr.Info(i18n('Settings saved successfully!'))        
+        all_vals = list(Sava_Utils.config.to_list()[:-1]) + [Sava_Utils.config.shared_opts[key] for key in self.shared_opts_info]
         return all_vals
 
     def get_ext_tab(self):

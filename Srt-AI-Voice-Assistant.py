@@ -118,7 +118,7 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
 def generate_preprocess(interrupt_event, *args, project=None):
     try:
         in_file, fps, offset, max_workers = args[:4]
-        args, kwargs = Projet_dict[project].arg_filter(*args[4:])
+        args = Projet_dict[project].arg_filter(*args[4:])
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': project, 'max_workers': max_workers}
     except Exception as e:
         info = f"{i18n('An error occurred')}: {str(e)}"

@@ -52,9 +52,8 @@ class Custom(TTSProjet):
         return gr.update(value="None", choices=self.custom_api_list)
 
     def arg_filter(self, *args):
-        input_file, fps, offset, workers, custom_api = args
+        custom_api = args
         if custom_api in [None, 'None', '']:
             gr.Info(i18n('Please select a valid custom API code file!'))
             raise Exception(i18n('Please select a valid custom API code file!'))
-        kwargs = {'in_files': input_file, 'fps': fps, 'offset': offset, 'proj': "custom", 'max_workers': workers}
-        return (custom_api, dict()), kwargs  #
+        return (custom_api, dict())

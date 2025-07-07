@@ -13,6 +13,20 @@ class BV2(TTSProjet):
         self.bv2_pydir = config.query("bv2_pydir")
         super().update_cfg(config)
 
+    def arg_filter(self, *args):
+        language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text = args
+        pargs = (language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text)
+        return pargs
+    
+    def save_action(self, *args, text: str = None):
+        language, port, mid, sid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emotion_text = args
+        sid, port, mid = utils.positive_int(sid, port, mid)
+        if speaker_name is not None and speaker_name != "":
+            audio = self.api(text=text, mid=mid, spk_name=speaker_name, sid=None, lang=language, length=length_scale, noise=noise_scale, noisew=noise_scale_w, sdp=sdp_ratio, split=False, style_text=None, style_weight=0, port=port, emotion=emotion_text)
+        else:
+            audio = self.api(text=text, mid=mid, spk_name=None, sid=sid, lang=language, length=length_scale, noise=noise_scale, noisew=noise_scale_w, sdp=sdp_ratio, split=False, style_text=None, style_weight=0, port=port, emotion=emotion_text)
+        return audio
+
     def api(self, text, mid, spk_name, sid, lang, length, noise, noisew, sdp, emotion, split, style_text, style_weight, port):
         try:
             API_URL = f'http://127.0.0.1:{port}/voice'
@@ -25,15 +39,6 @@ class BV2(TTSProjet):
             err = f"{i18n('An error has occurred. Please check if the API is running correctly. Details')}:{e}"
             logger.error(err)
             return None
-
-    def save_action(self, *args, text: str = None):
-        language, port, mid, sid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emotion_text = args
-        sid, port, mid = utils.positive_int(sid, port, mid)
-        if speaker_name is not None and speaker_name != "":
-            audio = self.api(text=text, mid=mid, spk_name=speaker_name, sid=None, lang=language, length=length_scale, noise=noise_scale, noisew=noise_scale_w, sdp=sdp_ratio, split=False, style_text=None, style_weight=0, port=port, emotion=emotion_text)
-        else:
-            audio = self.api(text=text, mid=mid, spk_name=None, sid=sid, lang=language, length=length_scale, noise=noise_scale, noisew=noise_scale_w, sdp=sdp_ratio, split=False, style_text=None, style_weight=0, port=port, emotion=emotion_text)
-        return audio
 
     def switch_spk(self, choice):
         if choice == "Speaker_ID":
@@ -114,7 +119,7 @@ class BV2(TTSProjet):
                 with gr.Row():
                     self.api_port1 = gr.Number(label="API Port", value=5000, visible=not self.server_mode, interactive=not self.server_mode)
         self.spkchoser.change(self.switch_spk, inputs=[self.spkchoser], outputs=[self.spkid, self.speaker_name])
-        self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+        # self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
         BV2_ARGS = [
             self.language1,
             self.api_port1,
@@ -128,9 +133,3 @@ class BV2(TTSProjet):
             self.emo_text,
         ]
         return BV2_ARGS
-
-    def arg_filter(self, *args):
-        in_file, fps, offset, max_workers, language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text = args
-        pargs = (language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text)
-        kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': "bv2", 'max_workers': max_workers}
-        return pargs, kwargs

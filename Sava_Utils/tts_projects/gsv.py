@@ -4,6 +4,7 @@ import gradio as gr
 from ..utils import positive_int
 from .. import logger
 from .. import i18n
+from ..settings import Shared_Options,Settings
 import os
 import hashlib
 import soundfile as sf
@@ -72,7 +73,7 @@ S2_PRETRAINED = [
     "GPT_SoVITS/pretrained_models/s2Gv3.pth",
     "GPT_SoVITS/pretrained_models/gsv-v4-pretrained/s2Gv4.pth",
     "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2Pro.pth",
-    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2ProPlus.pth",    
+    "GPT_SoVITS/pretrained_models/v2Pro/s2Gv2ProPlus.pth",
 ]
 S1_MODEL_PATH = ["GPT_weights", "GPT_weights_v2", "GPT_weights_v2Pro", "GPT_weights_v2ProPlus", "GPT_weights_v3", "GPT_weights_v4"]
 S1_PRETRAINED = [
@@ -82,17 +83,17 @@ S1_PRETRAINED = [
 
 
 class GSV(TTSProjet):
-    def __init__(self, config):
+    def __init__(self):
         self.gsv_fallback = False
         self.presets_list = ['None']
         self.current_sovits_model = dict()
         self.current_gpt_model = dict()
         self.refresh_presets_list()
-        super().__init__("gsv", config, title="AR-TTS")
+        super().__init__("AR-TTS", title="AR-TTS")
 
-    def update_cfg(self, config):
-        self.gsv_fallback = config.gsv_fallback
-        self.gsv_dir = config.gsv_dir
+    def update_cfg(self, config:Settings):
+        self.gsv_fallback = config.query("gsv_fallback")
+        self.gsv_dir = config.query("gsv_dir")
         super().update_cfg(config)
 
     def api(self, port, artts_name, **kwargs):
@@ -155,7 +156,29 @@ class GSV(TTSProjet):
             return None
 
     def save_action(self, *args, text: str = None):
-        artts_proj, text_language, port, refer_wav_path, aux_refer_wav_path, prompt_text, prompt_language, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps,parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
+        (
+            artts_proj,
+            text_language,
+            port,
+            refer_wav_path,
+            aux_refer_wav_path,
+            prompt_text,
+            prompt_language,
+            batch_size,
+            batch_threshold,
+            fragment_interval,
+            speed_factor,
+            top_k,
+            top_p,
+            temperature,
+            repetition_penalty,
+            sample_steps,
+            parallel_infer,
+            split_bucket,
+            text_split_method,
+            gpt_path,
+            sovits_path
+        ) = args
         port = positive_int(port)
         audio = self.api(
             port,
@@ -178,7 +201,7 @@ class GSV(TTSProjet):
             parallel_infer=parallel_infer,
             split_bucket=split_bucket,
             text_split_method=text_split_method,
-            sample_steps = sample_steps,
+            sample_steps=sample_steps,
             media_type="wav",
             streaming_mode=False,
         )
@@ -188,7 +211,7 @@ class GSV(TTSProjet):
         with gr.Column():
             self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
             self.language2 = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
-            with gr.Accordion(i18n('Reference Audio'), open=True):                
+            with gr.Accordion(i18n('Reference Audio'), open=True):
                 self.refer_audio = gr.Audio(label=i18n('Main Reference Audio'))
                 self.aux_ref_audio = gr.File(label=i18n('Auxiliary Reference Audios'), file_types=['.wav'], file_count="multiple", type="binary")
                 with gr.Row():
@@ -197,10 +220,10 @@ class GSV(TTSProjet):
             with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode):
                 self.sovits_path = gr.Dropdown(value="", label=f"Sovits {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
                 self.gpt_path = gr.Dropdown(value="", label=f"GPT {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
-                with gr.Row():                
+                with gr.Row():
                     self.switch_gsvmodel_btn = gr.Button(value=i18n('Switch Models'), variant="primary", scale=4)
                     self.scan_gsvmodel_btn = gr.Button(value=i18n('🔄️'), variant="secondary", scale=1, min_width=60)
-                    self.scan_gsvmodel_btn.click(self.find_gsv_models,inputs=[],outputs=[self.sovits_path,self.gpt_path])
+                    self.scan_gsvmodel_btn.click(self.find_gsv_models, inputs=[], outputs=[self.sovits_path, self.gpt_path])
             with gr.Row():
                 self.api_port2 = gr.Number(label="API Port", value=9880, interactive=not self.server_mode, visible=not self.server_mode)
             # self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
@@ -213,10 +236,10 @@ class GSV(TTSProjet):
                 self.top_p = gr.Slider(minimum=0, maximum=1, step=0.05, label="top_p", value=1, interactive=True)
                 self.temperature = gr.Slider(minimum=0, maximum=1, step=0.05, label="temperature", value=1, interactive=True)
                 self.repetition_penalty = gr.Slider(minimum=0, maximum=2, step=0.05, label="repetition_penalty", value=1.35, interactive=True)
-                self.sample_steps = gr.Dropdown(label="Sample_Steps", value='32', choices=['16','32','48','64','96','128'], interactive=True, show_label=True, allow_custom_value=False)
+                self.sample_steps = gr.Dropdown(label="Sample_Steps", value='32', choices=['16', '32', '48', '64', '96', '128'], interactive=True, show_label=True, allow_custom_value=False)
                 with gr.Row():
                     self.parallel_infer = gr.Checkbox(label="Parallel_Infer", value=True, interactive=True, show_label=True)
-                    self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)                
+                    self.split_bucket = gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True)
                 self.how_to_cut = gr.Radio(label=i18n('How to cut'), choices=list(cut_method.items()), value=list(cut_method.values())[0], interactive=True)
             with gr.Accordion(i18n('Presets'), open=False):
                 self.choose_presets = gr.Dropdown(label="", value="None", choices=self.presets_list, interactive=True, allow_custom_value=True)
@@ -262,15 +285,76 @@ class GSV(TTSProjet):
             self.repetition_penalty,
             self.sample_steps,
             self.parallel_infer,
-            self.split_bucket,            
+            self.split_bucket,
             self.how_to_cut,
             self.gpt_path,
             self.sovits_path,
         ]
         return GSV_ARGS
 
+    def register_settings(self):
+        options = []
+        def auto_env_detect(gsv_pydir:str,config:Settings):
+            if gsv_pydir != "":
+                if os.path.isfile(gsv_pydir):
+                    gsv_pydir = os.path.abspath(gsv_pydir)
+                elif gsv_pydir == 'python':
+                    pass
+                else:
+                    gr.Warning(f"{i18n('Error, Invalid Path')}:{gsv_pydir}")
+                    gsv_pydir = ""
+            else:
+                if os.path.isfile(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper():
+                    gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
+                    logger.info(f"{i18n('Env detected')}: GPT-SoVITS")
+                else:
+                    gsv_pydir = ""
+            ###################
+            if gsv_pydir != "" and config.query("gsv_dir","") == "":
+                config.shared_opts["gsv_dir"] = os.path.dirname(os.path.dirname(gsv_pydir))
+            return gsv_pydir
+        
+        options.append(
+            Shared_Options(
+                "gsv_fallback",
+                False,
+                gr.Checkbox,
+                label=i18n('Downgrade GPT-SoVITS API version to v1'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "gsv_pydir",
+                "",
+                gr.Textbox,
+                auto_env_detect,
+                label=i18n('Python Interpreter Path for GPT-SoVITS'),                
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "gsv_dir",
+                "",
+                gr.Textbox,
+                label=i18n('Root Path of GPT-SoVITS'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "gsv_args",
+                "",
+                gr.Textbox,
+                label=i18n('Start Parameters'),
+                interactive=True,
+            )
+        )
+        return options
+
     def arg_filter(self, *args):
-        in_file, fps, offset, max_workers, artts_proj, language, port, refer_audio, aux_ref_audio, refer_text, refer_lang, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps, parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
+        artts_proj, language, port, refer_audio, aux_ref_audio, refer_text, refer_lang, batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, sample_steps, parallel_infer, split_bucket, text_split_method, gpt_path, sovits_path = args
         if artts_proj == "GPT_SoVITS":
             if refer_audio is None:
                 gr.Warning(i18n('You must upload Main Reference Audio'))
@@ -281,8 +365,7 @@ class GSV(TTSProjet):
             refer_audio_path = ''
         aux_ref_audio_path = [temp_aux_ra(i) for i in aux_ref_audio] if aux_ref_audio is not None else []
         pargs = (artts_proj, dict_language.get(language,language), port, refer_audio_path, aux_ref_audio_path, refer_text, dict_language.get(refer_lang,refer_lang), batch_size, batch_threshold, fragment_interval, speed_factor, top_k, top_p, temperature, repetition_penalty, int(sample_steps),parallel_infer, split_bucket, cut_method.get(text_split_method,text_split_method), gpt_path, sovits_path)
-        kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': "gsv", 'max_workers': max_workers}
-        return pargs, kwargs
+        return pargs
 
     def before_gen_action(self, *args, **kwargs):
         if args[0] == 'GPT_SoVITS':
@@ -437,7 +520,19 @@ class GSV(TTSProjet):
 
 
 class ARPreset:
-    def __init__(self, name: str = "", AR_TTS_Project_name: str = 'GPT_SoVITS', description: str = "", port: int = 9880, reference_audio_path: tuple = None, reference_audio_text: str = "", reference_audio_lang: str = "", auxiliary_audios: list = [], sovits_path: str = "", gpt_path: str = ""):
+    def __init__(
+        self,
+        name: str = "",
+        AR_TTS_Project_name: str = 'GPT_SoVITS',
+        description: str = "",
+        port: int = 9880,
+        reference_audio_path: tuple = None,
+        reference_audio_text: str = "",
+        reference_audio_lang: str = "",
+        auxiliary_audios: list = [],
+        sovits_path: str = "",
+        gpt_path: str = "",
+    ):
         self.name = name
         self.AR_TTS_Project_name = AR_TTS_Project_name
         self.description = description
@@ -451,7 +546,7 @@ class ARPreset:
 
     def to_list(self):
         val = self.to_dict()
-        #return [val[x] for x in val.keys()]
+        # return [val[x] for x in val.keys()]
         return list(val.values())
 
     def to_dict(self):

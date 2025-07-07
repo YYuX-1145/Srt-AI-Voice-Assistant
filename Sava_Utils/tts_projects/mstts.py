@@ -1,4 +1,5 @@
 from . import TTSProjet
+from ..settings import Settings,Shared_Options
 import os
 import re
 import json
@@ -11,20 +12,51 @@ current_path = os.environ.get("current_path")
 
 
 class MSTTS(TTSProjet):
-    def __init__(self, config):
+    def __init__(self):
         self.ms_access_token = None
         self.ms_speaker_info = None
         self.cfg_ms_region = None
         self.cfg_ms_key = None
         self.ms_lang_option = ""
-        super().__init__("mstts", config, title="Azure-TTS(Microsoft)")
+        super().__init__("mstts", None, title="Azure-TTS(Microsoft)")
         self.ms_refresh()
 
     def update_cfg(self, config):
-        self.cfg_ms_region = config.ms_region
-        self.cfg_ms_key = config.ms_key
-        self.ms_lang_option = config.ms_lang_option
+        self.cfg_ms_region = config.query("ms_region")
+        self.cfg_ms_key = config.query("ms_key")
+        self.ms_lang_option = config.query("ms_lang_option")
         super().update_cfg(config)
+
+    def register_settings(self):
+        options = []
+        options.append(
+            Shared_Options(
+                "ms_region",
+                "",
+                gr.Textbox,
+                label="Server Region",
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "ms_key",
+                "",
+                gr.Textbox,
+                label=i18n('API=KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "ms_lang_option",
+                "",
+                gr.Textbox,
+                label=i18n('Select required languages, separated by commas or spaces.'),
+                interactive=True,
+            )
+        )
+        return options
 
     def getms_speakers(self):
         # if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
@@ -151,7 +183,7 @@ class MSTTS(TTSProjet):
             assert self.ms_access_token is not None, i18n('Failed to obtain access token from Microsoft.')
 
     def arg_filter(self, *args):
-        input_file, fps, offset, workers, ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch = args
+        ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch = args
         if ms_speaker in [None, "", []]:
             gr.Info(i18n('Please Select Your Speaker!'))
             raise Exception(i18n('Please Select Your Speaker!'))
@@ -159,8 +191,7 @@ class MSTTS(TTSProjet):
             gr.Warning(i18n('Please fill in your key!'))
             raise Exception(i18n('Please fill in your key!'))
         pargs = (ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch)
-        kwargs = {'in_files': input_file, 'fps': fps, 'offset': offset, 'proj': "mstts", 'max_workers': workers}
-        return pargs, kwargs
+        return pargs
 
     def ms_refresh(self):  # language
         self.getms_speakers()

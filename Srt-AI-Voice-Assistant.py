@@ -32,15 +32,13 @@ from Sava_Utils.utils import *
 from Sava_Utils.edit_panel import *
 from Sava_Utils.subtitle import Base_subtitle, Subtitle, Subtitles
 
-import Sava_Utils.tts_projects
-
 from Sava_Utils.subtitle_translation import Translation_module
 from Sava_Utils.polyphone import Polyphone
 
 from Sava_Utils.tts_projects import TTS_UI_LOADER
 
-TRANSLATION_MODULE = Translation_module(Sava_Utils.config)
-POLYPHONE = Polyphone(Sava_Utils.config)
+TRANSLATION_MODULE = Translation_module()
+POLYPHONE = Polyphone()
 Projet_dict = TTS_UI_LOADER.project_dict
 componments = {
     1: TTS_UI_LOADER.components,
@@ -119,7 +117,9 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
 
 def generate_preprocess(interrupt_event, *args, project=None):
     try:
-        args, kwargs = Projet_dict[project].arg_filter(*args)
+        in_file, fps, offset, max_workers = args[:4]
+        args, kwargs = Projet_dict[project].arg_filter(*args[4:])
+        kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': project, 'max_workers': max_workers}
     except Exception as e:
         info = f"{i18n('An error occurred')}: {str(e)}"
         gr.Warning(info)
@@ -269,22 +269,22 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
 #     return f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}"
 
 
-def start_gsv():
-    if Sava_Utils.config.gsv_pydir == "":
-        gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
-        return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
-    if Sava_Utils.config.gsv_fallback:
-        apath = "api.py"
-        gr.Info(i18n('API downgraded to v1, functionality is limited.'))
-        logger.warning(i18n('API downgraded to v1, functionality is limited.'))
-    else:
-        apath = "api_v2.py"
-    if not os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, apath)):
-        raise FileNotFoundError(os.path.join(Sava_Utils.config.gsv_dir, apath))
-    command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
-    rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
-    time.sleep(0.1)
-    return f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}"
+# def start_gsv():
+#     if Sava_Utils.config.gsv_pydir == "":
+#         gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
+#         return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
+#     if Sava_Utils.config.gsv_fallback:
+#         apath = "api.py"
+#         gr.Info(i18n('API downgraded to v1, functionality is limited.'))
+#         logger.warning(i18n('API downgraded to v1, functionality is limited.'))
+#     else:
+#         apath = "api_v2.py"
+#     if not os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, apath)):
+#         raise FileNotFoundError(os.path.join(Sava_Utils.config.gsv_dir, apath))
+#     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
+#     rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
+#     time.sleep(0.1)
+#     return f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}"
 
 
 def remake(*args):
@@ -441,7 +441,7 @@ if __name__ == "__main__":
                                 #start_hiyoriui_btn = gr.Button(value="HiyoriUI")
                                 start_gsv_btn = gr.Button(value="GPT-SoVITS")
                                 #start_hiyoriui_btn.click(start_hiyoriui, outputs=[gen_textbox_output_text])
-                                start_gsv_btn.click(start_gsv, outputs=[gen_textbox_output_text])
+                                #start_gsv_btn.click(start_gsv, outputs=[gen_textbox_output_text])
                         input_file.change(file_show, inputs=[input_file], outputs=[textbox_intput_text])
 
                 with gr.Accordion(label=i18n('Editing area *Note: DO NOT clear temporary files while using this function.'), open=True):
@@ -532,18 +532,18 @@ if __name__ == "__main__":
             with gr.TabItem(i18n('Auxiliary Functions')):
                 for i in componments[2]:
                     i.getUI(input_file)
-            with gr.TabItem(i18n('Extended Contents')):
-                available = False
-                from Sava_Utils.extern_extensions.wav2srt_webui import WAV2SRT
-                WAV2SRT = WAV2SRT(config=Sava_Utils.config)
-                componments[3].append(WAV2SRT)
-                available = WAV2SRT.getUI(input_file, worklist, TRANSLATION_MODULE)
-                if not available:
-                    gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
+            # with gr.TabItem(i18n('Extended Contents')):
+            #     available = False
+            #     from Sava_Utils.extern_extensions.wav2srt_webui import WAV2SRT
+            #     WAV2SRT = WAV2SRT(Sava_Utils.config)
+            #     componments[3].append(WAV2SRT)
+            #     available = WAV2SRT.getUI(input_file, worklist, TRANSLATION_MODULE)
+            #     if not available:
+            #         gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
             with gr.TabItem(i18n('Settings')):
                 with gr.Row():
                     with gr.Column():
-                        SETTINGS = Sava_Utils.settings.Settings_UI(componments=componments)
+                        SETTINGS = Sava_Utils.settings.Settings_Manager(componments=componments)
                         SETTINGS.getUI()
                     with gr.Column():
                         with gr.TabItem(i18n('Readme')):

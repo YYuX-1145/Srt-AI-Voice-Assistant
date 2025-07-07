@@ -93,10 +93,10 @@ def merge_uploaded_sub(filelist_sup: list, filelist_inf: list, output_dir: str):
 
 
 class Translation_module(Base_Componment):
-    def __init__(self, config):
+    def __init__(self):
         self.ui = False
-        self.config = config
         self.TRANSLATORS = TRANSLATORS
+        self.config = None
         self.menu = []
 
     def update_cfg(self, config):
@@ -139,7 +139,7 @@ class Translation_module(Base_Componment):
                         v = True
                         for i in TRANSLATORS.keys():
                             with gr.Column(visible=v) as tr_ui:
-                                TRANSLATORS[i].update_cfg(config=self.config)
+                                #TRANSLATORS[i].update_cfg(config=self.config)
                                 TRANSLATORS[i].getUI(*Base_args, output_info=self.result, output_files=self.translation_output)
                             v = False
                             self.menu.append(tr_ui)

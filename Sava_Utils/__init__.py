@@ -69,13 +69,11 @@ parser.add_argument("-share", dest="share", action="store_true", default=False, 
 parser.add_argument("-server_mode", dest="server_mode", action="store_true", default=False, help="activate server mode")
 args, unknown = parser.parse_known_args()
 
-# from .settings import load_cfg
-# config=load_cfg()
-
 config.server_mode = args.server_mode or config.server_mode
 if config.server_mode:
     logger.warning(i18n("Server Mode has been enabled!"))
 
 from .utils import clear_cache
+
 if config.clear_tmp:
     clear_cache()

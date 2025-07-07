@@ -21,6 +21,9 @@ class Base_Componment(ABC):
     def update_cfg(self, config):
         self.server_mode = config.server_mode
 
+    def register_settings(self):
+        return []
+
     @abstractmethod
     def _UI(self):
         raise NotImplementedError

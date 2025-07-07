@@ -1,9 +1,10 @@
+from typing import Literal, Callable, Any
 import os
 import gradio as gr
 import json
 import Sava_Utils
 import time
-import os
+import traceback
 import sys
 import platform
 import shutil
@@ -13,7 +14,13 @@ from . import logger, i18n
 
 current_path = os.environ.get("current_path")
 
-EXT_TYPES = ["tts_engine"]
+
+EXT_TYPES = ["tts_engine", "translator", "extension"]
+EXT_TYPES_TITLE = {
+    "tts_engine": i18n("TTS Engine"),
+    "translator": i18n("Translator"),
+    "extension": i18n("Extensions"),
+}
 # https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
 gradio_hf_hub_themes = [
     "default",
@@ -50,6 +57,16 @@ gradio_hf_hub_themes = [
 ]
 
 
+class Shared_Options:
+
+    def __init__(self, key: str, default_value: Any, gr_component_type: gr.components, validator: Callable = None, **gr_kwargs):
+        self.key = key
+        self.default_value = default_value
+        self.gr_component_type = gr_component_type
+        self.validator = validator
+        self.gr_kwargs = gr_kwargs
+
+
 class Settings:
     def __init__(
         self,
@@ -67,14 +84,8 @@ class Settings:
         num_edit_rows: int = 7,
         export_spk_pattern: str = "",
         theme: str = "default",
-        gsv_fallback: bool = False,
-        gsv_pydir: str = "",
-        gsv_dir: str = "",
-        gsv_args: str = "",
-        ms_region: str = "eastasia",
-        ms_key: str = "",
-        ms_lang_option: str = "zh",
-        ollama_url: str = "http://localhost:11434",
+        # ollama_url: str = "http://localhost:11434",
+        shared_opts: dict = dict(),
         **kwargs,
     ):
         self.language = language
@@ -91,36 +102,14 @@ class Settings:
         self.num_edit_rows = max(int(num_edit_rows), 1)
         self.export_spk_pattern = export_spk_pattern
         self.theme = theme
-        self.gsv_fallback = gsv_fallback
-        self.gsv_pydir = gsv_pydir.strip('"')
-        self.gsv_dir = os.path.abspath(gsv_dir.strip('"')) if gsv_dir else gsv_dir
-        self.gsv_args = gsv_args
-        self.ms_region = ms_region
-        self.ms_key = ms_key
-        self.ms_lang_option = ms_lang_option
-        self.ollama_url = ollama_url
-        # detect python envs####
-        if self.gsv_pydir != "":
-            if os.path.isfile(self.gsv_pydir):
-                self.gsv_pydir = os.path.abspath(self.gsv_pydir)
-            elif self.gsv_pydir == 'python':
-                pass
-            else:
-                gr.Warning(f"{i18n('Error, Invalid Path')}:{self.gsv_pydir}")
-                self.gsv_pydir = ""
-        else:
-            if os.path.isfile(os.path.join(current_path, "runtime\\python.exe")) and "GPT" in current_path.upper():
-                self.gsv_pydir = os.path.join(current_path, "runtime\\python.exe")
-                logger.info(f"{i18n('Env detected')}: GPT-SoVITS")
-            else:
-                self.gsv_pydir = ""
-        ###################
-        if self.gsv_pydir != "" and gsv_dir == "":
-            self.gsv_dir = os.path.dirname(os.path.dirname(self.gsv_pydir))
+        # self.ollama_url = ollama_url
+        self.shared_opts = shared_opts
+
+    def query(self, key: str, default=None):
+        return self.shared_opts.get(key, default)
 
     def to_list(self):
-        val = self.to_dict()
-        return [val[x] for x in val.keys()]
+        return list(self.to_dict().values())
 
     def to_dict(self):
         return self.__dict__
@@ -186,10 +175,29 @@ def restart():
         os.system(f"taskkill /PID {os.getpid()} /F && exit")
 
 
-class Settings_UI:
+class Settings_Manager:
     def __init__(self, componments: list):
         self.componments = componments
         self.ui = False
+        self.shared_opts_info: list[str] = []
+        self.shared_opts_validators: dict[str:Callable] = {}
+
+        # get default value and set up validators
+        default_shared_opts = dict()
+        for lst in [self.componments[1], list(self.componments[2][0].TRANSLATORS.values()), self.componments[3]]:
+            for item in lst:
+                for opt in item.register_settings():
+                    default_shared_opts[opt.key] = opt.default_value
+                    if opt.validator:
+                        self.shared_opts_validators[opt.key] = opt.validator
+
+        default_shared_opts.update(Sava_Utils.config.shared_opts)
+        Sava_Utils.config.shared_opts = default_shared_opts
+        for key, value in self.shared_opts_validators.items():
+            try:
+                Sava_Utils.config.shared_opts[key] = value(Sava_Utils.config.shared_opts[key], Sava_Utils.config)
+            except:
+                traceback.print_exc()
         self._apply_to_componments()
 
     def _apply_to_componments(self):
@@ -198,33 +206,46 @@ class Settings_UI:
                 i.update_cfg(config=Sava_Utils.config)
 
     def save_settngs(self, *args):
+        shared_opts_dict = dict()
+        for key, value in zip(reversed(self.shared_opts_info), reversed(args)):
+            shared_opts_dict[key] = value  # new value
+        old_opts = Sava_Utils.config.shared_opts
+        Sava_Utils.config = shared_opts_dict
+        for key, value in self.shared_opts_validators.items():
+            try:
+                shared_opts_dict[key] = value(shared_opts_dict[key], Sava_Utils.config)
+            except:
+                shared_opts_dict[key] = old_opts[key]
+                traceback.print_exc()
         current_edit_rows = Sava_Utils.config.num_edit_rows
-        Sava_Utils.config = Settings(*args)
+        Sava_Utils.config = Settings(*args[: -len(self.shared_opts_info)], shared_opts_dict)
         Sava_Utils.config.save()
-        self._apply_to_componments()
         if Sava_Utils.config.num_edit_rows != current_edit_rows:
             Sava_Utils.config.num_edit_rows = current_edit_rows
+        self._apply_to_componments()
         logger.info(i18n('Settings saved successfully!'))
         gr.Info(i18n('Settings saved successfully!'))
-        return Sava_Utils.config.to_list()
+        all_vals = [*Sava_Utils.config.to_list()[:-1], *args[-len(self.shared_opts_info) :]]
+        return all_vals
 
     def get_ext_tab(self):
         rows = []
-        comp_dict = {"tts_engine": [i.dirname for i in self.componments[1] if hasattr(i,"dirname")], "translator": list(self.componments[2][0].TRANSLATORS.keys())}
+        comp_dict = {"tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")], "translator": list(self.componments[2][0].TRANSLATORS.keys())}
         config_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
             ext_config = json.load(open(config_path, encoding="utf-8"))
         else:
             ext_config = {"tts_engine": {}}
         for ext_type in EXT_TYPES:
+            os.makedirs(os.path.join(current_path, "Sava_Extensions", ext_type), exist_ok=True)
             for i in [x for x in os.listdir(os.path.join(current_path, "Sava_Extensions", ext_type)) if os.path.isdir(os.path.join(current_path, "Sava_Extensions", ext_type, x))]:
                 rows.append([i, ext_type, "running" if i in comp_dict[ext_type] else "", ext_config[ext_type].get(i, True)])
         return np.array(rows)
 
-    def save_ext_tab(self,tab):
+    def save_ext_tab(self, tab):
         cfg = defaultdict(dict)
         for i in tab:
-            cfg[i[1]][i[0]] = True if i[-1] in [True,'true'] else False # gradio bug
+            cfg[i[1]][i[0]] = True if i[-1] in [True, 'true'] else False  # gradio bug
         with open(os.path.join(current_path, "Sava_Extensions/extensions_config.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
         return self.get_ext_tab()
@@ -288,37 +309,6 @@ class Settings_UI:
                             b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
                             b.click(rm_workspace, inputs=[item], outputs=[item, b])
 
-        with gr.TabItem(i18n('Submodule Settings')):
-            with gr.TabItem("TTS"):
-                with gr.TabItem("GPT-SoVITS"):
-                    with gr.Group():
-                        self.gsv_fallback = gr.Checkbox(value=False, label=i18n('Downgrade API version to v1'), interactive=True)
-                        self.gsv_pydir_input = gr.Textbox(label=i18n('Python Interpreter Path for GSV'), interactive=True, value=Sava_Utils.config.gsv_pydir)
-                        self.gsv_dir_input = gr.Textbox(label=i18n('Root Path of GSV'), interactive=True, value=Sava_Utils.config.gsv_dir)
-                        self.gsv_args = gr.Textbox(label=i18n('Start Parameters'), interactive=True, value=Sava_Utils.config.gsv_args)
-                with gr.TabItem("Azure-TTS(Microsoft)"):
-                    with gr.Group():
-                        self.ms_region = gr.Textbox(label="Server Region", interactive=True, value=Sava_Utils.config.ms_region)
-                        self.ms_key = gr.Textbox(label=i18n('KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'), interactive=True, value=Sava_Utils.config.ms_key)
-                        self.ms_lang_option = gr.Textbox(label=i18n('Select required languages, separated by commas or spaces.'), interactive=True, value=Sava_Utils.config.ms_lang_option)
-            with gr.TabItem(i18n('Translation Module')):
-                self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
-        with gr.TabItem("插件管理"):
-            ext_mgr_table = gr.Dataframe(
-                value=self.get_ext_tab(),
-                show_label=False,
-                headers=[i18n('名称'), i18n('类型'), i18n('状态'), i18n('启用')],
-                column_widths=['40%', '20%', '20%', '20%'],
-                datatype=["str", "str", "str", "bool"],
-                col_count=(4, 'fixed'),
-                row_count=(0, 'fixed'),
-                type="numpy",
-                static_columns=[0, 1, 2],
-                interactive=True,
-            )
-            save_ext_table_btn = gr.Button(i18n('Save'))
-            save_ext_table_btn.click(self.save_ext_tab,inputs=[ext_mgr_table],outputs=[ext_mgr_table])
-
         componments_list = [
             self.language,
             self.server_port,
@@ -334,15 +324,46 @@ class Settings_UI:
             self.num_edit_rows,
             self.export_spk_pattern,
             self.theme,
-            self.gsv_fallback,
-            self.gsv_pydir_input,
-            self.gsv_dir_input,
-            self.gsv_args,
-            self.ms_region,
-            self.ms_key,
-            self.ms_lang_option,
-            self.ollama_url,
+            # self.gsv_fallback,
+            # self.gsv_pydir_input,
+            # self.gsv_dir_input,
+            # self.gsv_args,
+            # self.ms_region,
+            # self.ms_key,
+            # self.ms_lang_option,
+            # self.ollama_url,
         ]
+
+        with gr.TabItem(i18n('Submodule Settings')):
+            with gr.TabItem("TTS"):
+                for comp in self.componments[1]:
+                    opt_list = comp.register_settings()
+                    if opt_list:
+                        with gr.TabItem(comp.name):
+                            try:
+                                for c in opt_list:
+                                    c.gr_kwargs["value"] = Sava_Utils.config.query(c.key, c.default_value)
+                                    componments_list.append(c.gr_component_type(**c.gr_kwargs))
+                                    self.shared_opts_info.append(c.key)
+                            except Exception as e:
+                                print(e)
+                pass
+                # self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
+        with gr.TabItem("插件管理"):
+            ext_mgr_table = gr.Dataframe(
+                value=self.get_ext_tab(),
+                show_label=False,
+                headers=[i18n('名称'), i18n('类型'), i18n('状态'), i18n('启用')],
+                column_widths=['40%', '20%', '20%', '20%'],
+                datatype=["str", "str", "str", "bool"],
+                col_count=(4, 'fixed'),
+                row_count=(0, 'fixed'),
+                type="numpy",
+                static_columns=[0, 1, 2],
+                interactive=True,
+            )
+            save_ext_table_btn = gr.Button(i18n('Save'))
+            save_ext_table_btn.click(self.save_ext_tab, inputs=[ext_mgr_table], outputs=[ext_mgr_table])
 
         self.save_settings_btn.click(self.save_settngs, inputs=componments_list, outputs=componments_list)
         self.restart_btn.click(restart, [], [])

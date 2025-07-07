@@ -1,4 +1,5 @@
 from .base_componment import Base_Componment
+from .settings import Settings
 from . import i18n
 import gradio as gr
 import re
@@ -27,11 +28,11 @@ WRITE_FN = {"ZH": lambda x, y: f"{x}: {str(y.split())}\n", "EN": lambda x, y: f"
 
 
 class Polyphone(Base_Componment):
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self):
+        super().__init__(None)
 
-    def update_cfg(self, config):
-        self.gsv_dir = config.gsv_dir
+    def update_cfg(self, config:Settings):
+        self.gsv_dir = config.query("gsv_dir","")
         return super().update_cfg(config)
 
     def _UI(self, *args):

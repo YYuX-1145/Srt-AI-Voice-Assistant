@@ -183,22 +183,24 @@ class Settings_Manager:
         self.shared_opts_validators: dict[str:Callable] = {}
 
         # get default value and set up validators
-        default_shared_opts = dict()
+        default_shared_opts: dict[str:Any] = dict()
         for lst in [self.componments[1], list(self.componments[2][0].TRANSLATORS.values()), self.componments[3]]:
             for item in lst:
                 for opt in item.register_settings():
                     if opt.key in default_shared_opts:
                         gr.Warning(f"Duplicate shared option from extension: {opt.key}")
+                        logger.warning(f"Duplicate shared option from extension: {opt.key}")
                     default_shared_opts[opt.key] = opt.default_value
                     if opt.validator:
                         self.shared_opts_validators[opt.key] = opt.validator
-
-        default_shared_opts.update(Sava_Utils.config.shared_opts)
-        Sava_Utils.config.shared_opts = default_shared_opts
-        for key, value in self.shared_opts_validators.items():
+        new_shared_opts = dict(default_shared_opts)
+        new_shared_opts.update(Sava_Utils.config.shared_opts)
+        Sava_Utils.config.shared_opts = new_shared_opts
+        for key, val in self.shared_opts_validators.items():
             try:
-                Sava_Utils.config.shared_opts[key] = value(Sava_Utils.config.shared_opts[key], Sava_Utils.config)
+                Sava_Utils.config.shared_opts[key] = val(Sava_Utils.config.shared_opts[key], Sava_Utils.config)
             except:
+                Sava_Utils.config.shared_opts[key] = default_shared_opts[key]
                 traceback.print_exc()
         self._apply_to_componments()
 
@@ -226,16 +228,16 @@ class Settings_Manager:
             Sava_Utils.config.num_edit_rows = current_edit_rows
         self._apply_to_componments()
         logger.info(i18n('Settings saved successfully!'))
-        gr.Info(i18n('Settings saved successfully!'))        
+        gr.Info(i18n('Settings saved successfully!'))
         all_vals = list(Sava_Utils.config.to_list()[:-1]) + [Sava_Utils.config.shared_opts[key] for key in self.shared_opts_info]
         return all_vals
 
     def get_ext_tab(self):
         rows = []
-        comp_dict = {"tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")], "translator": list(self.componments[2][0].TRANSLATORS.keys())}
+        comp_dict = {"tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")], "translator": list(self.componments[2][0].TRANSLATORS.keys()), "extension": []}
         config_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
-            ext_config = json.load(open(config_path, encoding="utf-8"))
+            ext_config = defaultdict(dict, json.load(open(config_path, encoding="utf-8")))
         else:
             ext_config = defaultdict(dict)
         for ext_type in EXT_TYPES:
@@ -247,7 +249,7 @@ class Settings_Manager:
     def save_ext_tab(self, tab):
         cfg = defaultdict(dict)
         for i in tab:
-            print(i[-1],type(i[-1]))
+            print(i[-1], type(i[-1]))
             cfg[i[1]][i[0]] = True if i[-1] in [True, 'True', 'true'] else False  # gradio bug
         with open(os.path.join(current_path, "Sava_Extensions/extensions_config.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)

@@ -109,7 +109,7 @@ class BV2(TTSProjet):
         )
         options.append(
             Shared_Options(
-                "gsv_args",
+                "bv2_args",
                 "",
                 gr.Textbox,
                 label=i18n('Start Parameters'),

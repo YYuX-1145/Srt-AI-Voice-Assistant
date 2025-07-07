@@ -13,7 +13,7 @@ from tqdm import tqdm
 class Ollama(Traducteur):
     def __init__(self, config=None):
         self.models = []
-        super().__init__("ollama", config)
+        super().__init__("Ollama", config)
 
     def update_cfg(self, config):
         self.ollama_url = config.query("ollama_url", "")
@@ -106,9 +106,7 @@ class Ollama(Traducteur):
         )
         return options
 
-    def _UI(self, *inputs, output_info, output_files):
-        from ..subtitle_translation import start_translation
-
+    def _UI(self):
         if self.server_mode:
             self.get_models("")
         with gr.Column():
@@ -124,7 +122,7 @@ class Ollama(Traducteur):
             self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
             self.num_history = gr.Slider(label=i18n('History Message Limit'), value=2, minimum=0, maximum=10, step=1)
             self.no_think_mode = gr.Checkbox(label="No Think", value=True, interactive=True)
-            self.start_translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
+            # self.start_translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
             ARGS = [
                 self.select_model,
                 self.api_url,
@@ -133,4 +131,3 @@ class Ollama(Traducteur):
                 self.no_think_mode,
             ]
             return ARGS
-            self.start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history, self.no_think_mode], outputs=[output_info, output_files])

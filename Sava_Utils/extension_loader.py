@@ -38,7 +38,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict:dict[str:bool]):
                 if not os.path.isdir(entry_path):
                     continue
                 module = _load_package_from_dir(entry_path)
-                assert hasattr(module, "register"), f"entry register() not found"
+                assert hasattr(module, "register"), f"{entry}: register() not found"
                 extension_instance = module.register(
                     {
                         "current_path": current_path,

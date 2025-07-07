@@ -36,7 +36,7 @@ from .i18nAuto import I18n
 
 ext_tab_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
 if os.path.exists(ext_tab_path):
-    ext_tab = json.load(open(ext_tab_path, encoding="utf-8"))
+    ext_tab = defaultdict(dict, json.load(open(ext_tab_path, encoding="utf-8")))
 else:
     ext_tab = defaultdict(dict)
 
@@ -49,12 +49,14 @@ try:
         x = dict()
         i18n = I18n()
     from .settings import Settings
+
     config = Settings.from_dict(x)
     del x
 except Exception as e:
     i18n = I18n()
     logger.warning(f"{i18n('Failed to load settings, reset to default')}: {e}")
     from .settings import Settings
+
     config = Settings()
 from .man import Man
 

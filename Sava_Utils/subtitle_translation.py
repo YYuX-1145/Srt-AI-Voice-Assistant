@@ -2,15 +2,15 @@ import gradio as gr
 import os
 import copy
 import Sava_Utils
-from . import i18n, logger
+from . import i18n, logger, ext_tab
 from .subtitle import Subtitle, Subtitles
 from .utils import read_file, basename_no_ext
 from .base_componment import Base_Componment
 from .translator.ollama import Ollama
-
+from . import extension_loader
 
 LANGUAGE = ["中文", "English", "日本語", "한국어", "Français"]
-TRANSLATORS = {"ollama": Ollama()}
+
 current_path = os.environ.get("current_path")
 
 
@@ -19,46 +19,6 @@ def merge_subtitles(subtitles_main: Subtitles, subtitles_tr: Subtitles):
     for s_main, s_tr in zip(result, subtitles_tr):
         s_main.text = s_main.text.strip() + "\n" + s_tr.text.strip()
     return result
-
-
-def start_translation(in_files, language: str, batch_size: float, merge: bool, output_dir: str, interrupt_flag: Sava_Utils.utils.Flag, *args, translator=None):
-    output_list = []
-    message = ""
-    if in_files is None:
-        gr.Info(i18n('Please upload the subtitle file!'))
-        return i18n('Please upload the subtitle file!'), output_list
-    with interrupt_flag:
-        for in_file in in_files:
-            subtitle_list_ori = read_file(in_file.name)
-            subtitle_list_tr = copy.deepcopy(subtitle_list_ori)
-            tasks = TRANSLATORS[translator].construct_tasks(subtitle_list_ori, int(batch_size))
-            try:
-                result, msg = TRANSLATORS[translator].api(tasks, language, interrupt_flag, *args, file_name=os.path.basename(in_file.name))
-                if interrupt_flag.is_set():
-                    message += i18n('Canceled by user.')
-                    break
-                if msg:
-                    message += f"{os.path.basename(in_file.name)}: {msg}\n"
-                for sub, txt in zip(subtitle_list_tr, result):
-                    sub.text = txt
-                if Sava_Utils.config.server_mode:
-                    output_path = os.path.join(os.path.dirname(in_file.name), f"{basename_no_ext(in_file.name)}_translated_to_{language}.srt")
-                else:
-                    output_path = os.path.join(output_dir, f"{basename_no_ext(in_file.name)}_translated_to_{language}.srt")
-                subtitle_list_tr.export(fp=output_path, open_explorer=False, raw=True)
-                output_list.append(output_path)
-                if merge:
-                    s_merged = merge_subtitles(subtitle_list_tr, subtitle_list_ori)
-                    op = output_path[:-4] + "_merged.srt"
-                    s_merged.export(fp=op, open_explorer=False, raw=True)
-                    output_list.append(op)
-            except Exception as e:
-                err = f"{i18n('Failed to translate')} {os.path.basename(in_file.name)} :{str(e)}"
-                gr.Warning(err)
-                message += err + "\n"
-                continue
-    # os.system(f'explorer {output_dir}')
-    return message.strip() if message else "OK", output_list
 
 
 def merge_uploaded_sub(filelist_sup: list, filelist_inf: list, output_dir: str):
@@ -95,13 +55,16 @@ def merge_uploaded_sub(filelist_sup: list, filelist_inf: list, output_dir: str):
 class Translation_module(Base_Componment):
     def __init__(self):
         self.ui = False
-        self.TRANSLATORS = TRANSLATORS
+        OLLAMA = Ollama()
+        self.TRANSLATORS = {OLLAMA.name: OLLAMA}
+        for ext in extension_loader.load_ext_from_dir(["Sava_Extensions/translator"], ext_enabled_dict=ext_tab["translator"]):
+            self.TRANSLATORS[ext.name] = ext
         self.config = None
         self.menu = []
 
     def update_cfg(self, config):
         self.config = config
-        for i in TRANSLATORS.values():
+        for i in self.TRANSLATORS.values():
             i.update_cfg(config=config)
         super().update_cfg(config)
 
@@ -111,6 +74,45 @@ class Translation_module(Base_Componment):
             self._UI(*args)
         else:
             raise "err"
+
+    def start_translation(self, in_files, language: str, batch_size: float, merge: bool, output_dir: str, interrupt_flag: Sava_Utils.utils.Flag, *args, translator=None):
+        output_list = []
+        message = ""
+        if in_files is None:
+            gr.Info(i18n('Please upload the subtitle file!'))
+            return i18n('Please upload the subtitle file!'), output_list
+        with interrupt_flag:
+            for in_file in in_files:
+                subtitle_list_ori = read_file(in_file.name)
+                subtitle_list_tr = copy.deepcopy(subtitle_list_ori)
+                tasks = self.TRANSLATORS[translator].construct_tasks(subtitle_list_ori, int(batch_size))
+                try:
+                    result, msg = self.TRANSLATORS[translator].api(tasks, language, interrupt_flag, *args, file_name=os.path.basename(in_file.name))
+                    if interrupt_flag.is_set():
+                        message += i18n('Canceled by user.')
+                        break
+                    if msg:
+                        message += f"{os.path.basename(in_file.name)}: {msg}\n"
+                    for sub, txt in zip(subtitle_list_tr, result):
+                        sub.text = txt
+                    if Sava_Utils.config.server_mode:
+                        output_path = os.path.join(os.path.dirname(in_file.name), f"{basename_no_ext(in_file.name)}_translated_to_{language}.srt")
+                    else:
+                        output_path = os.path.join(output_dir, f"{basename_no_ext(in_file.name)}_translated_to_{language}.srt")
+                    subtitle_list_tr.export(fp=output_path, open_explorer=False, raw=True)
+                    output_list.append(output_path)
+                    if merge:
+                        s_merged = merge_subtitles(subtitle_list_tr, subtitle_list_ori)
+                        op = output_path[:-4] + "_merged.srt"
+                        s_merged.export(fp=op, open_explorer=False, raw=True)
+                        output_list.append(op)
+                except Exception as e:
+                    err = f"{i18n('Failed to translate')} {os.path.basename(in_file.name)} :{str(e)}"
+                    gr.Warning(err)
+                    message += err + "\n"
+                    continue
+        # os.system(f'explorer {output_dir}')
+        return message.strip() if message else "OK", output_list
 
     def _UI(self, file_main):
         with gr.TabItem(i18n('Subtitle Translation')):
@@ -124,7 +126,7 @@ class Translation_module(Base_Componment):
                             self.merge_upload1 = gr.File(label=i18n('Main Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
                             self.merge_upload2 = gr.File(label=i18n('Secondary Subtitle'), file_count="multiple", file_types=[".srt", ".csv", ".txt"])
                         self.merge_btn = gr.Button(value=i18n('Merge'), variant='primary')
-                    self.result = gr.Text(interactive=False, value="", label=i18n('Output Info'))
+                    self.output_info = gr.Text(interactive=False, value="", label=i18n('Output Info'))
                     self.translation_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
                     self.send_btn = gr.Button(value=i18n('Send output files to Main Page'), interactive=True)
                     self.send_btn.click(lambda x: [i.name for i in x if not i.name.endswith('_merged.srt')] if x is not None else x, inputs=[self.translation_output], outputs=[file_main])
@@ -133,18 +135,21 @@ class Translation_module(Base_Componment):
                     self.batch_size = gr.Number(label="Batch Size", value=5, minimum=1, interactive=True)
                     self.merge_sub = gr.Checkbox(label=i18n('Generate merged subtitles'), value=False, interactive=True)
                     self.output_dir = gr.Text(value=os.path.join(current_path, "SAVAdata", "output"), label=i18n('File Output Path'), interactive=not Sava_Utils.config.server_mode, visible=not Sava_Utils.config.server_mode, max_lines=1)
-                    self.translator = gr.Radio(label=i18n('Select Translator'), choices=[i for i in TRANSLATORS.keys()], value="ollama")
-                    Base_args = [self.translation_upload, self.translation_target_language, self.batch_size, self.merge_sub, self.output_dir, self.INTERRUPT_EVENT]
+                    self.translator = gr.Radio(label=i18n('Select Translator'), choices=[i for i in self.TRANSLATORS.keys()], value=list(self.TRANSLATORS.keys())[0])
+                    BASE_ARGS = [self.translation_upload, self.translation_target_language, self.batch_size, self.merge_sub, self.output_dir, self.INTERRUPT_EVENT]
                     with gr.Column():
                         v = True
                         assert self.config is not None
-                        for i in TRANSLATORS.keys():
+                        for translator in self.TRANSLATORS.keys():
                             with gr.Column(visible=v) as tr_ui:
-                                TRANSLATORS[i].update_cfg(config=self.config)
-                                TRANSLATORS[i].getUI(*Base_args, output_info=self.result, output_files=self.translation_output)
+                                self.TRANSLATORS[translator].update_cfg(config=self.config)
+                                TRANSLATOR_ARGS = self.TRANSLATORS[translator].getUI()
+                                if not hasattr(self.TRANSLATORS[translator], "start_translate_btn"):
+                                    setattr(self.TRANSLATORS[translator], "start_translate_btn", gr.Button(value=i18n('Start Translating'), variant="primary"))
+                                self.TRANSLATORS[translator].start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: self.start_translation(*args, translator=translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
                             v = False
                             self.menu.append(tr_ui)
                     stop_btn = gr.Button(value=i18n('Stop'), variant="stop")
                     stop_btn.click(lambda x: gr.Info(x.set()), inputs=[self.INTERRUPT_EVENT])
-                self.translator.change(lambda x: [gr.update(visible=x == i) for i in TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
-            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output, self.result])
+                self.translator.change(lambda x: [gr.update(visible=x == i) for i in self.TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)
+            self.merge_btn.click(merge_uploaded_sub, inputs=[self.merge_upload1, self.merge_upload2, self.output_dir], outputs=[self.translation_output, self.output_info])

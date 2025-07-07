@@ -237,7 +237,7 @@ class Settings_Manager:
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
             ext_config = json.load(open(config_path, encoding="utf-8"))
         else:
-            ext_config = {"tts_engine": {}}
+            ext_config = defaultdict(dict)
         for ext_type in EXT_TYPES:
             os.makedirs(os.path.join(current_path, "Sava_Extensions", ext_type), exist_ok=True)
             for i in [x for x in os.listdir(os.path.join(current_path, "Sava_Extensions", ext_type)) if os.path.isdir(os.path.join(current_path, "Sava_Extensions", ext_type, x))]:
@@ -247,7 +247,8 @@ class Settings_Manager:
     def save_ext_tab(self, tab):
         cfg = defaultdict(dict)
         for i in tab:
-            cfg[i[1]][i[0]] = True if i[-1] in [True, 'true'] else False  # gradio bug
+            print(i[-1],type(i[-1]))
+            cfg[i[1]][i[0]] = True if i[-1] in [True, 'True', 'true'] else False  # gradio bug
         with open(os.path.join(current_path, "Sava_Extensions/extensions_config.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
         return self.get_ext_tab()

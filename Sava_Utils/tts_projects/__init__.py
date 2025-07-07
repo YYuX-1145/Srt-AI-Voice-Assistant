@@ -17,16 +17,14 @@ class TTSProjet(Base_Componment):
     def api(self, *args, **kwargs):
         raise NotImplementedError
 
-    @abstractmethod
-    def save_action(self, *args, **kwargs):
-        raise NotImplementedError
+    def arg_filter(self, *args):
+        return args
 
     def before_gen_action(self, *args, **kwargs):
         pass
 
-    @abstractmethod
-    def arg_filter(self, *args):
-        raise NotImplementedError
+    def save_action(self, *args, **kwargs):
+        return self.api(*args, **kwargs)
 
     def getUI(self, *args, **kwargs):
         x = super().getUI(*args, **kwargs)
@@ -35,7 +33,6 @@ class TTSProjet(Base_Componment):
         return x
 
 
-import Sava_Utils
 from . import gsv, mstts
 from .. import extension_loader
 
@@ -56,7 +53,7 @@ class TTS_UI_Loader(Base_Componment):
         for i in self.components:
             with gr.TabItem(i.title):
                 self.TTS_ARGS.append(i.getUI())
-                if not hasattr(i,"gen_btn"):
+                if not hasattr(i, "gen_btn"):
                     setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
 
     def get_btn_visible_dict(self):

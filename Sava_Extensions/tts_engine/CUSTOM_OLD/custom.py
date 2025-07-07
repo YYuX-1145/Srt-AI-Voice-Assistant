@@ -3,6 +3,7 @@ import gradio as gr
 import time
 import os
 from . import *
+
 current_path = os.environ.get("current_path")
 
 
@@ -17,16 +18,24 @@ class Custom(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            gr.Markdown(value=MANUAL.getInfo("help_custom"))                
+            gr.Markdown(value=MANUAL.getInfo("help_custom"))
             self.choose_custom_api = gr.Dropdown(label=i18n('Choose Custom API Code File'), choices=self.custom_api_list, value=self.custom_api_list[0] if self.custom_api_list != [] else '', allow_custom_value=False, scale=4)
             with gr.Row():
                 self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", scale=8)
-                self.refresh_custom_btn = gr.Button(value="🔄️", scale=1, min_width=40)                    
+                self.refresh_custom_btn = gr.Button(value="🔄️", scale=1, min_width=40)
             self.refresh_custom_btn.click(self.refresh_custom_api_list, outputs=[self.choose_custom_api])
         return [self.choose_custom_api]
 
+    def arg_filter(self, *args):
+        custom_api = args
+        if isinstance(custom_api ,tuple):
+            custom_api = custom_api[0]
+        if custom_api in [None, 'None', '']:
+            gr.Info(i18n('Please select a valid custom API code file!'))
+            raise Exception(i18n('Please select a valid custom API code file!'))
+        return custom_api, dict()
+
     def before_gen_action(self, custom_api_path, temp_namesp, **kwargs):
-        # print(args)
         logger.info(f"Exec: custom_api_path {custom_api_path}")
         with open(os.path.join(current_path, "SAVAdata", "presets", custom_api_path), "r", encoding="utf-8") as f:
             code = f.read()
@@ -50,10 +59,3 @@ class Custom(TTSProjet):
             gr.Warning(err)
         time.sleep(0.1)
         return gr.update(value="None", choices=self.custom_api_list)
-
-    def arg_filter(self, *args):
-        custom_api = args
-        if custom_api in [None, 'None', '']:
-            gr.Info(i18n('Please select a valid custom API code file!'))
-            raise Exception(i18n('Please select a valid custom API code file!'))
-        return (custom_api, dict())

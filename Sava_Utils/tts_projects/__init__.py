@@ -26,6 +26,9 @@ class TTSProjet(Base_Componment):
     def save_action(self, *args, **kwargs):
         return self.api(*args, **kwargs)
 
+    def api_launcher(self) -> None:
+        pass
+
     def getUI(self, *args, **kwargs):
         x = super().getUI(*args, **kwargs)
         if self.gen_btn is None:
@@ -55,6 +58,10 @@ class TTS_UI_Loader(Base_Componment):
                 self.TTS_ARGS.append(i.getUI())
                 if not hasattr(i, "gen_btn"):
                     setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
+
+    def get_launch_api_btn(self):
+        for item in self.components:
+            item.api_launcher()
 
     def get_btn_visible_dict(self):
         BTN_VISIBLE_DICT = {}

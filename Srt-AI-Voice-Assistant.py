@@ -267,34 +267,6 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
         return None
 
 
-# def start_hiyoriui():
-#     if Sava_Utils.config.bv2_pydir == "":
-#         gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
-#         return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
-#     command = f'"{Sava_Utils.config.bv2_pydir}" "{os.path.join(Sava_Utils.config.bv2_dir,"hiyoriUI.py")}" {Sava_Utils.config.bv2_args}'
-#     rc_open_window(command=command, dir=Sava_Utils.config.bv2_dir)
-#     time.sleep(0.1)
-#     return f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}"
-
-
-# def start_gsv():
-#     if Sava_Utils.config.gsv_pydir == "":
-#         gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
-#         return i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!')
-#     if Sava_Utils.config.gsv_fallback:
-#         apath = "api.py"
-#         gr.Info(i18n('API downgraded to v1, functionality is limited.'))
-#         logger.warning(i18n('API downgraded to v1, functionality is limited.'))
-#     else:
-#         apath = "api_v2.py"
-#     if not os.path.exists(os.path.join(Sava_Utils.config.gsv_dir, apath)):
-#         raise FileNotFoundError(os.path.join(Sava_Utils.config.gsv_dir, apath))
-#     command = f'"{Sava_Utils.config.gsv_pydir}" "{os.path.join(Sava_Utils.config.gsv_dir,apath)}" {Sava_Utils.config.gsv_args}'
-#     rc_open_window(command=command, dir=Sava_Utils.config.gsv_dir)
-#     time.sleep(0.1)
-#     return f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}"
-
-
 def remake(*args):
     fp = None
     page, idx, timestamp, s_txt, subtitle_list = args[:5]
@@ -448,10 +420,7 @@ if __name__ == "__main__":
                         stop_btn.click(lambda x: gr.Info(x.set()), inputs=[INTERRUPT_EVENT])
                         if not Sava_Utils.config.server_mode:
                             with gr.Accordion(i18n('API Launcher')):
-                                # start_hiyoriui_btn = gr.Button(value="HiyoriUI")
-                                start_gsv_btn = gr.Button(value="GPT-SoVITS")
-                                # start_hiyoriui_btn.click(start_hiyoriui, outputs=[gen_textbox_output_text])
-                                # start_gsv_btn.click(start_gsv, outputs=[gen_textbox_output_text])
+                                TTS_UI_LOADER.get_launch_api_btn()
                         input_file.change(file_show, inputs=[input_file], outputs=[textbox_intput_text])
 
                 with gr.Accordion(label=i18n('Editing area *Note: DO NOT clear temporary files while using this function.'), open=True):

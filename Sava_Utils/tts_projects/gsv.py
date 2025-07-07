@@ -1,7 +1,7 @@
 from . import TTSProjet
 import requests
 import gradio as gr
-from ..utils import positive_int
+from ..utils import positive_int,rc_open_window
 from .. import logger
 from .. import i18n
 from ..settings import Shared_Options, Settings
@@ -94,7 +94,29 @@ class GSV(TTSProjet):
     def update_cfg(self, config: Settings):
         self.gsv_fallback = config.query("gsv_fallback")
         self.gsv_dir = config.query("gsv_dir")
+        self.gsv_pydir = config.query("gsv_pydir")
+        self.gsv_args = config.query("gsv_args")
         super().update_cfg(config)
+
+    def api_launcher(self):
+        def start_gsv():
+            if self.gsv_pydir == "":
+                gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
+                return
+            if self.gsv_fallback:
+                apath = "api.py"
+                gr.Info(i18n('API downgraded to v1, functionality is limited.'))
+                logger.warning(i18n('API downgraded to v1, functionality is limited.'))
+            else:
+                apath = "api_v2.py"
+            if not os.path.exists(os.path.join(self.gsv_dir, apath)):
+                raise gr.Error(f'File NOT Found: {os.path.join(self.gsv_dir, apath)}')
+            command = f'"{self.gsv_pydir}" "{os.path.join(self.gsv_dir,apath)}" {self.gsv_args}'
+            rc_open_window(command=command, dir=self.gsv_dir)
+            time.sleep(0.1)
+            gr.Info(f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}")
+        start_gsv_btn = gr.Button(value="GPT-SoVITS")
+        start_gsv_btn.click(start_gsv)
 
     def api(self, port, artts_name, **kwargs):
         try:

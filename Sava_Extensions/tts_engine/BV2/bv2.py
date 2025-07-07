@@ -1,6 +1,7 @@
 import requests
 import gradio as gr
 import os
+import time
 from . import *
 
 
@@ -11,13 +12,29 @@ class BV2(TTSProjet):
     def update_cfg(self, config: Settings):
         self.bv2_dir = config.query("bv2_dir")
         self.bv2_pydir = config.query("bv2_pydir")
+        self.bv2_args = config.query("bv2_args")
         super().update_cfg(config)
+
+    def api_launcher(self):
+        def start_hiyoriui():
+            if self.bv2_pydir == "":
+                gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
+                return
+            api_path = os.path.join(self.bv2_dir,"hiyoriUI.py")
+            command = f'"{self.bv2_pydir}" "{api_path}" {self.bv2_args}'            
+            if not os.path.exists(api_path):
+                raise gr.Error(f'File NOT Found: {api_path}')
+            utils.rc_open_window(command=command, dir=self.bv2_dir)
+            time.sleep(0.1)
+            gr.Info(f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}")
+        start_hiyoriui_btn = gr.Button(value="HiyoriUI")
+        start_hiyoriui_btn.click(start_hiyoriui)
 
     def arg_filter(self, *args):
         language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text = args
         pargs = (language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text)
         return pargs
-    
+
     def save_action(self, *args, text: str = None):
         language, port, mid, sid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emotion_text = args
         sid, port, mid = utils.positive_int(sid, port, mid)

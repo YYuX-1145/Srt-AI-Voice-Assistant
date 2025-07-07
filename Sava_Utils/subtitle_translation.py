@@ -137,9 +137,10 @@ class Translation_module(Base_Componment):
                     Base_args = [self.translation_upload, self.translation_target_language, self.batch_size, self.merge_sub, self.output_dir, self.INTERRUPT_EVENT]
                     with gr.Column():
                         v = True
+                        assert self.config is not None
                         for i in TRANSLATORS.keys():
                             with gr.Column(visible=v) as tr_ui:
-                                #TRANSLATORS[i].update_cfg(config=self.config)
+                                TRANSLATORS[i].update_cfg(config=self.config)
                                 TRANSLATORS[i].getUI(*Base_args, output_info=self.result, output_files=self.translation_output)
                             v = False
                             self.menu.append(tr_ui)

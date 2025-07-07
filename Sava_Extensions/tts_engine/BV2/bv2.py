@@ -1,11 +1,17 @@
 import requests
 import gradio as gr
+import os
 from . import *
 
 
 class BV2(TTSProjet):
-    def __init__(self, config=None):
-        super().__init__("bv2", config, title="Bert-VITS2-HiyoriUI")
+    def __init__(self):
+        super().__init__("Bert-VITS2", None, title="Bert-VITS2-HiyoriUI")
+
+    def update_cfg(self, config: Settings):
+        self.bv2_dir = config.query("bv2_dir")
+        self.bv2_pydir = config.query("bv2_pydir")
+        super().update_cfg(config)
 
     def api(self, text, mid, spk_name, sid, lang, length, noise, noisew, sdp, emotion, split, style_text, style_weight, port):
         try:
@@ -34,6 +40,61 @@ class BV2(TTSProjet):
             return gr.update(label="Speaker_ID", value=0, visible=True, interactive=True), gr.update(label="Speaker_Name", visible=False, value="", interactive=True)
         else:
             return gr.update(label="Speaker_ID", value=0, visible=False, interactive=True), gr.update(label="Speaker_Name", visible=True, value="", interactive=True)
+
+    def register_settings(self):
+        options = []
+
+        def auto_env_detect(bv2_pydir: str, config: Settings):
+            bv2_pydir = bv2_pydir.strip('"')
+            if bv2_pydir != "":
+                if os.path.isfile(bv2_pydir):
+                    bv2_pydir = os.path.abspath(bv2_pydir)
+                elif bv2_pydir == 'python':
+                    pass
+                else:
+                    gr.Warning(f"{i18n('Error, Invalid Path')}:{bv2_pydir}")
+                    bv2_pydir = ""
+            else:
+                if os.path.isfile(os.path.join(current_path, "venv\\python.exe")) and "BERT" in current_path.upper():
+                    bv2_pydir = os.path.join(current_path, "venv\\python.exe")
+                    logger.info(f"{i18n('Env detected')}: GPT-SoVITS")
+                else:
+                    bv2_pydir = ""
+            ###################
+            if bv2_pydir != "" and config.query("bv2_dir", "") == "":
+                config.shared_opts["bv2_dir"] = os.path.dirname(os.path.dirname(bv2_pydir))
+            return bv2_pydir
+
+        options.append(
+            Shared_Options(
+                "bv2_pydir",
+                "",
+                gr.Textbox,
+                auto_env_detect,
+                label=i18n('Python Interpreter Path for BV2'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "bv2_dir",
+                "",
+                gr.Textbox,
+                lambda v, c: v.strip('"'),
+                label=i18n('Root Path of BV2'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "gsv_args",
+                "",
+                gr.Textbox,
+                label=i18n('Start Parameters'),
+                interactive=True,
+            )
+        )
+        return options
 
     def _UI(self):
         with gr.Row():

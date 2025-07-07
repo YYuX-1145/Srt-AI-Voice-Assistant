@@ -1,6 +1,6 @@
 from ..base_componment import Base_Componment
 from abc import ABC, abstractmethod
-from .. import i18n,ext_tab
+from .. import i18n, ext_tab
 import gradio as gr
 
 
@@ -39,6 +39,7 @@ import Sava_Utils
 from . import gsv, mstts
 from .. import extension_loader
 
+
 class TTS_UI_Loader(Base_Componment):
     def __init__(self):
         # BV2 = bv2.BV2(Sava_Utils.config)
@@ -55,6 +56,8 @@ class TTS_UI_Loader(Base_Componment):
         for i in self.components:
             with gr.TabItem(i.title):
                 self.TTS_ARGS.append(i.getUI())
+                if not hasattr(i,"gen_btn"):
+                    setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
 
     def get_btn_visible_dict(self):
         BTN_VISIBLE_DICT = {}

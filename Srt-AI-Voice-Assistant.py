@@ -45,7 +45,7 @@ componments = {
     2: [TRANSLATION_MODULE, POLYPHONE],
     3: [],
 }
-
+SETTINGS = Sava_Utils.settings.Settings_Manager(componments=componments)
 
 def custom_api(text):
     raise i18n('You need to load custom API functions!')
@@ -543,7 +543,6 @@ if __name__ == "__main__":
             with gr.TabItem(i18n('Settings')):
                 with gr.Row():
                     with gr.Column():
-                        SETTINGS = Sava_Utils.settings.Settings_Manager(componments=componments)
                         SETTINGS.getUI()
                     with gr.Column():
                         with gr.TabItem(i18n('Readme')):

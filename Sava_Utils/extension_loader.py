@@ -5,6 +5,8 @@ import importlib.util
 from . import i18n, logger, MANUAL
 from . import utils
 from .tts_projects import Base_Componment, TTSProjet
+from .translator import Traducteur
+from .settings import Settings,Shared_Options
 
 current_path = os.environ.get("current_path")
 
@@ -39,12 +41,16 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict:dict[str:bool]):
                 assert hasattr(module, "register"), f"entry register() not found"
                 extension_instance = module.register(
                     {
+                        "current_path": current_path,
                         "Base_Componment": Base_Componment,
                         "TTSProjet": TTSProjet,
+                        "Traducteur":Traducteur,
                         "utils": utils,
                         "i18n": i18n,
                         "MANUAL": MANUAL,
                         "logger": logger,
+                        "Settings": Settings,
+                        "Shared_Options":Shared_Options,
                     },
                 )
                 assert extension_instance is not None

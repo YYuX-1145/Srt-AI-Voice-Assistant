@@ -187,6 +187,8 @@ class Settings_Manager:
         for lst in [self.componments[1], list(self.componments[2][0].TRANSLATORS.values()), self.componments[3]]:
             for item in lst:
                 for opt in item.register_settings():
+                    if opt.key in default_shared_opts:
+                        gr.Warning(f"Duplicate shared option from extension: {opt.key}")
                     default_shared_opts[opt.key] = opt.default_value
                     if opt.validator:
                         self.shared_opts_validators[opt.key] = opt.validator
@@ -324,31 +326,27 @@ class Settings_Manager:
             self.num_edit_rows,
             self.export_spk_pattern,
             self.theme,
-            # self.gsv_fallback,
-            # self.gsv_pydir_input,
-            # self.gsv_dir_input,
-            # self.gsv_args,
-            # self.ms_region,
-            # self.ms_key,
-            # self.ms_lang_option,
-            # self.ollama_url,
         ]
 
         with gr.TabItem(i18n('Submodule Settings')):
-            with gr.TabItem("TTS"):
-                for comp in self.componments[1]:
-                    opt_list = comp.register_settings()
-                    if opt_list:
-                        with gr.TabItem(comp.name):
-                            try:
-                                for c in opt_list:
-                                    c.gr_kwargs["value"] = Sava_Utils.config.query(c.key, c.default_value)
-                                    componments_list.append(c.gr_component_type(**c.gr_kwargs))
-                                    self.shared_opts_info.append(c.key)
-                            except Exception as e:
-                                print(e)
-                pass
-                # self.ollama_url = gr.Textbox(label=i18n('Default Request Address for Ollama'), interactive=True, value=Sava_Utils.config.ollama_url)
+            EXT_POINTER = {
+                "tts_engine": self.componments[1],
+                "translator": self.componments[2][0].TRANSLATORS.values(),
+                "extension": self.componments[3],
+            }
+            for ext_type in EXT_TYPES:
+                with gr.TabItem(EXT_TYPES_TITLE[ext_type]):
+                    for comp in EXT_POINTER[ext_type]:
+                        opt_list = comp.register_settings()
+                        if opt_list:
+                            with gr.TabItem(comp.name):
+                                try:
+                                    for c in opt_list:
+                                        c.gr_kwargs["value"] = Sava_Utils.config.query(c.key, c.default_value)
+                                        componments_list.append(c.gr_component_type(**c.gr_kwargs))
+                                        self.shared_opts_info.append(c.key)
+                                except Exception as e:
+                                    print(e)
         with gr.TabItem("插件管理"):
             ext_mgr_table = gr.Dataframe(
                 value=self.get_ext_tab(),

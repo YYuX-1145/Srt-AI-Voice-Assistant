@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 from . import Traducteur
+from ..settings import Shared_Options
 from ..utils import rc_open_window
 from .. import logger, i18n
 from tqdm import tqdm
@@ -15,7 +16,7 @@ class Ollama(Traducteur):
         super().__init__("ollama", config)
 
     def update_cfg(self, config):
-        self.ollama_url = config.query("ollama_url","")
+        self.ollama_url = config.query("ollama_url", "")
         super().update_cfg(config)
 
     def get_models(self, url):
@@ -92,6 +93,19 @@ class Ollama(Traducteur):
             ret += batch
         return ret, msg
 
+    def register_settings(self):
+        options = []
+        options.append(
+            Shared_Options(
+                "ollama_url",
+                "http://localhost:11434",
+                gr.Textbox,
+                label=i18n('Default Request Address for Ollama'),
+                interactive=True,
+            )
+        )
+        return options
+
     def _UI(self, *inputs, output_info, output_files):
         from ..subtitle_translation import start_translation
 
@@ -110,5 +124,13 @@ class Ollama(Traducteur):
             self.prompt = gr.Text(label=i18n('Custom prompt (enabled when filled in)'), value='', placeholder="Directly translate the following content to English:", interactive=True)
             self.num_history = gr.Slider(label=i18n('History Message Limit'), value=2, minimum=0, maximum=10, step=1)
             self.no_think_mode = gr.Checkbox(label="No Think", value=True, interactive=True)
-            self.translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
-            self.translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history, self.no_think_mode], outputs=[output_info, output_files])
+            self.start_translate_btn = gr.Button(value=i18n('Start Translating'), variant="primary")
+            ARGS = [
+                self.select_model,
+                self.api_url,
+                self.prompt,
+                self.num_history,
+                self.no_think_mode,
+            ]
+            return ARGS
+            self.start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: start_translation(*args, translator="ollama"), inputs=[*inputs, self.select_model, self.api_url, self.prompt, self.num_history, self.no_think_mode], outputs=[output_info, output_files])

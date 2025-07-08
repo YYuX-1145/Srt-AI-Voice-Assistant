@@ -13,13 +13,12 @@ current_path = os.environ.get("current_path")
 
 class MSTTS(TTSProjet):
     def __init__(self):
-        self.ms_access_token = None
-        self.ms_speaker_info = None
-        self.cfg_ms_region = None
-        self.cfg_ms_key = None
+        self.ms_access_token = ""
+        self.ms_speaker_info = {}
+        self.cfg_ms_region = ""
+        self.cfg_ms_key = ""
         self.ms_lang_option = ""
         super().__init__("Azure-TTS(Microsoft)", title="Azure-TTS(Microsoft)")
-        self.ms_refresh()
 
     def update_cfg(self, config):
         self.cfg_ms_region = config.query("ms_region")
@@ -60,7 +59,6 @@ class MSTTS(TTSProjet):
         return options
 
     def getms_speakers(self):
-        # if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
         if not os.path.exists(os.path.join(current_path, "SAVAdata", "ms_speaker_info_raw.json")):
             try:
                 assert self.cfg_ms_key not in [None, ""], i18n('Please fill in your key to get MSTTS speaker list.')
@@ -83,7 +81,6 @@ class MSTTS(TTSProjet):
                 return None
         dataraw = json.load(open(os.path.join(current_path, "SAVAdata", "ms_speaker_info_raw.json"), encoding="utf-8"))  # list
         classified_info = {}
-        # target_language=["zh","ja","en","ko","fr"]
         target_language = re.split(r'(?<=[,，])| ', self.ms_lang_option)
         target_language = [x.strip() for x in target_language if x.strip()]
         if len(target_language) == 0:
@@ -148,6 +145,7 @@ class MSTTS(TTSProjet):
             return None
 
     def _UI(self):
+        self.ms_refresh()
         with gr.Column():
             self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
             if self.ms_speaker_info == {}:

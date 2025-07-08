@@ -3,7 +3,7 @@ import sys
 import traceback
 import gradio as gr
 import importlib.util
-from . import i18n, logger, MANUAL, ext_tab
+from . import i18n, logger, MANUAL, ext_tab, no_ext_mode
 from . import utils,audio_utils
 from .tts_engines import Base_Component, TTSProjet
 from .translator import Traducteur
@@ -26,6 +26,8 @@ def _load_package_from_dir(dir_path: str):
 
 def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> list[Base_Component]:
     loaded_ext = []
+    if no_ext_mode:
+        return loaded_ext
     for extension_root in roots:
         if not os.path.isdir(extension_root):
             # does not exist

@@ -8,24 +8,51 @@ import gradio as gr
 class TTSProjet(Base_Component):
 
     def __init__(self, name, title=None, config=None):
+        """
+        The name parameter must not be empty for extensions.
+        self.gen_btn is a class member representing the generation button, which is not necessary to be defined.
+        """
         self.gen_btn = None
-        self.args = []
         super().__init__(name, title, config)
 
     @abstractmethod
-    def api(self, *args, **kwargs):
+    def api(self, *args, **kwargs) -> bytes:
+        """
+        Mandatory. Define the API call code here.
+        Return value must be binary data of a wav file
+        """
         raise NotImplementedError
 
     def arg_filter(self, *args):
+        """
+        Filters and modifies input arguments. You can raise an exception here when encountering illegal arguments.
+        Typical usage: Verify if a file path exists; read audio file binary data from the path
+        Must return the modified arguments (even if no changes were made)
+        """
         return args
 
-    def before_gen_action(self, *args, **kwargs):
+    def before_gen_action(self, *args, **kwargs) -> None:
+        """
+        Perform preprocessing operations before calling the API
+        Typical usage: Switch GSV models, obtain API key for Microsoft TTS 
+        """
         pass
 
     def save_action(self, *args, **kwargs):
+        """
+        Pass the filtered arguments to the API call method
+        """
         return self.api(*args, **kwargs)
 
     def api_launcher(self) -> None:
+        """
+        Define button for launching API here.
+        Example:
+            def start_gsv():
+                pass
+            start_gsv_btn = gr.Button(value="GPT-SoVITS")
+            start_gsv_btn.click(start_gsv)
+        """
         pass
 
     def getUI(self, *args, **kwargs):
@@ -41,10 +68,8 @@ from .. import extension_loader
 
 class TTS_UI_Loader(Base_Component):
     def __init__(self):
-        # BV2 = bv2.BV2(Sava_Utils.config)
         GSV = gsv.GSV()
         MSTTS = mstts.MSTTS()
-        # CUSTOM = custom.Custom(Sava_Utils.config)
         self.components: list[TTSProjet] = [GSV, MSTTS]
         self.components += extension_loader.load_ext_from_dir(["Sava_Extensions/tts_engine"], ext_enabled_dict=ext_tab["tts_engine"])
         self.project_dict = {i.name: i for i in self.components}

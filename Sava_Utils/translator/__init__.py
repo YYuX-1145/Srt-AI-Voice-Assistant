@@ -5,7 +5,6 @@ import re
 class Traducteur(Base_Component):
     def __init__(self, name, config=None):
         self.name = name
-        self.args = []
         super().__init__(name, config=config)
 
     def update_cfg(self, config):

@@ -5,7 +5,7 @@ import re
 import subprocess
 from . import Traducteur
 from ..settings import Shared_Options
-from ..utils import rc_open_window
+from ..utils import rc_open_window,rc_bg
 from .. import logger, i18n
 from tqdm import tqdm
 
@@ -43,15 +43,15 @@ class Ollama(Traducteur):
         if model in [None, [], ""] or self.server_mode:
             gr.Warning(i18n('You must specify the model!'))
             return None
-        rc_open_window(f"ollama stop {model} && exit")
+        rc_bg(f"ollama stop {model}") # && exit
 
-    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, no_think, file_name: str = ""):
+    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, no_think, file_name: str = "") -> tuple[list[list[str]],str]:
         num_history = int(num_history)
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
         if model_name in [None, [], ""]:
             raise ValueError(i18n('You must specify the model!'))
-        ret = []
+        ret:list[list[str]] = []
         msg = ""
         request_data = {
             "model": model_name,

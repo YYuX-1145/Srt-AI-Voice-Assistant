@@ -11,7 +11,7 @@ import shutil
 import numpy as np
 from collections import defaultdict
 from . import logger, i18n
-from.base_component import Base_Component
+
 
 current_path = os.environ.get("current_path")
 
@@ -58,16 +58,6 @@ gradio_hf_hub_themes = [
 ]
 
 
-class Shared_Options:
-
-    def __init__(self, key: str, default_value: Any, gr_component_type: gr.components, validator: Callable = None, **gr_kwargs):
-        self.key = key
-        self.default_value = default_value
-        self.gr_component_type = gr_component_type
-        self.validator = validator
-        self.gr_kwargs = gr_kwargs
-
-
 class Settings:
     def __init__(
         self,
@@ -85,7 +75,6 @@ class Settings:
         num_edit_rows: int = 7,
         export_spk_pattern: str = "",
         theme: str = "default",
-        # ollama_url: str = "http://localhost:11434",
         shared_opts: dict = dict(),
         **kwargs,
     ):
@@ -103,7 +92,6 @@ class Settings:
         self.num_edit_rows = max(int(num_edit_rows), 1)
         self.export_spk_pattern = export_spk_pattern
         self.theme = theme
-        # self.ollama_url = ollama_url
         self.shared_opts = shared_opts
 
     def query(self, key: str, default=None):
@@ -137,6 +125,36 @@ def load_cfg():
     else:
         config = Settings()
     return config
+
+
+class Shared_Options:
+
+    def __init__(self, key: str, default_value: Any, gr_component_type: gr.components, validator: Callable[[Any, Settings], Any]|None = None, **gr_kwargs):
+        """
+        Example:
+            def validate_path(value,config):
+                # (Optional) define a validator function, throwing exceptions is acceptable here.
+                # You can access shared options via config.
+                if not os.path.isfile(value):
+                    value = ""
+                return value    # must return modified value.
+
+            Shared_Options(
+                "gsv_pydir",        # key
+                "",                 # default value
+                gr.Textbox,         # gradio component type
+                validate_path,    # function
+
+                # These keyword arguments below will be passed to the class constructors of gr.components
+                label=i18n('Python Interpreter Path for GPT-SoVITS'),
+                interactive=True,
+            )
+        """
+        self.key = key
+        self.default_value = default_value
+        self.gr_component_type = gr_component_type
+        self.validator = validator
+        self.gr_kwargs = gr_kwargs
 
 
 def rm_workspace(name):
@@ -176,8 +194,11 @@ def restart():
         os.system(f"taskkill /PID {os.getpid()} /F && exit")
 
 
+from .base_component import Base_Component
+
+
 class Settings_Manager:
-    def __init__(self, components: dict[int:dict[str:Base_Component]]):
+    def __init__(self, components: dict[int : dict[str:Base_Component]]):
         self.components = components
         self.ui = False
         self.shared_opts_info: list[str] = []
@@ -211,7 +232,7 @@ class Settings_Manager:
                 try:
                     i.update_cfg(config=Sava_Utils.config)
                 except:
-                    name = i.dirname if hasattr(i,"dirname") else str(type(i))
+                    name = i.dirname if hasattr(i, "dirname") else str(type(i))
                     logger.error(f"Failed to apply config to component: {name}")
                     traceback.print_exc()
 

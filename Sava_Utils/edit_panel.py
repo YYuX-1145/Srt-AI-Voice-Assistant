@@ -5,6 +5,7 @@ import re
 from . import i18n
 from itertools import islice
 from .subtitle import Subtitles, Subtitle
+from .tts_engines import TTS_UI_LOADER
 import Sava_Utils
 
 current_path = os.environ.get("current_path")
@@ -18,13 +19,9 @@ def load_page(subtitle_list, target_index=1):
         value = target_index
     return gr.update(minimum=1, maximum=length if length > 0 else 1, interactive=True, value=value), *show_page(value, subtitle_list)
 
-BTN_VISIBLE_DICT = {
-    "bv2": [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)],
-    "gsv": [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
-    "mstts": [gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)],
-    "custom": [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)],
-    None: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
-}
+
+BTN_VISIBLE_DICT = TTS_UI_LOADER.get_btn_visible_dict()
+NUM_PROJ = len(TTS_UI_LOADER.components)
 
 
 def show_page(page_start, subtitle_list: Subtitles):
@@ -50,14 +47,14 @@ def show_page(page_start, subtitle_list: Subtitles):
         ret.append(gr.update(value="None", interactive=False, visible=False))
         ret.append(gr.update(value="NO INFO", interactive=False, visible=False))
         ret += btn
-    ret += btn  # all regen btn*4
+    ret += btn  # all regen btn
     return ret
 
 
 def load_single_line(subtitle_list: Subtitles, index):  # with page slider
     ret = [gr.update()]
     i = int(index)
-    if i >=0 and i<len(subtitle_list):
+    if i >= 0 and i < len(subtitle_list):
         ret.append(gr.update(value=i, visible=False))
         ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
         ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
@@ -74,8 +71,8 @@ def load_single_line(subtitle_list: Subtitles, index):  # with page slider
     return ret
 
 
-def play_audio(idx, subtitle_list:Subtitles):
-    i = int(idx)        
+def play_audio(idx, subtitle_list: Subtitles):
+    i = int(idx)
     if i == -1 or not subtitle_list.dir:
         gr.Info(i18n('Not available!'))
         return None
@@ -234,7 +231,7 @@ def apply_spkmap2workspace(spk_map: dict, page, subtitles: Subtitles):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n("There is no subtitle in the current workspace"))
         return show_page(page, Subtitles())
-    spk_dict = {key:value for key,value in spk_map.items() if key!=value}
+    spk_dict = {key: value for key, value in spk_map.items() if key != value}
     for i in subtitles:
         key = i.speaker if i.speaker else "None"
         if key in spk_dict:
@@ -276,7 +273,7 @@ def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_ind
         return *ck, *load_page(Subtitles())
     if text_to_find == '':
         gr.Warning(i18n('You must enter the text to find.'))
-        return *ck, *[gr.update() for _ in range(10 * Sava_Utils.config.num_edit_rows + 1 + 4)]
+        return *ck, *[gr.update() for _ in range((6 + NUM_PROJ) * Sava_Utils.config.num_edit_rows + 1 + NUM_PROJ)]
     current_index = real_index_list[checkbox_list.index(True)] if any(checkbox_list) else real_index_list[0] - 1
     if enable_re:
         try:
@@ -286,7 +283,7 @@ def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_ind
             return *ck, *load_page(subtitles, 1)
     else:
         pat = text_to_find
-    for index, item in enumerate(islice(subtitles,current_index + 1,None), current_index + 1):
+    for index, item in enumerate(islice(subtitles, current_index + 1, None), current_index + 1):
         if match_text(item.text, pat):
             next_index = index
             ck[next_index % Sava_Utils.config.num_edit_rows] = True
@@ -300,19 +297,19 @@ def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_ind
     return *ck, *load_page(subtitles, 1)
 
 
-def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, exec_code:str, enable_re: bool, page_index:int=1):
+def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_text: str, exec_code: str, enable_re: bool, page_index: int = 1):
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return load_page(Subtitles())
     if find_text_expression == '':
         gr.Warning(i18n('You must enter the text to find.'))
         return load_page(subtitles, page_index)
-    replaced=[]
+    replaced = []
     if enable_re:
         try:
             pat = re.compile(find_text_expression)
             LEN = len(subtitles)
-            for i,item in enumerate(reversed(subtitles)):
+            for i, item in enumerate(reversed(subtitles)):
                 index = LEN - i - 1
                 item.text, count = pat.subn(target_text, item.text)
                 if count != 0:
@@ -326,7 +323,7 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
     else:
         LEN = len(subtitles)
         for i, item in enumerate(reversed(subtitles)):
-            index =  LEN - i - 1
+            index = LEN - i - 1
             x = item.text.replace(find_text_expression, target_text)
             if item.text != x:
                 item.text = x

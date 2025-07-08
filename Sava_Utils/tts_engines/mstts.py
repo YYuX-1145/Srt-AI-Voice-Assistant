@@ -1,4 +1,5 @@
 from . import TTSProjet
+from ..settings import Settings,Shared_Options
 import os
 import re
 import json
@@ -11,20 +12,52 @@ current_path = os.environ.get("current_path")
 
 
 class MSTTS(TTSProjet):
-    def __init__(self, config):
+    def __init__(self):
         self.ms_access_token = None
         self.ms_speaker_info = None
         self.cfg_ms_region = None
         self.cfg_ms_key = None
         self.ms_lang_option = ""
-        super().__init__("mstts", config)
+        super().__init__("Azure-TTS(Microsoft)", title="Azure-TTS(Microsoft)")
         self.ms_refresh()
 
     def update_cfg(self, config):
-        self.cfg_ms_region = config.ms_region
-        self.cfg_ms_key = config.ms_key
-        self.ms_lang_option = config.ms_lang_option
+        self.cfg_ms_region = config.query("ms_region")
+        self.cfg_ms_key = config.query("ms_key")
+        self.ms_lang_option = config.query("ms_lang_option")
         super().update_cfg(config)
+
+    def register_settings(self):
+        options = []
+        options.append(
+            Shared_Options(
+                "ms_region",
+                "",
+                gr.Textbox,
+                label="Server Region",
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "ms_key",
+                "",
+                gr.Textbox,
+                label=i18n('API=KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Options(
+                "ms_lang_option",
+                "",
+                gr.Textbox,
+                label=i18n('Select required languages, separated by commas or spaces.'),
+                interactive=True,
+                placeholder="zh en",
+            )
+        )
+        return options
 
     def getms_speakers(self):
         # if not os.path.exists(os.path.join(current_path,"SAVAdata", "ms_speaker_info.json")):
@@ -115,29 +148,28 @@ class MSTTS(TTSProjet):
             return None
 
     def _UI(self):
-        with gr.TabItem("Azure-TTS(Microsoft)"):
-            with gr.Column():
-                self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
-                if self.ms_speaker_info == {}:
-                    self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                    self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                else:
-                    choices = list(self.ms_speaker_info.keys())
-                    self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=choices[0], choices=choices, allow_custom_value=False, interactive=True)
-                    choices = list(self.ms_speaker_info[choices[0]].keys())
-                    self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=choices, allow_custom_value=False, interactive=True)
-                    del choices
-                with gr.Row():
-                    self.ms_style = gr.Dropdown(label=i18n('Style'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                    self.ms_role = gr.Dropdown(label=i18n('Role'), value=None, choices=[], allow_custom_value=False, interactive=True)
-                self.ms_speed = gr.Slider(minimum=0.2, maximum=2, step=0.01, label=i18n('Speed'), value=1, interactive=True)
-                self.ms_pitch = gr.Slider(minimum=0.5, maximum=1.5, step=0.01, label=i18n('Pitch'), value=1, interactive=True)
-                gr.Markdown(value=i18n('MSTTS_NOTICE'))
-                self.gen_btn3 = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
-                self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
-                self.ms_languages.change(self.display_ms_spk, inputs=[self.ms_languages], outputs=[self.ms_speaker])
-                self.ms_speaker.change(self.display_style_role, inputs=[self.ms_languages, self.ms_speaker], outputs=[self.ms_style, self.ms_role])
-                MSTTS_ARGS = [self.ms_languages, self.ms_speaker, self.ms_style, self.ms_role, self.ms_speed, self.ms_pitch]
+        with gr.Column():
+            self.ms_refresh_btn = gr.Button(value=i18n('Refresh speakers list'), variant="secondary")
+            if self.ms_speaker_info == {}:
+                self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=None, choices=[], allow_custom_value=False, interactive=True)
+                self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=[], allow_custom_value=False, interactive=True)
+            else:
+                choices = list(self.ms_speaker_info.keys())
+                self.ms_languages = gr.Dropdown(label=i18n('Choose Language'), value=choices[0], choices=choices, allow_custom_value=False, interactive=True)
+                choices = list(self.ms_speaker_info[choices[0]].keys())
+                self.ms_speaker = gr.Dropdown(label=i18n('Choose Your Speaker'), value=None, choices=choices, allow_custom_value=False, interactive=True)
+                del choices
+            with gr.Row():
+                self.ms_style = gr.Dropdown(label=i18n('Style'), value=None, choices=[], allow_custom_value=False, interactive=True)
+                self.ms_role = gr.Dropdown(label=i18n('Role'), value=None, choices=[], allow_custom_value=False, interactive=True)
+            self.ms_speed = gr.Slider(minimum=0.2, maximum=2, step=0.01, label=i18n('Speed'), value=1, interactive=True)
+            self.ms_pitch = gr.Slider(minimum=0.5, maximum=1.5, step=0.01, label=i18n('Pitch'), value=1, interactive=True)
+            gr.Markdown(value=i18n('MSTTS_NOTICE'))
+            self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+            self.ms_refresh_btn.click(self.ms_refresh, outputs=[self.ms_languages])
+            self.ms_languages.change(self.display_ms_spk, inputs=[self.ms_languages], outputs=[self.ms_speaker])
+            self.ms_speaker.change(self.display_style_role, inputs=[self.ms_languages, self.ms_speaker], outputs=[self.ms_style, self.ms_role])
+            MSTTS_ARGS = [self.ms_languages, self.ms_speaker, self.ms_style, self.ms_role, self.ms_speed, self.ms_pitch]
         return MSTTS_ARGS
 
     def save_action(self, *args, text: str = None):
@@ -152,7 +184,7 @@ class MSTTS(TTSProjet):
             assert self.ms_access_token is not None, i18n('Failed to obtain access token from Microsoft.')
 
     def arg_filter(self, *args):
-        input_file, fps, offset, workers, ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch = args
+        ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch = args
         if ms_speaker in [None, "", []]:
             gr.Info(i18n('Please Select Your Speaker!'))
             raise Exception(i18n('Please Select Your Speaker!'))
@@ -160,8 +192,7 @@ class MSTTS(TTSProjet):
             gr.Warning(i18n('Please fill in your key!'))
             raise Exception(i18n('Please fill in your key!'))
         pargs = (ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch)
-        kwargs = {'in_files': input_file, 'fps': fps, 'offset': offset, 'proj': "mstts", 'max_workers': workers}
-        return pargs, kwargs
+        return pargs
 
     def ms_refresh(self):  # language
         self.getms_speakers()

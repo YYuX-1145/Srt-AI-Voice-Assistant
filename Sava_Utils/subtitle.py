@@ -9,7 +9,7 @@ import shutil
 import Sava_Utils
 import copy
 from . import logger, i18n
-from .librosa_load import load_audio
+from .audio_utils import load_audio
 
 current_path = os.environ.get("current_path")
 MAX_TIMESTAMP = 18000

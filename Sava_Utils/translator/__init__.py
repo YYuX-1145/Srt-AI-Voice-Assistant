@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from ..base_componment import Base_Componment
+from ..base_component import Base_Component
 import re
 
-class Traducteur(Base_Componment):
+class Traducteur(Base_Component):
     def __init__(self, name, config=None):
         self.name = name
-        self.args = []
-        super().__init__(config)
+        super().__init__(name, config=config)
 
     def update_cfg(self, config):
         super().update_cfg(config)

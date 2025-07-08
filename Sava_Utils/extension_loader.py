@@ -6,7 +6,7 @@ from . import i18n, logger, MANUAL
 from . import utils
 from .tts_engines import Base_Componment, TTSProjet
 from .translator import Traducteur
-from .settings import Settings,Shared_Options
+from .settings import Settings, Shared_Options
 
 current_path = os.environ.get("current_path")
 
@@ -23,7 +23,7 @@ def _load_package_from_dir(dir_path: str):
     return module
 
 
-def load_ext_from_dir(roots: list[str], ext_enabled_dict:dict[str:bool]):
+def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]):
     loaded_ext = []
     for extension_root in roots:
         if not os.path.isdir(extension_root):
@@ -44,13 +44,13 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict:dict[str:bool]):
                         "current_path": current_path,
                         "Base_Componment": Base_Componment,
                         "TTSProjet": TTSProjet,
-                        "Traducteur":Traducteur,
+                        "Traducteur": Traducteur,
                         "utils": utils,
                         "i18n": i18n,
                         "MANUAL": MANUAL,
                         "logger": logger,
                         "Settings": Settings,
-                        "Shared_Options":Shared_Options,
+                        "Shared_Options": Shared_Options,
                     },
                 )
                 assert extension_instance is not None

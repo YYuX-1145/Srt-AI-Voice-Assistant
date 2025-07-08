@@ -125,8 +125,8 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
 
 def generate_preprocess(interrupt_event, *args, project=None):
     try:
-        in_file, fps, offset, max_workers = args[:4]
-        args = Projet_dict[project].arg_filter(*args[4:])
+        in_file, fps, offset, max_workers = args[: len(BASE_ARGS)]
+        args = Projet_dict[project].arg_filter(*args[ len(BASE_ARGS):])
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': project, 'max_workers': max_workers}
     except Exception as e:
         info = f"{i18n('An error occurred')}: {str(e)}"
@@ -142,7 +142,7 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
     if subtitles is None or len(subtitles) == 0:
         gr.Info(i18n('There is no subtitle in the current workspace'))
         return *show_page(page, Subtitles()), None
-    proj_args = (None, *args)
+    proj_args = args[3:]
     if remake:
         todo = [i for i in subtitles if not i.is_success]
     else:
@@ -184,7 +184,7 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
             args = info["raw_data"]
             project = info["project"]
         try:
-            args, kwargs = Projet_dict[project].arg_filter(*args)
+            args = Projet_dict[project].arg_filter(*args)
             Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
         except Exception as e:
             ok = False
@@ -270,7 +270,7 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
 def remake(*args):
     fp = None
     page, idx, timestamp, s_txt, subtitle_list = args[:5]
-    args = args[1:]
+    args = args[5:]
     idx = int(idx)
     if idx == -1:
         gr.Info(i18n('Not available!'))
@@ -293,7 +293,7 @@ def remake(*args):
                 info = pickle.load(f)
             args = info["raw_data"]
             proj = info["project"]
-            args, kwargs = Projet_dict[proj].arg_filter(*args)
+            args = Projet_dict[proj].arg_filter(*args)
         except KeyError:
             logger.error(f"{i18n('TTS engine not found')}: {proj}")
             gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
@@ -310,7 +310,7 @@ def remake(*args):
         # args = [None, *args]  # ~~fill data~~
         try:
             proj = subtitle_list.proj
-            args, kwargs = Projet_dict[proj].arg_filter(*args)
+            args = Projet_dict[proj].arg_filter(*args)
         except KeyError:
             logger.error(f"{i18n('TTS engine not found')}: {proj}")
             gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
@@ -345,7 +345,6 @@ def save_spk(name: str, *args, project: str):
     if name in ["", [], None, 'None']:
         gr.Info(i18n('Please enter a valid name!'))
         return getspklist()
-    args = [None, None, None, None, *args]
     # catch all arguments
     # process raw data before generating
     try:
@@ -534,8 +533,9 @@ if __name__ == "__main__":
 
         update_spkmap_btn_upload.click(get_speaker_map_from_file, inputs=[input_file], outputs=[speaker_map_set, speaker_map_dict])
         update_spkmap_btn_current.click(get_speaker_map_from_sub, inputs=[STATE], outputs=[speaker_map_set, speaker_map_dict])
-        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, use_labled_text_mode, speaker_map_dict, fps, offset], outputs=[worklist, page_slider, *edit_rows, STATE])
-        TTS_UI_LOADER.activate([INTERRUPT_EVENT, input_file, fps, offset, workers], [audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE], generate_preprocess)
+        create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, fps, offset, use_labled_text_mode, speaker_map_dict], outputs=[worklist, page_slider, *edit_rows, STATE])
+        BASE_ARGS = [input_file, fps, offset, workers]
+        TTS_UI_LOADER.activate([INTERRUPT_EVENT, *BASE_ARGS], [audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE], generate_preprocess)
 
     app.queue(default_concurrency_limit=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
         share=args.share,

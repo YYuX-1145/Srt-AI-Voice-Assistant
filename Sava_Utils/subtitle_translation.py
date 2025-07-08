@@ -6,7 +6,7 @@ import Sava_Utils
 from . import i18n, logger, ext_tab
 from .subtitle import Subtitle, Subtitles
 from .utils import read_file, basename_no_ext
-from .base_componment import Base_Componment
+from .base_component import Base_Component
 from .translator.ollama import Ollama
 from . import extension_loader
 
@@ -53,7 +53,7 @@ def merge_uploaded_sub(filelist_sup: list, filelist_inf: list, output_dir: str):
     return ret, "OK"
 
 
-class Translation_module(Base_Componment):
+class Translation_module(Base_Component):
     def __init__(self):
         self.ui = False
         OLLAMA = Ollama()

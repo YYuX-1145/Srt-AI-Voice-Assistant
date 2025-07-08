@@ -11,6 +11,7 @@ import shutil
 import numpy as np
 from collections import defaultdict
 from . import logger, i18n
+from.base_component import Base_Component
 
 current_path = os.environ.get("current_path")
 
@@ -176,7 +177,7 @@ def restart():
 
 
 class Settings_Manager:
-    def __init__(self, components: list):
+    def __init__(self, components: dict[int:dict[str:Base_Component]]):
         self.components = components
         self.ui = False
         self.shared_opts_info: list[str] = []
@@ -184,7 +185,7 @@ class Settings_Manager:
 
         # get default value and set up validators
         default_shared_opts: dict[str:Any] = dict()
-        for lst in [self.components[1], list(self.components[2][0].TRANSLATORS.values()), self.components[3]]:
+        for lst in [self.components[1].values(), list(self.components[2]["translation_module"].TRANSLATORS.values()), self.components[3].values()]:
             for item in lst:
                 for opt in item.register_settings():
                     if opt.key in default_shared_opts:
@@ -206,7 +207,7 @@ class Settings_Manager:
 
     def _apply_to_components(self):
         for item in self.components.values():
-            for i in item:
+            for i in item.values():
                 try:
                     i.update_cfg(config=Sava_Utils.config)
                 except:
@@ -240,9 +241,9 @@ class Settings_Manager:
     def get_ext_tab(self):
         rows = []
         comp_dict = {
-            "tts_engine": [i.dirname for i in self.components[1] if hasattr(i, "dirname")],
-            "translator": [i.dirname for i in self.components[2][0].TRANSLATORS.values() if hasattr(i, "dirname")],
-            "extension": [i.dirname for i in self.components[3] if hasattr(i, "dirname")],
+            "tts_engine": [i.dirname for i in self.components[1].values() if hasattr(i, "dirname")],
+            "translator": [i.dirname for i in self.components[2]["translation_module"].TRANSLATORS.values() if hasattr(i, "dirname")],
+            "extension": [i.dirname for i in self.components[3].values() if hasattr(i, "dirname")],
         }
         config_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
@@ -341,9 +342,9 @@ class Settings_Manager:
 
         with gr.TabItem(i18n('Submodule Settings')):
             EXT_POINTER = {
-                "tts_engine": self.components[1],
-                "translator": self.components[2][0].TRANSLATORS.values(),
-                "extension": self.components[3],
+                "tts_engine": self.components[1].values(),
+                "translator": self.components[2]["translation_module"].TRANSLATORS.values(),
+                "extension": self.components[3].values(),
             }
             for ext_type in EXT_TYPES:
                 with gr.TabItem(EXT_TYPES_TITLE[ext_type]):

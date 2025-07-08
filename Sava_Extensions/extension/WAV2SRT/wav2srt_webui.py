@@ -21,7 +21,7 @@ def flatten(lst):
             yield item
 
 
-class WAV2SRT(Base_Componment):
+class WAV2SRT(Base_Component):
     def __init__(self):
         self.gsv_pydir = ""
         self.gsv_dir = ""
@@ -35,7 +35,7 @@ class WAV2SRT(Base_Componment):
     def _UI(self, global_components):
         file_main = global_components["main_menu"]["file_input"]
         worklist= global_components["main_menu"]["work_space_list"]
-        TR_MODULE = global_components["components"][2][0]
+        TR_MODULE = global_components["components"][2]["translation_module"]
         if os.path.exists(os.path.join(current_path, "tools", "wav2srt.py")):
             with gr.Row():
                 self.wav2srt_pid = gr.State(value=-1)

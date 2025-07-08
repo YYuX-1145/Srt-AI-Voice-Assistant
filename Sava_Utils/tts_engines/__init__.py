@@ -1,11 +1,11 @@
-from ..base_componment import Base_Componment
+from ..base_component import Base_Component
 from abc import ABC, abstractmethod
 import traceback
 from .. import i18n, logger, ext_tab
 import gradio as gr
 
 
-class TTSProjet(Base_Componment):
+class TTSProjet(Base_Component):
 
     def __init__(self, name, title=None, config=None):
         self.gen_btn = None
@@ -39,7 +39,7 @@ from . import gsv, mstts
 from .. import extension_loader
 
 
-class TTS_UI_Loader(Base_Componment):
+class TTS_UI_Loader(Base_Component):
     def __init__(self):
         # BV2 = bv2.BV2(Sava_Utils.config)
         GSV = gsv.GSV()

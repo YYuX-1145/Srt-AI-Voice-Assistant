@@ -40,9 +40,9 @@ POLYPHONE = Polyphone()
 
 TTS_Engine_dict = TTS_UI_LOADER.project_dict
 COMPONENTS = {
-    1: TTS_UI_LOADER.components,
-    2: [TRANSLATION_MODULE, POLYPHONE],
-    3: EXTENTION_LOADER.components,
+    1: TTS_UI_LOADER.project_dict,
+    2: {"translation_module": TRANSLATION_MODULE, "polyphone_editor": POLYPHONE},
+    3: EXTENTION_LOADER.extension_dict,
 }
 SETTINGS = Sava_Utils.settings.Settings_Manager(components=COMPONENTS)
 
@@ -505,7 +505,7 @@ if __name__ == "__main__":
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(lambda process=gr.Progress(track_tqdm=True), *args: gen_multispeaker(*args), inputs=[INTERRUPT_EVENT, page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
-                for i in COMPONENTS[2]:
+                for i in COMPONENTS[2].values():
                     i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
                 global_comp = {

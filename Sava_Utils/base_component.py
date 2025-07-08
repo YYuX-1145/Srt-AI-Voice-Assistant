@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Base_Componment(ABC):
+class Base_Component(ABC):
     _instances = {}
 
     def __init__(self, name = "", title = "", config=None):

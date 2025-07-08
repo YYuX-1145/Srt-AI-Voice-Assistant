@@ -1,4 +1,4 @@
-from .base_componment import Base_Componment
+from .base_component import Base_Component
 from .settings import Settings
 from . import i18n
 import gradio as gr
@@ -27,7 +27,7 @@ READ_FN = {"ZH": read_fn_zh, "EN": lambda x: [i.strip() for i in x.split(' ', 1)
 WRITE_FN = {"ZH": lambda x, y: f"{x}: {str(y.split())}\n", "EN": lambda x, y: f"{x} {y}\n"}
 
 
-class Polyphone(Base_Componment):
+class Polyphone(Base_Component):
     def __init__(self):
         super().__init__()
 

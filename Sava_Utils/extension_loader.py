@@ -5,7 +5,7 @@ import gradio as gr
 import importlib.util
 from . import i18n, logger, MANUAL, ext_tab
 from . import utils
-from .tts_engines import Base_Componment, TTSProjet
+from .tts_engines import Base_Component, TTSProjet
 from .translator import Traducteur
 from .settings import Settings, Shared_Options
 
@@ -24,7 +24,7 @@ def _load_package_from_dir(dir_path: str):
     return module
 
 
-def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> list[Base_Componment]:
+def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> list[Base_Component]:
     loaded_ext = []
     for extension_root in roots:
         if not os.path.isdir(extension_root):
@@ -43,7 +43,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                 extension_instance = module.register(
                     {
                         "current_path": current_path,
-                        "Base_Componment": Base_Componment,
+                        "Base_Component": Base_Component,
                         "TTSProjet": TTSProjet,
                         "Traducteur": Traducteur,
                         "utils": utils,
@@ -65,7 +65,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
     return loaded_ext
 
 
-class Extension_Loader(Base_Componment):
+class Extension_Loader(Base_Component):
     def __init__(self):
         self.components = load_ext_from_dir(["Sava_Extensions/extension"], ext_enabled_dict=ext_tab["extension"])
         self.extension_dict = {i.name: i for i in self.components}

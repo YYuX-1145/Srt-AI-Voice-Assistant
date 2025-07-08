@@ -24,7 +24,7 @@ def _load_package_from_dir(dir_path: str):
     return module
 
 
-def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]):
+def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> list[Base_Componment]:
     loaded_ext = []
     for extension_root in roots:
         if not os.path.isdir(extension_root):

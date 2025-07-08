@@ -29,7 +29,7 @@ WRITE_FN = {"ZH": lambda x, y: f"{x}: {str(y.split())}\n", "EN": lambda x, y: f"
 
 class Polyphone(Base_Componment):
     def __init__(self):
-        super().__init__(None)
+        super().__init__()
 
     def update_cfg(self, config:Settings):
         self.gsv_dir = config.query("gsv_dir","")

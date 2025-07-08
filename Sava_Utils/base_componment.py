@@ -4,9 +4,11 @@ from abc import ABC, abstractmethod
 class Base_Componment(ABC):
     _instances = {}
 
-    def __init__(self, config=None):
+    def __init__(self, name = "", title = "", config=None):
         self.ui = False
         self.server_mode = False
+        self.name = name
+        self.title = title if title else name
         if config is not None:
             self.update_cfg(config)
         super().__init__()

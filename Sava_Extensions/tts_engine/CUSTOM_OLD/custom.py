@@ -8,10 +8,10 @@ current_path = os.environ.get("current_path")
 
 
 class Custom(TTSProjet):
-    def __init__(self, config=None):
+    def __init__(self):
         self.custom_api_list = []
         self.refresh_custom_api_list()
-        super().__init__("custom", config, title=i18n('Custom API'))
+        super().__init__("custom", title=i18n('Custom API'))
 
     def api(self, func, text):
         return func(text)
@@ -28,7 +28,7 @@ class Custom(TTSProjet):
 
     def arg_filter(self, *args):
         custom_api = args
-        if isinstance(custom_api ,tuple):
+        if isinstance(custom_api, tuple):
             custom_api = custom_api[0]
         if custom_api in [None, 'None', '']:
             gr.Info(i18n('Please select a valid custom API code file!'))

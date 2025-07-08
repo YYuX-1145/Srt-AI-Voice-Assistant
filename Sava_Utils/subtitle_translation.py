@@ -61,6 +61,7 @@ class Translation_module(Base_Componment):
             self.TRANSLATORS[ext.name] = ext
         self.config = None
         self.menu = []
+        super().__init__()
 
     def update_cfg(self, config):
         self.config = config

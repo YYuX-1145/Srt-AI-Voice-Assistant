@@ -18,7 +18,7 @@ class MSTTS(TTSProjet):
         self.cfg_ms_region = None
         self.cfg_ms_key = None
         self.ms_lang_option = ""
-        super().__init__("Azure-TTS(Microsoft)", None, title="Azure-TTS(Microsoft)")
+        super().__init__("Azure-TTS(Microsoft)", title="Azure-TTS(Microsoft)")
         self.ms_refresh()
 
     def update_cfg(self, config):

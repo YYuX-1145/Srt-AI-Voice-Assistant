@@ -6,7 +6,7 @@ class Traducteur(Base_Componment):
     def __init__(self, name, config=None):
         self.name = name
         self.args = []
-        super().__init__(config)
+        super().__init__(name, config=config)
 
     def update_cfg(self, config):
         super().update_cfg(config)

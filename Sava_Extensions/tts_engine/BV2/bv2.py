@@ -7,7 +7,7 @@ from . import *
 
 class BV2(TTSProjet):
     def __init__(self):
-        super().__init__("Bert-VITS2", None, title="Bert-VITS2-HiyoriUI")
+        super().__init__("Bert-VITS2", "Bert-VITS2-HiyoriUI", None)
 
     def update_cfg(self, config: Settings):
         self.bv2_dir = config.query("bv2_dir")
@@ -20,13 +20,14 @@ class BV2(TTSProjet):
             if self.bv2_pydir == "":
                 gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
                 return
-            api_path = os.path.join(self.bv2_dir,"hiyoriUI.py")
-            command = f'"{self.bv2_pydir}" "{api_path}" {self.bv2_args}'            
+            api_path = os.path.join(self.bv2_dir, "hiyoriUI.py")
+            command = f'"{self.bv2_pydir}" "{api_path}" {self.bv2_args}'
             if not os.path.exists(api_path):
                 raise gr.Error(f'File NOT Found: {api_path}')
             utils.rc_open_window(command=command, dir=self.bv2_dir)
             time.sleep(0.1)
             gr.Info(f"HiyoriUI{i18n(' has been launched, please ensure the configuration is correct.')}")
+
         start_hiyoriui_btn = gr.Button(value="HiyoriUI")
         start_hiyoriui_btn.click(start_hiyoriui)
 

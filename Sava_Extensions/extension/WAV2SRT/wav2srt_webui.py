@@ -22,10 +22,10 @@ def flatten(lst):
 
 
 class WAV2SRT(Base_Componment):
-    def __init__(self, config):
+    def __init__(self):
         self.gsv_pydir = ""
         self.gsv_dir = ""
-        super().__init__(config)
+        super().__init__(name="wav2srt", title="i18n('Audio/Video Transcribe')")
 
     def update_cfg(self, config):
         self.gsv_pydir = config.gsv_pydir

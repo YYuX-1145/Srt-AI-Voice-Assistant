@@ -6,12 +6,10 @@ import gradio as gr
 
 class TTSProjet(Base_Componment):
 
-    def __init__(self, name, config=None, title=None):
-        self.name = name
-        self.title = title if title else name
+    def __init__(self, name, title=None, config=None):
         self.gen_btn = None
         self.args = []
-        super().__init__(config)
+        super().__init__(name, title, config)
 
     @abstractmethod
     def api(self, *args, **kwargs):

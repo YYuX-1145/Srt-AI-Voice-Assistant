@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 
 class Ollama(Traducteur):
-    def __init__(self, config=None):
+    def __init__(self):
         self.models = []
-        super().__init__("Ollama", config)
+        super().__init__("Ollama")
 
     def update_cfg(self, config):
         self.ollama_url = config.query("ollama_url", "")

@@ -107,7 +107,23 @@ i18n_dict = {
     "Subtitles have not been synthesized yet!": "还未合成任何字幕！",
     "The following subtitles are delayed due to the previous audio being too long.": "以下字幕由于之前的音频过长而被延迟",
     "Failed to synthesize the following subtitles or they were not synthesized": "以下字幕合成失败或未合成",
+    # Ext loader
+    "Loaded extension": "成功加载扩展",
+    "Failed to load extension": "扩展加载失败",
+    "Failed to load TTS-Engine UI": "TTS引擎扩展UI加载失败",
+    "Failed to load Extension UI": "扩展UI加载失败",
+    "Failed to load Translator UI": "翻译器扩展UI加载失败",
     # Settings
+    "TTS Engine": "TTS引擎",
+    "Translator": "翻译器",
+    "Extensions": "扩展",
+    "Failed to apply settings to component": "无法将设置应用到扩展",
+    "Running": "运行中",
+    "Extension Management": "插件管理",
+    "Name": "名称",
+    "Type": "类型",
+    "Status": "状态",
+    "Enabled": "启用",
     "Failed to load settings, reset to default": "设置加载失败，恢复默认",
     "was removed successfully.": "成功删除",
     "Error, Invalid Path": "错误，无效的路径",
@@ -286,7 +302,7 @@ i18n_dict = {
     "Background audio (optional, override the original video audio)": "背景音(可选，覆盖原视频声音)",
     "Dubbed audio path": "配音音频路径",
     "Start Merging Video": "合并视频",
-    "You must specify the original video along with audio or subtitles.":"你必须上传原视频，以及硬字幕或配音音频！",
+    "You must specify the original video along with audio or subtitles.": "你必须上传原视频，以及硬字幕或配音音频！",
     "WAV2SRT_INFO": """
             ### 本功能可直接用于GPT-SoVITS整合包且需要安装ffmpeg，否则需要自己安装对应依赖。<br>
             """,

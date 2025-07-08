@@ -87,7 +87,7 @@ class TTS_UI_Loader(Base_Component):
                     if not hasattr(i, "gen_btn"):
                         setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
             except:
-                logger.error(f"Failed to load TTS-Engine UI: {i.dirname}")
+                logger.error(f"{i18n('Failed to load TTS-Engine UI')}: {i.dirname}")
                 traceback.print_exc()
 
     def get_launch_api_btn(self):

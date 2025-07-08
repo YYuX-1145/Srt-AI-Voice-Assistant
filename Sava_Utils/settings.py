@@ -233,7 +233,7 @@ class Settings_Manager:
                     i.update_cfg(config=Sava_Utils.config)
                 except:
                     name = i.dirname if hasattr(i, "dirname") else str(type(i))
-                    logger.error(f"Failed to apply config to component: {name}")
+                    logger.error(f"{i18n('Failed to apply settings to component')}: {name}")
                     traceback.print_exc()
 
     def save_settngs(self, *args):
@@ -274,7 +274,7 @@ class Settings_Manager:
         for ext_type in EXT_TYPES:
             os.makedirs(os.path.join(current_path, "Sava_Extensions", ext_type), exist_ok=True)
             for i in [x for x in os.listdir(os.path.join(current_path, "Sava_Extensions", ext_type)) if os.path.isdir(os.path.join(current_path, "Sava_Extensions", ext_type, x))]:
-                rows.append([i, ext_type, "running" if i in comp_dict[ext_type] else "", ext_config[ext_type].get(i, True)])
+                rows.append([i, EXT_TYPES_TITLE[ext_type], i18n('Running') if i in comp_dict[ext_type] else "", ext_config[ext_type].get(i, True)])
         return np.array(rows)
 
     def save_ext_tab(self, tab):
@@ -380,11 +380,11 @@ class Settings_Manager:
                                         self.shared_opts_info.append(c.key)
                                 except Exception as e:
                                     print(e)
-        with gr.TabItem("插件管理"):
+        with gr.TabItem(i18n('Extension Management')):
             ext_mgr_table = gr.Dataframe(
                 value=self.get_ext_tab(),
                 show_label=False,
-                headers=[i18n('名称'), i18n('类型'), i18n('状态'), i18n('启用')],
+                headers=[i18n('Name'), i18n('Type'), i18n('Status'), i18n('Enabled')],
                 column_widths=['40%', '20%', '20%', '20%'],
                 datatype=["str", "str", "str", "bool"],
                 col_count=(4, 'fixed'),

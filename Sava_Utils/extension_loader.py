@@ -61,8 +61,8 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                 assert hasattr(extension_instance, "name")
                 setattr(extension_instance, "dirname", entry)
                 loaded_ext.append(extension_instance)
-                logger.info(f"Loaded extension: {entry}")
-            except Exception as e:
+                logger.info(f"{i18n('Loaded extension')}: {entry}")
+            except:
                 logger.warning(f"Failed to load extension: {entry}")
                 traceback.print_exc()
     return loaded_ext
@@ -81,7 +81,7 @@ class Extension_Loader(Base_Component):
                 with gr.TabItem(i.title):
                     i.getUI(components)
             except:
-                logger.error(f"Failed to load extension UI: {i.dirname}")
+                logger.error(f"{i18n('Failed to load Extension UI')}: {i.dirname}")
                 traceback.print_exc()
 
     def getUI(self, *args, **kwargs):

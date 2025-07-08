@@ -106,6 +106,23 @@ i18n_dict = {
     "Subtitles have not been synthesized yet!": "Aucun sous-titre n'a été synthétisé encore !",
     "The following subtitles are delayed due to the previous audio being too long.": "Les sous-titres suivants sont retardés en raison de la longueur excessive de l'audio précédent.",
     "Failed to synthesize the following subtitles or they were not synthesized": "Les sous-titres suivants n'ont pas pu être synthétisés ou n'ont pas été synthétisés",
+    # Ext loader
+    "Loaded extension": "Extension chargée avec succès",
+    "Failed to load extension": "Échec du chargement de l'extension",
+    "Failed to load TTS-Engine UI": "Échec du chargement de l'interface utilisateur du moteur TTS",
+    "Failed to load Extension UI": "Échec du chargement de l'interface utilisateur de l'extension",
+    "Failed to load Translator UI": "Échec du chargement de l'interface utilisateur du traducteur",
+    # Settings
+    "TTS Engine": "Moteur TTS",
+    "Translator": "Traducteur",
+    "Extensions": "Extensions",
+    "Failed to apply settings to component": "Échec lors de l'application des paramètres à l'extension",
+    "Running": "En exécution",
+    "Extension Management": "Gestion des extensions",
+    "Name": "Nom",
+    "Type": "Type",
+    "Status": "Statut",
+    "Enabled": "Activé",
     # Settings
     "Failed to load settings, reset to default": "Échec du chargement des paramètres du logiciel, réinitialisation aux valeurs par défaut",
     "was removed successfully.": "a été supprimé avec succès.",
@@ -147,7 +164,7 @@ i18n_dict = {
     "Translation Module": "Paramètres du module de traduction",
     "Default Request Address for Ollama": "Adresse de requête par défaut pour Ollama",
     "Apply & Save": "Appliquer et enregistrer les paramètres actuels",
-    "Restart UI": "Redémarrer l'interface utilisateur",
+    "Restart UI": "Redémarrer l'UI",
     # TTS
     "An error has occurred. Please check if the API is running correctly. Details": "Une erreur s'est produite. Veuillez vérifier si l'API fonctionne correctement. Détails de l'erreur",
     "Advanced Parameters": "Paramètres avancés de synthèse",

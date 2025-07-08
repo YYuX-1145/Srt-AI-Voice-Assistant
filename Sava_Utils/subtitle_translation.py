@@ -153,7 +153,7 @@ class Translation_module(Base_Component):
                                 v = False
                                 self.menu.append(tr_ui)
                             except:
-                                logger.error(f"Failed to load Translator UI: {self.TRANSLATORS[translator].dirname}")
+                                logger.error(f"{i18n('Failed to load Translator UI')}: {self.TRANSLATORS[translator].dirname}")
                                 traceback.print_exc()
                     stop_btn = gr.Button(value=i18n('Stop'), variant="stop")
                     stop_btn.click(lambda x: gr.Info(x.set()), inputs=[self.INTERRUPT_EVENT])

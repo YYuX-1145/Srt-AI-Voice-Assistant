@@ -5,7 +5,7 @@ import time
 from . import *
 
 
-class BV2(TTSProjet):
+class BV2(TTSProjet):  # Must inherit from base class.
     def __init__(self):
         super().__init__("Bert-VITS2", "Bert-VITS2-HiyoriUI", None)
 

@@ -21,7 +21,7 @@ def flatten(lst):
             yield item
 
 
-class WAV2SRT(Base_Component):
+class WAV2SRT(Base_Component):  # Must inherit from base class.
     def __init__(self):
         self.gsv_pydir = ""
         self.gsv_dir = ""

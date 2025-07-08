@@ -1,0 +1,12 @@
+{
+  "tts_engine": {
+    "BV2": false,
+    "CUSTOM_OLD": false
+  },
+  "translator": {
+    "Ollama_copy_test": false
+  },
+  "extension": {
+    "WAV2SRT": true
+  }
+}

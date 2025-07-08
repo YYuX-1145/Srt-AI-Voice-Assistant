@@ -232,14 +232,14 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
             # sr=int.from_bytes(audio[24:28],'little')
             filepath = os.path.join(dir, f"{subtitle.index}.wav")
             if Sava_Utils.config.remove_silence:
-                audio, sr = Sava_Utils.librosa_load.load_audio(io.BytesIO(audio))
+                audio, sr = Sava_Utils.audio_utils.load_audio(io.BytesIO(audio))
                 audio = remove_silence(audio, sr)
                 sf.write(filepath, audio, sr)
             else:
                 with open(filepath, 'wb') as file:
                     file.write(audio)
             if Sava_Utils.config.max_accelerate_ratio > 1.0:
-                audio, sr = Sava_Utils.librosa_load.load_audio(filepath)
+                audio, sr = Sava_Utils.audio_utils.load_audio(filepath)
                 target_dur = int(subtitle.end_time - subtitle.start_time) * sr
                 if target_dur > 0 and (audio.shape[-1] - target_dur) > (0.01 * sr):
                     ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)

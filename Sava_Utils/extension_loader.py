@@ -1,8 +1,9 @@
 import os
 import sys
 import traceback
+import gradio as gr
 import importlib.util
-from . import i18n, logger, MANUAL
+from . import i18n, logger, MANUAL, ext_tab
 from . import utils
 from .tts_engines import Base_Componment, TTSProjet
 from .translator import Traducteur
@@ -61,3 +62,15 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]):
                 logger.warning(f"Failed to load extension: {entry}")
                 traceback.print_exc()
     return loaded_ext
+
+
+class Extension_Loader(Base_Componment):
+    def __init__(self):
+        self.components = load_ext_from_dir(["Sava_Extensions/extension"], ext_enabled_dict=ext_tab["extension"])
+        self.extension_dict = {i.name: i for i in self.components}
+        super().__init__()
+
+    def _UI(self, components):
+        for i in self.components:
+            with gr.TabItem(i.title):
+                i.getUI(components)

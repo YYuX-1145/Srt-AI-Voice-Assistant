@@ -176,15 +176,15 @@ def restart():
 
 
 class Settings_Manager:
-    def __init__(self, componments: list):
-        self.componments = componments
+    def __init__(self, components: list):
+        self.components = components
         self.ui = False
         self.shared_opts_info: list[str] = []
         self.shared_opts_validators: dict[str:Callable] = {}
 
         # get default value and set up validators
         default_shared_opts: dict[str:Any] = dict()
-        for lst in [self.componments[1], list(self.componments[2][0].TRANSLATORS.values()), self.componments[3]]:
+        for lst in [self.components[1], list(self.components[2][0].TRANSLATORS.values()), self.components[3]]:
             for item in lst:
                 for opt in item.register_settings():
                     if opt.key in default_shared_opts:
@@ -202,10 +202,10 @@ class Settings_Manager:
             except:
                 Sava_Utils.config.shared_opts[key] = default_shared_opts[key]
                 traceback.print_exc()
-        self._apply_to_componments()
+        self._apply_to_components()
 
-    def _apply_to_componments(self):
-        for item in self.componments.values():
+    def _apply_to_components(self):
+        for item in self.components.values():
             for i in item:
                 i.update_cfg(config=Sava_Utils.config)
 
@@ -226,7 +226,7 @@ class Settings_Manager:
         Sava_Utils.config.save()
         if Sava_Utils.config.num_edit_rows != current_edit_rows:
             Sava_Utils.config.num_edit_rows = current_edit_rows
-        self._apply_to_componments()
+        self._apply_to_components()
         logger.info(i18n('Settings saved successfully!'))
         gr.Info(i18n('Settings saved successfully!'))
         all_vals = list(Sava_Utils.config.to_list()[:-1]) + [Sava_Utils.config.shared_opts[key] for key in self.shared_opts_info]
@@ -235,9 +235,9 @@ class Settings_Manager:
     def get_ext_tab(self):
         rows = []
         comp_dict = {
-            "tts_engine": [i.dirname for i in self.componments[1] if hasattr(i, "dirname")],
-            "translator": [i.dirname for i in self.componments[2][0].TRANSLATORS.values() if hasattr(i, "dirname")],
-            "extension": [i.dirname for i in self.componments[3] if hasattr(i, "dirname")],
+            "tts_engine": [i.dirname for i in self.components[1] if hasattr(i, "dirname")],
+            "translator": [i.dirname for i in self.components[2][0].TRANSLATORS.values() if hasattr(i, "dirname")],
+            "extension": [i.dirname for i in self.components[3] if hasattr(i, "dirname")],
         }
         config_path = os.path.join(current_path, "Sava_Extensions/extensions_config.json")
         if os.path.isfile(os.path.join(current_path, "Sava_Extensions/extensions_config.json")):
@@ -317,7 +317,7 @@ class Settings_Manager:
                             b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
                             b.click(rm_workspace, inputs=[item], outputs=[item, b])
 
-        componments_list = [
+        components_list = [
             self.language,
             self.server_port,
             self.LAN_access,
@@ -336,9 +336,9 @@ class Settings_Manager:
 
         with gr.TabItem(i18n('Submodule Settings')):
             EXT_POINTER = {
-                "tts_engine": self.componments[1],
-                "translator": self.componments[2][0].TRANSLATORS.values(),
-                "extension": self.componments[3],
+                "tts_engine": self.components[1],
+                "translator": self.components[2][0].TRANSLATORS.values(),
+                "extension": self.components[3],
             }
             for ext_type in EXT_TYPES:
                 with gr.TabItem(EXT_TYPES_TITLE[ext_type]):
@@ -349,7 +349,7 @@ class Settings_Manager:
                                 try:
                                     for c in opt_list:
                                         c.gr_kwargs["value"] = Sava_Utils.config.query(c.key, c.default_value)
-                                        componments_list.append(c.gr_component_type(**c.gr_kwargs))
+                                        components_list.append(c.gr_component_type(**c.gr_kwargs))
                                         self.shared_opts_info.append(c.key)
                                 except Exception as e:
                                     print(e)
@@ -369,5 +369,5 @@ class Settings_Manager:
             save_ext_table_btn = gr.Button(i18n('Save'), variant="primary")
             save_ext_table_btn.click(self.save_ext_tab, inputs=[ext_mgr_table], outputs=[ext_mgr_table])
 
-        self.save_settings_btn.click(self.save_settngs, inputs=componments_list, outputs=componments_list)
+        self.save_settings_btn.click(self.save_settngs, inputs=components_list, outputs=components_list)
         self.restart_btn.click(restart, [], [])

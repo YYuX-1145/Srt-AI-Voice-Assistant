@@ -42,12 +42,12 @@ from Sava_Utils.tts_engines import TTS_UI_LOADER
 TRANSLATION_MODULE = Translation_module()
 POLYPHONE = Polyphone()
 Projet_dict = TTS_UI_LOADER.project_dict
-componments = {
+COMPONENTS = {
     1: TTS_UI_LOADER.components,
     2: [TRANSLATION_MODULE, POLYPHONE],
     3: [],
 }
-SETTINGS = Sava_Utils.settings.Settings_Manager(componments=componments)
+SETTINGS = Sava_Utils.settings.Settings_Manager(components=COMPONENTS)
 
 
 # single speaker
@@ -508,13 +508,13 @@ if __name__ == "__main__":
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(lambda process=gr.Progress(track_tqdm=True), *args: gen_multispeaker(*args), inputs=[INTERRUPT_EVENT, page_slider, workers, STATE], outputs=edit_rows + [audio_output])
             with gr.TabItem(i18n('Auxiliary Functions')):
-                for i in componments[2]:
+                for i in COMPONENTS[2]:
                     i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
                 available = False
             #     from Sava_Utils.extern_extensions.wav2srt_webui import WAV2SRT
             #     WAV2SRT = WAV2SRT(Sava_Utils.config)
-            #     componments[3].append(WAV2SRT)
+            #     components[3].append(WAV2SRT)
             #     available = WAV2SRT.getUI(input_file, worklist, TRANSLATION_MODULE)
             #     if not available:
             #         gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")

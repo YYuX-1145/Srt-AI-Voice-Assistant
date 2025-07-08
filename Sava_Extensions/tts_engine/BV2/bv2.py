@@ -32,6 +32,7 @@ class BV2(TTSProjet):
         start_hiyoriui_btn.click(start_hiyoriui)
 
     def arg_filter(self, *args):
+        # actually defining this method is not necessarily here.
         language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text = args
         pargs = (language, port, mid, spkid, speaker_name, sdp_ratio, noise_scale, noise_scale_w, length_scale, emo_text)
         return pargs

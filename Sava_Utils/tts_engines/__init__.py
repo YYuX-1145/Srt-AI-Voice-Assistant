@@ -19,7 +19,10 @@ class TTSProjet(Base_Component):
     def api(self, *args, **kwargs) -> bytes:
         """
         Mandatory. Define the API call code here.
-        Return value must be binary data of a wav file
+        Return value must be binary data of a wav file.
+        Please pay attention to the return type. 
+        If api returns a path, you can use the following example:
+            with open(path, "rb") as f: return f.read()
         """
         raise NotImplementedError
 

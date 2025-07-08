@@ -264,6 +264,7 @@ class WAV2SRT(Base_Component):
                 p = subprocess.run(cmd, cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
             else:
                 p = subprocess.run(' '.join(shlex.quote(c) for c in cmd), cwd=current_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True, encoding='utf-8')
+            assert os.path.isfile(output)
             file_list.append(output)
             msg = 'OK'
         except:

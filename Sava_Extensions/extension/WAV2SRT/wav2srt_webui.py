@@ -1,12 +1,12 @@
 import gradio as gr
-from .. import i18n
-from ..utils import rc_bg, kill_process, basename_no_ext,fix_null,logger
-from ..base_componment import Base_Componment
+from . import *
 import os
 import subprocess
 import platform
+
 if platform.system() != "Windows":
     import shlex
+
 current_path = os.environ.get("current_path")
 OUT_DIR_DEFAULT = os.path.join(current_path, "SAVAdata", "output")
 
@@ -25,69 +25,70 @@ class WAV2SRT(Base_Componment):
     def __init__(self):
         self.gsv_pydir = ""
         self.gsv_dir = ""
-        super().__init__(name="wav2srt", title="i18n('Audio/Video Transcribe')")
+        super().__init__(name="wav2srt", title=i18n('Audio/Video Transcribe'))
 
     def update_cfg(self, config):
-        self.gsv_pydir = config.gsv_pydir
-        self.gsv_dir = config.gsv_dir
+        self.gsv_pydir = config.query("gsv_pydir", "")
+        self.gsv_dir = config.query("gsv_dir", "")
         super().update_cfg(config)
 
-    def _UI(self, file_main, worklist, TR_MODULE):
-        available = False
+    def _UI(self, global_components):
+        file_main = global_components["main_menu"]["file_input"]
+        worklist= global_components["main_menu"]["work_space_list"]
+        TR_MODULE = global_components["components"][2][0]
         if os.path.exists(os.path.join(current_path, "tools", "wav2srt.py")):
-            available = True
-            with gr.TabItem(i18n('Audio/Video Transcribe')):
-                with gr.Row():
-                    self.wav2srt_pid = gr.State(value=-1)
-                    with gr.Column():
-                        self.wav2srt_input = gr.File(label=i18n('Upload File'), file_count="multiple", interactive=True)
-                        self.wav2srt_out_dir = gr.Textbox(value="Default", label=i18n('Save Path(Folder Path), Default: SAVAdata\\output'), visible=not self.server_mode, interactive=not self.server_mode)
-                        self.wav2srt_pydir = gr.Textbox(value='Auto', label=i18n('Python Interpreter Path, align with GSV by default'), visible=not self.server_mode, interactive=not self.server_mode)
-                        self.wav2srt_uvr_models = gr.Dropdown(
-                            value='None',
-                            choices=[
-                                'None',
-                                'HP2_all_vocals',
-                                'HP5_only_main_vocal',
-                                'model_bs_roformer_ep_317_sdr_12.9755',
-                                'onnx_dereverb_By_FoxJoy',
-                            ],
-                            allow_custom_value=not self.server_mode,
-                            label=i18n('Select UVR model. If vocal separation is not needed, set the value to None.'),
-                        )
-                        self.wav2srt_engine = gr.Radio(choices=["whisper", "funasr"], value="whisper", label=i18n('Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support'), interactive=True)
-                        self.wav2srt_whisper_size = gr.Radio(choices=["small", "medium", "large-v3-turbo"], value="large-v3-turbo", label=i18n('Whisper Size'), interactive=True)
-                        self.wav2srt_engine.change(lambda x: gr.update(visible=x == "whisper"), inputs=[self.wav2srt_engine], outputs=[self.wav2srt_whisper_size])
-                        self.wav2srt_min_length = gr.Slider(label=i18n('(ms)Minimum length of each segment'), minimum=0, maximum=10000, step=100, value=3000)
-                        self.wav2srt_min_interval = gr.Slider(label=i18n('(ms)Minium slice interval'), minimum=0, maximum=5000, step=10, value=300)
-                        self.wav2srt_sil = gr.Slider(label=i18n('(ms)Maxium silence length'), minimum=0, maximum=1000, step=50, value=500)
-                        # self.wav2srt_args = gr.Textbox(value="", label=i18n('Other Parameters'), interactive=True)
-                    with gr.Column():
-                        gr.Markdown(i18n('WAV2SRT_INFO'))
-                        with gr.Accordion(i18n('Video Merge Tool'), open=False):
-                            with gr.Group():
-                                with gr.Row():
-                                    self.video_merge_inputvid = gr.Dropdown(label=i18n('Original video path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.video_merge_sub = gr.Dropdown(label=i18n('Hard subtitles (optional)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                with gr.Row():
-                                    self.video_merge_inst = gr.Dropdown(label=i18n('Background audio (optional, override the original video audio)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.inst_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
-                                with gr.Row():
-                                    self.video_merge_audio = gr.Dropdown(label=i18n('Dubbed audio path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
-                                    self.audio_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
+            with gr.Row():
+                self.wav2srt_pid = gr.State(value=-1)
+                with gr.Column():
+                    self.wav2srt_input = gr.File(label=i18n('Upload File'), file_count="multiple", interactive=True)
+                    self.wav2srt_out_dir = gr.Textbox(value="Default", label=i18n('Save Path(Folder Path), Default: SAVAdata\\output'), visible=not self.server_mode, interactive=not self.server_mode)
+                    self.wav2srt_pydir = gr.Textbox(value='Auto', label=i18n('Python Interpreter Path, align with GSV by default'), visible=not self.server_mode, interactive=not self.server_mode)
+                    self.wav2srt_uvr_models = gr.Dropdown(
+                        value='None',
+                        choices=[
+                            'None',
+                            'HP2_all_vocals',
+                            'HP5_only_main_vocal',
+                            'model_bs_roformer_ep_317_sdr_12.9755',
+                            'onnx_dereverb_By_FoxJoy',
+                        ],
+                        allow_custom_value=not self.server_mode,
+                        label=i18n('Select UVR model. If vocal separation is not needed, set the value to None.'),
+                    )
+                    self.wav2srt_engine = gr.Radio(choices=["whisper", "funasr"], value="whisper", label=i18n('Select ASR model. Funasr supports only Chinese(but much more faster) while Faster-Whisper has multi-language support'), interactive=True)
+                    self.wav2srt_whisper_size = gr.Radio(choices=["small", "medium", "large-v3-turbo"], value="large-v3-turbo", label=i18n('Whisper Size'), interactive=True)
+                    self.wav2srt_engine.change(lambda x: gr.update(visible=x == "whisper"), inputs=[self.wav2srt_engine], outputs=[self.wav2srt_whisper_size])
+                    self.wav2srt_min_length = gr.Slider(label=i18n('(ms)Minimum length of each segment'), minimum=0, maximum=10000, step=100, value=3000)
+                    self.wav2srt_min_interval = gr.Slider(label=i18n('(ms)Minium slice interval'), minimum=0, maximum=5000, step=10, value=300)
+                    self.wav2srt_sil = gr.Slider(label=i18n('(ms)Maxium silence length'), minimum=0, maximum=1000, step=50, value=500)
+                    # self.wav2srt_args = gr.Textbox(value="", label=i18n('Other Parameters'), interactive=True)
+                with gr.Column():
+                    gr.Markdown(i18n('WAV2SRT_INFO'))
+                    with gr.Accordion(i18n('Video Merge Tool'), open=False):
+                        with gr.Group():
                             with gr.Row():
-                                self.merge_video_btn = gr.Button(value=i18n('Start Merging Video'), variant='primary')
-                                self.merge_video_ref_btn = gr.Button(value='🔄️', variant='secondary')
-                        self.wav2srt_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
-                        self.wav2srt_output_status = gr.Textbox(label=i18n('Output Info'), value="", interactive=False)
+                                self.video_merge_inputvid = gr.Dropdown(label=i18n('Original video path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                self.video_merge_sub = gr.Dropdown(label=i18n('Hard subtitles (optional)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                            with gr.Row():
+                                self.video_merge_inst = gr.Dropdown(label=i18n('Background audio (optional, override the original video audio)'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                self.inst_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
+                            with gr.Row():
+                                self.video_merge_audio = gr.Dropdown(label=i18n('Dubbed audio path'), choices=[('None', 'None')], interactive=True, allow_custom_value=not self.server_mode)
+                                self.audio_vol = gr.Slider(label=i18n('Volume'), minimum=0, maximum=2, value=1, step=0.1, interactive=True)
                         with gr.Row():
-                            self.wav2srt_run = gr.Button(value=i18n('Start'), variant="primary", interactive=True)
-                            self.wav2srt_terminate = gr.Button(value=i18n('Stop'), variant="secondary", interactive=True)
-                            self.wav2srt_terminate.click(kill_process, inputs=[self.wav2srt_pid])
-                        self.wav2srt_send2main = gr.Button(value=i18n('Send output files to Main Page'), variant="secondary", interactive=True)
-                        self.wav2srt_send2main.click(send, inputs=[self.wav2srt_output], outputs=[file_main])
-                        self.wav2srt_send2tr = gr.Button(value=i18n('Send output files to Translator'), variant="secondary", interactive=True)
-                        self.wav2srt_send2tr.click(send, inputs=[self.wav2srt_output], outputs=[TR_MODULE.translation_upload])
+                            self.merge_video_btn = gr.Button(value=i18n('Start Merging Video'), variant='primary')
+                            self.merge_video_ref_btn = gr.Button(value='🔄️', variant='secondary')
+                    self.wav2srt_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
+                    self.wav2srt_output_status = gr.Textbox(label=i18n('Output Info'), value="", interactive=False)
+                    with gr.Row():
+                        self.wav2srt_run = gr.Button(value=i18n('Start'), variant="primary", interactive=True)
+                        self.wav2srt_terminate = gr.Button(value=i18n('Stop'), variant="secondary", interactive=True)
+                        self.wav2srt_terminate.click(utils.kill_process, inputs=[self.wav2srt_pid])
+                    self.wav2srt_send2main = gr.Button(value=i18n('Send output files to Main Page'), variant="secondary", interactive=True)
+                    self.wav2srt_send2main.click(send, inputs=[self.wav2srt_output], outputs=[file_main])
+                    self.wav2srt_send2tr = gr.Button(value=i18n('Send output files to Translator'), variant="secondary", interactive=True)
+                    self.wav2srt_send2tr.click(send, inputs=[self.wav2srt_output], outputs=[TR_MODULE.translation_upload])
+
                     self.merge_video_ref_btn.click(
                         self.refresh_merge_vid,
                         inputs=[worklist, self.wav2srt_input, self.wav2srt_output, TR_MODULE.translation_output, file_main],
@@ -104,7 +105,8 @@ class WAV2SRT(Base_Componment):
                         outputs=[self.wav2srt_pid, self.wav2srt_output_status, self.wav2srt_output],
                         concurrency_limit=1,
                     )
-        return available
+        else:
+            gr.Markdown("[tools/wav2srt.py](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools) NOT Found.")
 
     def run_wav2srt(self, inputs, out_dir, pydir, uvr_model, engine, whisper_size, min_length, min_interval, max_sil_kept, args):
         if self.server_mode:
@@ -113,7 +115,7 @@ class WAV2SRT(Base_Componment):
         if inputs in [None, []]:
             gr.Warning(i18n('Please upload audio or video!'))
             return -1, i18n('Please upload audio or video!'), None
-        if not self.server_mode and len(set(basename_no_ext(i.name) for i in inputs)) != len(inputs):
+        if not self.server_mode and len(set(utils.basename_no_ext(i.name) for i in inputs)) != len(inputs):
             gr.Warning(i18n('Uploading files with the same name is not allowed.'))
             return -1, i18n('Uploading files with the same name is not allowed.'), None
         pydir = pydir.strip('"')
@@ -132,7 +134,7 @@ class WAV2SRT(Base_Componment):
         input_str = '"' + '" "'.join([i.name for i in inputs]) + '"'
         output_dir_str = f' -output_dir "{out_dir}"' if not self.server_mode else ""
         command = f'"{pydir}" tools/wav2srt.py -input {input_str}{output_dir_str} --uvr_model {uvr_model} -engine {engine} --whisper_size {whisper_size} --min_length {int(min_length)} --min_interval {int(min_interval)} --max_sil_kept {int(max_sil_kept)}'
-        process = rc_bg(command=command, dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
+        process = utils.rc_bg(command=command, dir=self.gsv_dir if self.gsv_dir and os.path.isdir(self.gsv_dir) else current_path)
         pid = process.pid
         yield pid, msg, output_list
         progress_line = ''
@@ -152,16 +154,16 @@ class WAV2SRT(Base_Componment):
             msg += f"{i18n('Done!')}\n"
             if self.server_mode:
                 for i in inputs:
-                    output_list.append(os.path.join(os.path.dirname(i.name), f"{basename_no_ext(i.name)}.srt"))
+                    output_list.append(os.path.join(os.path.dirname(i.name), f"{utils.basename_no_ext(i.name)}.srt"))
                     if uvr_model not in ['None', None, '']:
-                        output_list.append(os.path.join(os.path.dirname(i.name), f"instrument_{basename_no_ext(i.name)}.wav"))
-                        output_list.append(os.path.join(os.path.dirname(i.name), f"vocal_{basename_no_ext(i.name)}.wav"))
+                        output_list.append(os.path.join(os.path.dirname(i.name), f"instrument_{utils.basename_no_ext(i.name)}.wav"))
+                        output_list.append(os.path.join(os.path.dirname(i.name), f"vocal_{utils.basename_no_ext(i.name)}.wav"))
             else:
                 for i in inputs:
-                    output_list.append(os.path.join(out_dir, f"{basename_no_ext(i.name)}.srt"))
+                    output_list.append(os.path.join(out_dir, f"{utils.basename_no_ext(i.name)}.srt"))
                     if uvr_model not in ['None', None, '']:
-                        output_list.append(os.path.join(out_dir, f"instrument_{basename_no_ext(i.name)}.wav"))
-                        output_list.append(os.path.join(out_dir, f"vocal_{basename_no_ext(i.name)}.wav"))
+                        output_list.append(os.path.join(out_dir, f"instrument_{utils.basename_no_ext(i.name)}.wav"))
+                        output_list.append(os.path.join(out_dir, f"vocal_{utils.basename_no_ext(i.name)}.wav"))
         else:
             msg += f"{i18n('Tasks are terminated due to an error in')}\n"
         ret = []
@@ -206,11 +208,11 @@ class WAV2SRT(Base_Componment):
         video = video.strip('"')
         sub = sub.strip('"')
         bg = bg.strip('"')
-        db = db.strip('"')            
-        video, sub, bg, db = fix_null(video, sub, bg, db)
+        db = db.strip('"')
+        video, sub, bg, db = utils.fix_null(video, sub, bg, db)
         if video is None or (sub is None and db is None):
             gr.Info(i18n('You must specify the original video along with audio or subtitles.'))
-            return None,file_list
+            return None, file_list
         input_args = ['-i', video]
         filter_complex = []
         map_args = []

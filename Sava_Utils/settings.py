@@ -207,7 +207,12 @@ class Settings_Manager:
     def _apply_to_components(self):
         for item in self.components.values():
             for i in item:
-                i.update_cfg(config=Sava_Utils.config)
+                try:
+                    i.update_cfg(config=Sava_Utils.config)
+                except:
+                    name = i.dirname if hasattr(i,"dirname") else str(type(i))
+                    logger.error(f"Failed to apply config to component: {name}")
+                    traceback.print_exc()
 
     def save_settngs(self, *args):
         shared_opts_dict = dict()

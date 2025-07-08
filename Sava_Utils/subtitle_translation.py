@@ -1,6 +1,7 @@
 import gradio as gr
 import os
 import copy
+import traceback
 import Sava_Utils
 from . import i18n, logger, ext_tab
 from .subtitle import Subtitle, Subtitles
@@ -142,14 +143,18 @@ class Translation_module(Base_Componment):
                         v = True
                         assert self.config is not None
                         for translator in self.TRANSLATORS.keys():
-                            with gr.Column(visible=v) as tr_ui:
-                                self.TRANSLATORS[translator].update_cfg(config=self.config)
-                                TRANSLATOR_ARGS = self.TRANSLATORS[translator].getUI()
-                                if not hasattr(self.TRANSLATORS[translator], "start_translate_btn"):
-                                    setattr(self.TRANSLATORS[translator], "start_translate_btn", gr.Button(value=i18n('Start Translating'), variant="primary"))
-                                self.TRANSLATORS[translator].start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: self.start_translation(*args, translator=translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
-                            v = False
-                            self.menu.append(tr_ui)
+                            try:
+                                with gr.Column(visible=v) as tr_ui:
+                                    self.TRANSLATORS[translator].update_cfg(config=self.config)
+                                    TRANSLATOR_ARGS = self.TRANSLATORS[translator].getUI()
+                                    if not hasattr(self.TRANSLATORS[translator], "start_translate_btn"):
+                                        setattr(self.TRANSLATORS[translator], "start_translate_btn", gr.Button(value=i18n('Start Translating'), variant="primary"))
+                                    self.TRANSLATORS[translator].start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: self.start_translation(*args, translator=translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
+                                v = False
+                                self.menu.append(tr_ui)
+                            except:
+                                logger.error(f"Failed to load Translator UI: {self.TRANSLATORS[translator].dirname}")
+                                traceback.print_exc()
                     stop_btn = gr.Button(value=i18n('Stop'), variant="stop")
                     stop_btn.click(lambda x: gr.Info(x.set()), inputs=[self.INTERRUPT_EVENT])
                 self.translator.change(lambda x: [gr.update(visible=x == i) for i in self.TRANSLATORS.keys()], inputs=[self.translator], outputs=self.menu)

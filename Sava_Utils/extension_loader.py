@@ -55,6 +55,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                     },
                 )
                 assert extension_instance is not None
+                assert hasattr(extension_instance, "name")
                 setattr(extension_instance, "dirname", entry)
                 loaded_ext.append(extension_instance)
                 logger.info(f"Loaded extension: {entry}")
@@ -72,5 +73,14 @@ class Extension_Loader(Base_Componment):
 
     def _UI(self, components):
         for i in self.components:
-            with gr.TabItem(i.title):
-                i.getUI(components)
+            try:
+                assert i.title, "Title must not be empty."
+                with gr.TabItem(i.title):
+                    i.getUI(components)
+            except:
+                logger.error(f"Failed to load extension UI: {i.dirname}")
+                traceback.print_exc()
+
+    def getUI(self, *args, **kwargs):
+        super().getUI(*args, **kwargs)
+        return len(self.components) != 0

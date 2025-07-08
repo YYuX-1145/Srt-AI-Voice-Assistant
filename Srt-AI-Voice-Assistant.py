@@ -2,9 +2,6 @@ import os
 import sys
 import io
 
-# import inspect
-import warnings
-
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
     os.environ["exe"] = 'True'
@@ -14,14 +11,11 @@ elif __file__:
 os.environ["current_path"] = current_path
 
 import shutil
-
 import gradio as gr
-
+import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import json
-
-# import datetime
 import time
 import soundfile as sf
 import concurrent.futures
@@ -38,14 +32,17 @@ from Sava_Utils.subtitle_translation import Translation_module
 from Sava_Utils.polyphone import Polyphone
 
 from Sava_Utils.tts_engines import TTS_UI_LOADER
+from Sava_Utils.extension_loader import Extension_Loader
 
+EXTENTION_LOADER = Extension_Loader()
 TRANSLATION_MODULE = Translation_module()
 POLYPHONE = Polyphone()
-Projet_dict = TTS_UI_LOADER.project_dict
+
+TTS_Engine_dict = TTS_UI_LOADER.project_dict
 COMPONENTS = {
     1: TTS_UI_LOADER.components,
     2: [TRANSLATION_MODULE, POLYPHONE],
-    3: [],
+    3: EXTENTION_LOADER.components,
 }
 SETTINGS = Sava_Utils.settings.Settings_Manager(components=COMPONENTS)
 
@@ -71,7 +68,7 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
         # subtitle_list.sort()
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)
-        Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
+        TTS_Engine_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
         abs_dir = subtitle_list.get_abs_dir()
         if Sava_Utils.config.server_mode:
             max_workers = 1
@@ -126,7 +123,7 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
 def generate_preprocess(interrupt_event, *args, project=None):
     try:
         in_file, fps, offset, max_workers = args[: len(BASE_ARGS)]
-        args = Projet_dict[project].arg_filter(*args[ len(BASE_ARGS):])
+        args = TTS_Engine_dict[project].arg_filter(*args[ len(BASE_ARGS):])
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': project, 'max_workers': max_workers}
     except Exception as e:
         info = f"{i18n('An error occurred')}: {str(e)}"
@@ -184,8 +181,8 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
             args = info["raw_data"]
             project = info["project"]
         try:
-            args = Projet_dict[project].arg_filter(*args)
-            Projet_dict[project].before_gen_action(*args, config=Sava_Utils.config)
+            args = TTS_Engine_dict[project].arg_filter(*args)
+            TTS_Engine_dict[project].before_gen_action(*args, config=Sava_Utils.config)
         except Exception as e:
             ok = False
             gr.Warning(str(e))
@@ -229,7 +226,7 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
 
 
 def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
-    audio = Projet_dict[proj].save_action(*args, text=subtitle.text)
+    audio = TTS_Engine_dict[proj].save_action(*args, text=subtitle.text)
     if audio is not None:
         if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
             # sr=int.from_bytes(audio[24:28],'little')
@@ -293,7 +290,7 @@ def remake(*args):
                 info = pickle.load(f)
             args = info["raw_data"]
             proj = info["project"]
-            args = Projet_dict[proj].arg_filter(*args)
+            args = TTS_Engine_dict[proj].arg_filter(*args)
         except KeyError:
             logger.error(f"{i18n('TTS engine not found')}: {proj}")
             gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
@@ -310,7 +307,7 @@ def remake(*args):
         # args = [None, *args]  # ~~fill data~~
         try:
             proj = subtitle_list.proj
-            args = Projet_dict[proj].arg_filter(*args)
+            args = TTS_Engine_dict[proj].arg_filter(*args)
         except KeyError:
             logger.error(f"{i18n('TTS engine not found')}: {proj}")
             gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
@@ -318,7 +315,7 @@ def remake(*args):
         except Exception as e:
             # print(e)
             return fp, *load_single_line(subtitle_list, idx)
-    Projet_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
+    TTS_Engine_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[idx])
     if fp is not None:
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
@@ -348,7 +345,7 @@ def save_spk(name: str, *args, project: str):
     # catch all arguments
     # process raw data before generating
     try:
-        Projet_dict[project].arg_filter(*args)
+        TTS_Engine_dict[project].arg_filter(*args)
         os.makedirs(os.path.join(current_path, "SAVAdata", "speakers"), exist_ok=True)
         with open(os.path.join(current_path, "SAVAdata", "speakers", name), "wb") as f:
             pickle.dump({"project": project, "raw_data": args}, f)
@@ -413,7 +410,7 @@ if __name__ == "__main__":
                             workers = gr.Number(label=i18n('Number of threads for sending requests'), value=2, visible=True, interactive=True, minimum=1)
                             offset = gr.Slider(minimum=-6, maximum=6, value=0, step=0.1, label=i18n('Voice time offset (seconds)'))
                         input_file = gr.File(label=i18n('Upload file (Batch mode only supports one speaker at a time)'), file_types=['.csv', '.srt', '.txt'], file_count='multiple')
-                        gen_textbox_output_text = gr.Textbox(label=i18n('Output Info'), interactive=False)
+                        output_info = gr.Textbox(label=i18n('Output Info'), interactive=False)
                         audio_output = gr.Audio(label="Output Audio")
                         stop_btn = gr.Button(value=i18n('Stop'), variant="stop")
                         stop_btn.click(lambda x: gr.Info(x.set()), inputs=[INTERRUPT_EVENT])
@@ -477,7 +474,7 @@ if __name__ == "__main__":
 
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
                         workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
-                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, gen_textbox_output_text, *edit_rows])
+                        recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, output_info, *edit_rows])
 
                         apply_spkmap2workspace_btn.click(apply_spkmap2workspace, inputs=[speaker_map_dict, page_slider, STATE], outputs=edit_rows)
 
@@ -511,13 +508,13 @@ if __name__ == "__main__":
                 for i in COMPONENTS[2]:
                     i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
-                available = False
-            #     from Sava_Utils.extern_extensions.wav2srt_webui import WAV2SRT
-            #     WAV2SRT = WAV2SRT(Sava_Utils.config)
-            #     components[3].append(WAV2SRT)
-            #     available = WAV2SRT.getUI(input_file, worklist, TRANSLATION_MODULE)
-            #     if not available:
-            #         gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/tools)")
+                global_comp = {
+                    "main_menu": {"file_input": input_file, "audio_output": audio_output, "output_info": output_info, "work_space_list":worklist},
+                    "components": COMPONENTS,
+                }
+                available = EXTENTION_LOADER.getUI(global_comp)
+                if not available:
+                    gr.Markdown("No additional extensions have been installed and a restart is required for the changes to take effect.<br>[Get Extentions](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/Sava_Extensions)")
             with gr.TabItem(i18n('Settings')):
                 with gr.Row():
                     with gr.Column():
@@ -535,7 +532,7 @@ if __name__ == "__main__":
         update_spkmap_btn_current.click(get_speaker_map_from_sub, inputs=[STATE], outputs=[speaker_map_set, speaker_map_dict])
         create_multispeaker_btn.click(create_multi_speaker, inputs=[input_file, fps, offset, use_labled_text_mode, speaker_map_dict], outputs=[worklist, page_slider, *edit_rows, STATE])
         BASE_ARGS = [input_file, fps, offset, workers]
-        TTS_UI_LOADER.activate([INTERRUPT_EVENT, *BASE_ARGS], [audio_output, gen_textbox_output_text, worklist, page_slider, *edit_rows, STATE], generate_preprocess)
+        TTS_UI_LOADER.activate([INTERRUPT_EVENT, *BASE_ARGS], [audio_output, output_info, worklist, page_slider, *edit_rows, STATE], generate_preprocess)
 
     app.queue(default_concurrency_limit=Sava_Utils.config.concurrency_count, max_size=2 * Sava_Utils.config.concurrency_count).launch(
         share=args.share,

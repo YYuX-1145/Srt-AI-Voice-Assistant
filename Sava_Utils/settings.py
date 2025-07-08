@@ -129,7 +129,7 @@ def load_cfg():
 
 class Shared_Options:
 
-    def __init__(self, key: str, default_value: Any, gr_component_type: gr.components, validator: Callable[[Any, Settings], Any]|None = None, **gr_kwargs):
+    def __init__(self, key: str, default_value: Any, gr_component_type: gr.components.FormComponent, validator: Callable[[Any, Settings], Any] | None = None, **gr_kwargs):
         """
         Example:
             def validate_path(value,config):
@@ -145,7 +145,7 @@ class Shared_Options:
                 gr.Textbox,         # gradio component type
                 validate_path,    # function
 
-                # These keyword arguments below will be passed to the class constructors of gr.components
+                # These keyword arguments below will be passed to the class constructors of gr.FormComponent
                 label=i18n('Python Interpreter Path for GPT-SoVITS'),
                 interactive=True,
             )

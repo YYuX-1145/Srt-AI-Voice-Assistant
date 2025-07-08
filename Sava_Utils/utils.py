@@ -2,7 +2,7 @@ import os
 import time
 import subprocess
 from . import logger, i18n
-from .librosa_load import get_rms
+from .audio_utils import get_rms
 import gradio as gr
 import numpy as np
 import csv

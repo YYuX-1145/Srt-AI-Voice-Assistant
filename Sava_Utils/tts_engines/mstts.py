@@ -54,6 +54,7 @@ class MSTTS(TTSProjet):
                 gr.Textbox,
                 label=i18n('Select required languages, separated by commas or spaces.'),
                 interactive=True,
+                placeholder="zh en",
             )
         )
         return options

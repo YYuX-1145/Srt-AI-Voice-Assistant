@@ -114,6 +114,7 @@ i18n_dict = {
     "Failed to load Extension UI": "扩展UI加载失败",
     "Failed to load Translator UI": "翻译器扩展UI加载失败",
     # Settings
+    "Duplicate shared option from extension": "插件注册了重复的共享设置键值",
     "TTS Engine": "TTS引擎",
     "Translator": "翻译器",
     "Extensions": "扩展",

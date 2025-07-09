@@ -113,6 +113,7 @@ i18n_dict = {
     "Failed to load Extension UI": "Échec du chargement de l'interface utilisateur de l'extension",
     "Failed to load Translator UI": "Échec du chargement de l'interface utilisateur du traducteur",
     # Settings
+    "Duplicate shared option from extension": "Option partagée dupliquée par l'extension",
     "TTS Engine": "Moteur TTS",
     "Translator": "Traducteur",
     "Extensions": "Extensions",
@@ -123,7 +124,6 @@ i18n_dict = {
     "Type": "Type",
     "Status": "Statut",
     "Enabled": "Activé",
-    # Settings
     "Failed to load settings, reset to default": "Échec du chargement des paramètres du logiciel, réinitialisation aux valeurs par défaut",
     "was removed successfully.": "a été supprimé avec succès.",
     "Error, Invalid Path": "Erreur, chemin invalide",

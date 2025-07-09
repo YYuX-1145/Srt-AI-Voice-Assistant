@@ -211,8 +211,8 @@ class Settings_Manager:
             for item in lst:
                 for opt in item.register_settings():
                     if opt.key in default_shared_opts:
-                        gr.Warning(f"Duplicate shared option from extension: {opt.key}")
-                        logger.warning(f"Duplicate shared option from extension: {opt.key}")
+                        gr.Warning(f"{i18n('Duplicate shared option from extension')}: {opt.key}")
+                        logger.warning(f"{i18n('Duplicate shared option from extension')}: {opt.key}")
                     default_shared_opts[opt.key] = opt.default_value
                     if opt.validator:
                         self.shared_opts_validators[opt.key] = opt.validator

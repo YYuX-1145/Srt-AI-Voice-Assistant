@@ -12,7 +12,7 @@ class TTSProjet(Base_Component):
         The name parameter must not be empty for extensions.
         self.gen_btn is a class member representing the generation button, which is not necessary to be defined.
         """
-        self.gen_btn = None
+        # self.gen_btn = None
         super().__init__(name, title, config)
 
     @abstractmethod
@@ -59,9 +59,9 @@ class TTSProjet(Base_Component):
         pass
 
     def getUI(self, *args, **kwargs):
-        x = super().getUI(*args, **kwargs)
-        if self.gen_btn is None:
-            self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
+        x: list[gr.components.Component] = super().getUI(*args, **kwargs)
+        # if self.gen_btn is None:
+        #     self.gen_btn = gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True)
         return x
 
 
@@ -84,8 +84,8 @@ class TTS_UI_Loader(Base_Component):
             with gr.TabItem(i.title):
                 try:
                     arg_list = i.getUI()
-                    assert isinstance(arg_list,list)
-                    for c in arg_list:                        
+                    assert isinstance(arg_list, list)
+                    for c in arg_list:
                         if not isinstance(c, gr.components.Component):
                             raise TypeError(type(c).__name__)
                     self.TTS_ARGS.append(arg_list)

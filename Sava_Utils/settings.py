@@ -22,6 +22,7 @@ EXT_TYPES_TITLE = {
     "translator": i18n("Translator"),
     "extension": i18n("Extensions"),
 }
+EXT_TYPES_TITLE_REV = {v: k for k, v in EXT_TYPES_TITLE.items()}
 # https://huggingface.co/datasets/freddyaboulton/gradio-theme-subdomains/resolve/main/subdomains.json
 gradio_hf_hub_themes = [
     "default",
@@ -280,7 +281,7 @@ class Settings_Manager:
     def save_ext_tab(self, tab):
         cfg = defaultdict(dict)
         for i in tab:
-            cfg[i[1]][i[0]] = True if i[-1] in [True, 'True', 'true'] else False  # gradio bug
+            cfg[EXT_TYPES_TITLE_REV.get(i[1], "extension")][i[0]] = True if i[-1] in [True, 'True', 'true'] else False  # gradio bug
         with open(os.path.join(current_path, "Sava_Extensions/extensions_config.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
         return self.get_ext_tab()

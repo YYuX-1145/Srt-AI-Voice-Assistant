@@ -1,5 +1,5 @@
 from . import TTSProjet
-from ..settings import Settings,Shared_Options
+from ..settings import Settings, Shared_Options
 import os
 import re
 import json
@@ -9,6 +9,38 @@ from .. import logger, i18n
 from xml.etree import ElementTree
 
 current_path = os.environ.get("current_path")
+SERVER_Regions = [
+    'southafricanorth',
+    'eastasia',
+    'southeastasia',
+    'australiaeast',
+    'centralindia',
+    'japaneast',
+    'japanwest',
+    'koreacentral',
+    'canadacentral',
+    'northeurope',
+    'westeurope',
+    'francecentral',
+    'germanywestcentral',
+    'norwayeast',
+    'swedencentral',
+    'switzerlandnorth',
+    'switzerlandwest',
+    'uksouth',
+    'uaenorth',
+    'brazilsouth',
+    'qatarcentral',
+    'centralus',
+    'eastus',
+    'eastus2',
+    'northcentralus',
+    'southcentralus',
+    'westcentralus',
+    'westus',
+    'westus2',
+    'westus3',
+]
 
 
 class MSTTS(TTSProjet):
@@ -31,8 +63,10 @@ class MSTTS(TTSProjet):
         options.append(
             Shared_Options(
                 "ms_region",
-                "",
-                gr.Textbox,
+                "eastasia",
+                gr.Dropdown,
+                allow_custom_value=True,
+                choices=SERVER_Regions,
                 label="Server Region",
                 interactive=True,
             )

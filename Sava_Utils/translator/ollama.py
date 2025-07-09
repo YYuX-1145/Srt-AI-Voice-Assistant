@@ -4,7 +4,7 @@ import json
 import re
 import subprocess
 from . import Traducteur
-from ..settings import Shared_Options
+from ..settings import Shared_Option
 from ..utils import rc_open_window,rc_bg
 from .. import logger, i18n
 from tqdm import tqdm
@@ -96,7 +96,7 @@ class Ollama(Traducteur):
     def register_settings(self):
         options = []
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "ollama_url",
                 "http://localhost:11434",
                 gr.Textbox,

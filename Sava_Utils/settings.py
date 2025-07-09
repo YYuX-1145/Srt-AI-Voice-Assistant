@@ -128,7 +128,7 @@ def load_cfg():
     return config
 
 
-class Shared_Options:
+class Shared_Option:
 
     def __init__(self, key: str, default_value: Any, gr_component_type: gr.components.FormComponent, validator: Callable[[Any, Settings], Any] | None = None, **gr_kwargs):
         """
@@ -140,7 +140,7 @@ class Shared_Options:
                     value = ""
                 return value    # must return modified value.
 
-            Shared_Options(
+            Shared_Option(
                 "gsv_pydir",        # key
                 "",                 # default value
                 gr.Textbox,         # gradio component type

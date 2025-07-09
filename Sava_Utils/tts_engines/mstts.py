@@ -1,5 +1,5 @@
 from . import TTSProjet
-from ..settings import Settings, Shared_Options
+from ..settings import Settings, Shared_Option
 import os
 import re
 import json
@@ -61,7 +61,7 @@ class MSTTS(TTSProjet):
     def register_settings(self):
         options = []
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "ms_region",
                 "eastasia",
                 gr.Dropdown,
@@ -72,7 +72,7 @@ class MSTTS(TTSProjet):
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "ms_key",
                 "",
                 gr.Textbox,
@@ -81,7 +81,7 @@ class MSTTS(TTSProjet):
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "ms_lang_option",
                 "",
                 gr.Textbox,

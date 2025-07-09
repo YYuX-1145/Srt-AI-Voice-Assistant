@@ -7,7 +7,7 @@ from . import i18n, logger, MANUAL, ext_tab, no_ext_mode
 from . import utils,audio_utils
 from .tts_engines import Base_Component, TTSProjet
 from .translator import Traducteur
-from .settings import Settings, Shared_Options
+from .settings import Settings, Shared_Option
 
 current_path = os.environ.get("current_path")
 
@@ -54,7 +54,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                         "MANUAL": MANUAL,
                         "logger": logger,
                         "Settings": Settings,
-                        "Shared_Options": Shared_Options,
+                        "Shared_Option": Shared_Option,
                     },
                 )
                 assert extension_instance is not None

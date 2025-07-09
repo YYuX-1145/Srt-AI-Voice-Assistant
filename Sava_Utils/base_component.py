@@ -30,9 +30,9 @@ class Base_Component(ABC):
         """
         self.server_mode = config.server_mode
 
-    def register_settings(self) -> list[settings.Shared_Options]:
+    def register_settings(self) -> list[settings.Shared_Option]:
         """
-        Returns a list containing settings.Shared_Options objects, to be used for registering shared configuration options.
+        Returns a list containing settings.Shared_Option objects, to be used for registering shared configuration options.
         """
         return []
 

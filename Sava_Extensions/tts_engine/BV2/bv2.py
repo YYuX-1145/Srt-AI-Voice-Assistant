@@ -90,7 +90,7 @@ class BV2(TTSProjet):  # Must inherit from base class.
             return bv2_pydir
 
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "bv2_pydir",
                 "",
                 gr.Textbox,
@@ -100,7 +100,7 @@ class BV2(TTSProjet):  # Must inherit from base class.
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "bv2_dir",
                 "",
                 gr.Textbox,
@@ -110,7 +110,7 @@ class BV2(TTSProjet):  # Must inherit from base class.
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "bv2_args",
                 "",
                 gr.Textbox,

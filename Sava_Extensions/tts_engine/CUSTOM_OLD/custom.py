@@ -7,7 +7,7 @@ from . import *
 current_path = os.environ.get("current_path")
 
 
-class Custom(TTSProjet):
+class Custom(TTSProjet):  # Must inherit from base class.
     def __init__(self):
         self.custom_api_list = []
         self.refresh_custom_api_list()

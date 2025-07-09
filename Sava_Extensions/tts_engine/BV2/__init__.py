@@ -13,7 +13,7 @@ extension_instance = module.register(
         "MANUAL": MANUAL,
         "logger": logger,
         "Settings": Settings,
-        "Shared_Options": Shared_Options,
+        "Shared_Option": Shared_Option,
     },
 )
 """

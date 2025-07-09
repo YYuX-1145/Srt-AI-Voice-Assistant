@@ -4,7 +4,7 @@ import gradio as gr
 from ..utils import positive_int,rc_open_window
 from .. import logger
 from .. import i18n
-from ..settings import Shared_Options, Settings
+from ..settings import Shared_Option, Settings
 import os
 import hashlib
 import soundfile as sf
@@ -339,7 +339,7 @@ class GSV(TTSProjet):
             return gsv_pydir
 
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "gsv_fallback",
                 False,
                 gr.Checkbox,
@@ -348,7 +348,7 @@ class GSV(TTSProjet):
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "gsv_pydir",
                 "",
                 gr.Textbox,
@@ -358,7 +358,7 @@ class GSV(TTSProjet):
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "gsv_dir",
                 "",
                 gr.Textbox,
@@ -368,7 +368,7 @@ class GSV(TTSProjet):
             )
         )
         options.append(
-            Shared_Options(
+            Shared_Option(
                 "gsv_args",
                 "",
                 gr.Textbox,

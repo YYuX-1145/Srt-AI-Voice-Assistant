@@ -89,7 +89,12 @@ class Translation_module(Base_Component):
                 subtitle_list_tr = copy.deepcopy(subtitle_list_ori)
                 tasks = self.TRANSLATORS[translator].construct_tasks(subtitle_list_ori, int(batch_size))
                 try:
-                    result, msg = self.TRANSLATORS[translator].api(tasks, language, interrupt_flag, *args, file_name=os.path.basename(in_file.name))
+                    returned = self.TRANSLATORS[translator].api(tasks, language, interrupt_flag, *args, file_name=os.path.basename(in_file.name))
+                    if isinstance(returned, tuple) and len(returned) == 2:
+                        result, msg = returned
+                    else:
+                        result = returned
+                        msg = ""
                     if interrupt_flag.is_set():
                         message += i18n('Canceled by user.')
                         break

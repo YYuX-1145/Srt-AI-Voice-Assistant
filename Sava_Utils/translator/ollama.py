@@ -45,13 +45,13 @@ class Ollama(Traducteur):
             return None
         rc_bg(f"ollama stop {model}") # && exit
 
-    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, no_think, file_name: str = "") -> tuple[list[list[str]],str]:
+    def api(self, tasks, target_lang, interrupt_flag, model_name, url, custom_prompt, num_history, no_think, file_name: str = "") -> tuple[list[str],str]:
         num_history = int(num_history)
         if url in [None, "", "Default"] or self.server_mode:
             url = self.ollama_url
         if model_name in [None, [], ""]:
             raise ValueError(i18n('You must specify the model!'))
-        ret:list[list[str]] = []
+        ret:list[str] = []
         msg = ""
         request_data = {
             "model": model_name,

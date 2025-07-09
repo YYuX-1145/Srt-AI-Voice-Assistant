@@ -18,6 +18,11 @@ LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 
 class Flag:
+    """
+    A lightweight interrupt flag utility for task cancellation.
+    Used in translation workflows to detect user-initiated aborts.
+    """
+
     def __init__(self):
         self.stop = False
         self.using = False
@@ -34,6 +39,10 @@ class Flag:
         self.using = False
 
     def is_set(self):
+        """
+        Returns True if a stop request has been issued by the user.
+        Call this periodically in long-running loops to safely abort.
+        """
         return self.stop
 
     def __enter__(self):

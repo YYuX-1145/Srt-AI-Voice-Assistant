@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(add_help=True)
 parser.add_argument("-p", "--server_port", type=int, help="server_port")
-parser.add_argument("-lan", "--lan", dest="LAN_access", action="store_true", default=False, help="LAN access")
+parser.add_argument("-lan", "--lan", dest="LAN_access", action="store_true", default=False, help="Enable LAN access")
 parser.add_argument("--no_ext", dest="no_ext", action="store_true", default=False, help="Do not load any extensions")
 parser.add_argument("--share", dest="share", action="store_true", default=False, help="set share True")
 parser.add_argument("--server_mode", dest="server_mode", action="store_true", default=False, help="activate server mode")

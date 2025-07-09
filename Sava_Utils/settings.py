@@ -210,6 +210,9 @@ class Settings_Manager:
         for lst in [self.components[1].values(), list(self.components[2]["translation_module"].TRANSLATORS.values()), self.components[3].values()]:
             for item in lst:
                 for opt in item.register_settings():
+                    if not isinstance(opt, Shared_Option):
+                        logger.error(f"Invalid shared option: {str(opt)}")
+                        continue
                     if opt.key in default_shared_opts:
                         gr.Warning(f"{i18n('Duplicate shared option from extension')}: {opt.key}")
                         logger.warning(f"{i18n('Duplicate shared option from extension')}: {opt.key}")

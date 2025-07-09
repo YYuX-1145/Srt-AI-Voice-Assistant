@@ -20,6 +20,30 @@ README = r"""
 - ✅ 扩展功能：音视频字幕转录
 - ✅ I18n
 
+## 安装和启动
+### 用源码运行
+```
+git clone https://github.com/YYuX-1145/Srt-AI-Voice-Assistant.git
+cd Srt-AI-Voice-Assistant/
+pip install -r requirements.txt
+python Srt-AI-Voice-Assistant.py
+```
+### 可选命令行启动参数
+你可以用它自定义启动行为:
+|   参数      |     描述           |
+|   -----           |       -----               |
+| `-p`              | 指定启动端口   |
+| `--lan`           | 启用局域网访问         |
+| `--no_ext`        | 禁用全部扩展   |
+| `--share`         | Create a publicly shareable link for the gradio app.（Colab可能有用） |
+| `--server_mode`   | 启用服务模式     |
+
+**然后自己准备配置TTS引擎。Windows用户可以下载打包版或使用搭配GPT-SoVITS的整合包**
+
+**如果本项目不支持你需要的TTS项目，你可以参阅这个[文档](/docs/zh_CN/extension_dev.md)写插件。**
+
+---
+
 ## [仅下载本体（打包版）](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/releases)
 * 当依赖冲突或无法正常安装时使用此版本
 

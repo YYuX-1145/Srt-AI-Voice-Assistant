@@ -35,7 +35,9 @@ You can customize the behavior of the application with the following command-lin
 
 **And then prepare TTS engines yourself. For Windows users, you can download the packaged version or use the integrated package with GPT-SoVITS.**
 
-**If the required TTS engine is not on the supported list, you can refer to the [documentation](./docs/en_US/extension_dev.md) to write an extension.**
+**If the required TTS engine is not on the supported list, you can refer to the [documentation](/docs/en_US/extension_dev.md) to write an extension.**
+
+---
 
 ### [Download the packaged version only](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/releases)
 * Use this version only when there are dependency conflicts or installation issues.

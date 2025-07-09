@@ -82,6 +82,7 @@ i18n_dict = {
     "Readme": "简介",
     "Issues": "常见错误",
     "Help & User guide": "使用指南",
+    "Extension Dev Docs": "插件开发文档",
     # utils
     "After completing the generation of the next item, the task will be aborted.": "完成下一条项生成后中止任务...",
     "No running tasks.": "没有进行中的任务",

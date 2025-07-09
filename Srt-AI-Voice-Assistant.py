@@ -521,12 +521,15 @@ if __name__ == "__main__":
                         SETTINGS.getUI()
                     with gr.Column():
                         with gr.TabItem(i18n('Readme')):
-                            gr.Markdown(value=MANUAL.getInfo("readme"))
-                            gr.Markdown(value=MANUAL.getInfo("changelog"))
+                            gr.Markdown(value=MANUAL.getInfo("readme"), line_breaks=True)
+                        with gr.TabItem('Changelog'):
+                            gr.Markdown(value=MANUAL.getInfo("changelog"), line_breaks=True)
                         with gr.TabItem(i18n('Issues')):
-                            gr.Markdown(value=MANUAL.getInfo("issues"))
+                            gr.Markdown(value=MANUAL.getInfo("issues"), line_breaks=True)
                         with gr.TabItem(i18n('Help & User guide')):
-                            gr.Markdown(value=MANUAL.getInfo("help"))
+                            gr.Markdown(value=MANUAL.getInfo("help"), line_breaks=True)
+                        with gr.TabItem(i18n('Extension Dev Docs')):
+                            gr.Markdown(value=MANUAL.getInfo("extension_dev"), line_breaks=True)
 
         update_spkmap_btn_upload.click(get_speaker_map_from_file, inputs=[input_file], outputs=[speaker_map_set, speaker_map_dict])
         update_spkmap_btn_current.click(get_speaker_map_from_sub, inputs=[STATE], outputs=[speaker_map_set, speaker_map_dict])

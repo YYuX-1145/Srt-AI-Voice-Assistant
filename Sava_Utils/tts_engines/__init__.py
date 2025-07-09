@@ -16,11 +16,11 @@ class TTSProjet(Base_Component):
         super().__init__(name, title, config)
 
     @abstractmethod
-    def api(self, *args, **kwargs) -> bytes|None:
+    def api(self, *args, **kwargs) -> bytes | None:
         """
         Mandatory. Define the API call code here.
         Return value must be binary data of a wav file. If there is an error, return None.
-        Please pay attention to the return type. 
+        Please pay attention to the return type.
         If api returns a path, you can use the following example:
             with open(path, "rb") as f: return f.read()
         """
@@ -37,7 +37,7 @@ class TTSProjet(Base_Component):
     def before_gen_action(self, *args, **kwargs) -> None:
         """
         Perform preprocessing operations before calling the API
-        Typical usage: Switch GSV models, obtain API key for Microsoft TTS 
+        Typical usage: Switch GSV models, obtain API key for Microsoft TTS
         """
         pass
 
@@ -81,14 +81,22 @@ class TTS_UI_Loader(Base_Component):
     def _UI(self, *args, **kwargs):
         self.TTS_ARGS = []
         for i in self.components:
-            try:
-                with gr.TabItem(i.title):
-                    self.TTS_ARGS.append(i.getUI())
-                    if not hasattr(i, "gen_btn"):
-                        setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
-            except:
-                logger.error(f"{i18n('Failed to load TTS-Engine UI')}: {i.dirname}")
-                traceback.print_exc()
+            with gr.TabItem(i.title):
+                try:
+                    arg_list = i.getUI()
+                    assert isinstance(arg_list,list)
+                    for c in arg_list:                        
+                        if not isinstance(c, gr.components.Component):
+                            raise TypeError(type(c).__name__)
+                    self.TTS_ARGS.append(arg_list)
+                    ok = True
+                except:
+                    ok = False
+                    self.TTS_ARGS.append([])
+                    logger.error(f"{i18n('Failed to load TTS-Engine UI')}: {i.dirname}")
+                    traceback.print_exc()
+                if ok and not hasattr(i, "gen_btn"):
+                    setattr(i, "gen_btn", gr.Button(value=i18n('Generate Audio'), variant="primary", visible=True))
 
     def get_launch_api_btn(self):
         for item in self.components:
@@ -104,6 +112,7 @@ class TTS_UI_Loader(Base_Component):
     def get_regenbtn(self, inputs, outputs, remake):
         visible = True
         ret = []
+        assert len(self.components) == len(self.TTS_ARGS)
         for item, ARGS in zip(self.components, self.TTS_ARGS):
             regenbtn = gr.Button(value="🔄️", scale=1, min_width=50, visible=visible)
             ret.append(regenbtn)
@@ -139,8 +148,13 @@ class TTS_UI_Loader(Base_Component):
             # avoid late binding
 
         for item, ARGS in zip(self.components, self.TTS_ARGS):
-            item.gen_btn.click(make_handler(item.name), inputs=[*inputs, *ARGS], outputs=outputs)
-            # Stability is not ensured due to the mechanism of gradio.
+            if hasattr(item, "gen_btn"):
+                try:
+                    item.gen_btn.click(make_handler(item.name), inputs=[*inputs, *ARGS], outputs=outputs)
+                    # Stability is not ensured due to the mechanism of gradio.
+                except:
+                    logger.error(f"Failed to activate tts-engine: {item.name}")
+                    traceback.print_exc()
 
 
 TTS_UI_LOADER = TTS_UI_Loader()

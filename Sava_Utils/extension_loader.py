@@ -4,7 +4,7 @@ import traceback
 import gradio as gr
 import importlib.util
 from . import i18n, logger, MANUAL, ext_tab, no_ext_mode
-from . import utils,audio_utils
+from . import utils, audio_utils
 from .tts_engines import Base_Component, TTSProjet
 from .translator import Traducteur
 from .settings import Settings, Shared_Option
@@ -49,7 +49,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                         "TTSProjet": TTSProjet,
                         "Traducteur": Traducteur,
                         "utils": utils,
-                        "audio_utils":audio_utils,
+                        "audio_utils": audio_utils,
                         "i18n": i18n,
                         "MANUAL": MANUAL,
                         "logger": logger,
@@ -57,7 +57,7 @@ def load_ext_from_dir(roots: list[str], ext_enabled_dict: dict[str:bool]) -> lis
                         "Shared_Option": Shared_Option,
                     },
                 )
-                assert extension_instance is not None
+                assert isinstance(extension_instance, Base_Component)
                 assert hasattr(extension_instance, "name")
                 setattr(extension_instance, "dirname", entry)
                 loaded_ext.append(extension_instance)

@@ -246,7 +246,10 @@ class Settings_Manager:
         for key, value in self.shared_opts_validators.items():
             try:
                 shared_opts_dict[key] = value(shared_opts_dict[key], Sava_Utils.config)
-            except:
+            except Exception as e:
+                msg = f"Invalid value for '{key}': {shared_opts_dict[key]}\n{str(e)}"
+                gr.Warning(msg)
+                logger.warning(msg)
                 shared_opts_dict[key] = old_opts[key]
                 traceback.print_exc()
         current_edit_rows = Sava_Utils.config.num_edit_rows

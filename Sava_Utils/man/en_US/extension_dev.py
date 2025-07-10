@@ -44,7 +44,7 @@ This is the top-level base class for all extension components, providing a unifi
 
 | Method                          | Description                                                                                                                                                                         |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `__init__(name, title, config)` | Requires a unique `name` upon initialization. If `title` is not specified, `name` will be used as the display title.                                                                |
+| `__init__(name, title = "", config = None)` | Requires a unique `name` upon initialization. If `title` is not specified, `name` will be used as the display title.                                                                |
 | `update_cfg(config)`            | Accepts the global configuration object `Settings`; use `config.query(key, default)` to access shared settings.                                                                     |
 | `register_settings()`           | Returns a list of shared settings items (optional), of type `list[Shared_Option]`.                                                                                                  |
 | `getUI()`                       | Retrieves the UI component, internally calls `_UI()`. **Overriding this method is not recommended.**                                                                                |
@@ -55,12 +55,13 @@ This is the top-level base class for all extension components, providing a unifi
 
 ### 🔊 TTSProjet (for TTS extensions)
 
-`TTSProjet` (**inherits from Base_Component**) is the base framework for building text-to-speech extensions. It provides hooks for API calls, parameter filtering, and execution processes.
+`TTSProjet` (**inherits from `Base_Component`**) is the base framework for building text-to-speech extensions. It provides hooks for API calls, parameter filtering, and execution processes.
 
 **Recommended methods to override:**
 
 | Method                               | Description                                                                                                                                                      |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|Base class methods like `__init__` |See`Base_Component` |
 | `api(*args, **kwargs)`               | Must be implemented. Handles API calls and returns binary audio data (e.g., `.wav`).                                                                             |
 | `arg_filter(*args)`                  | Optional. Validates/transforms input parameters, e.g., convert numpy audio to binary or file. Must return a tuple of parameters for `save_action`.               |
 | `before_gen_action(*args, **kwargs)` | Optional. Preprocessing logic before calling `api()`, such as model loading or environment setup.                                                                |
@@ -72,12 +73,13 @@ This is the top-level base class for all extension components, providing a unifi
 
 ### 🌍 Traducteur (for subtitle translation extensions)
 
-`Traducteur` (**inherits from Base_Component**) is the base class for translation extensions. It is designed to handle batch translation of subtitle text and requires implementation of the core `api()` method.
+`Traducteur` (**inherits from `Base_Component`**) is the base class for translation extensions. It is designed to handle batch translation of subtitle text and requires implementation of the core `api()` method.
 
 **Recommended methods to override:**
 
 | Method                                                                   | Description                                                                                                                      |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+|Base class methods like `__init__` |See`Base_Component` |
 | `construct_tasks(subtitles, batch_size=1)`                               | Organizes subtitle entries into task batches. Each task is a cleaned-up subtitle list. Optional to override.                     |
 | `api(tasks, target_lang, interrupt_flag, *args, file_name="", **kwargs)` | Must be implemented. Handles the translation logic; takes a task list and returns translated strings (optionally with messages). |
 

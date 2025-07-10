@@ -10,7 +10,7 @@
 
 插件必须以类的形式实现，并继承于内置的基类之一：
 
-* 所有插件最基础的父类是 `Base_Component`
+* 所有插件最基础的基类是 `Base_Component`
 * 如果是**文本转语音类插件**，请继承 `TTSProjet`
 * 如果是**翻译器类插件**，请继承 `Traducteur`
 * 如果是**一般插件(即扩展插件)**，请继承 `Base_Component`
@@ -38,13 +38,13 @@ class MyPlugin(TTSProjet):
 
 ### 🔧 Base_Component（用于一般插件）
 
-这是所有插件组件的最顶层父类，提供统一的配置接口和 UI 接入方式。
+这是所有插件组件的最顶层基类，提供统一的配置接口和 UI 接入方式。
 
 **重要方法与属性：**
 
 | 方法                              | 说明                                                           |
 | ------------------------------- | ------------------------------------------------------------ |
-| `__init__(name, title, config)` | 插件初始化时必须提供唯一的 `name`。如果未指定 `title`，将使用 `name` 作为显示标题。        |
+| `__init__(name, title = "", config = None)` | 插件初始化时必须提供唯一的 `name`。如果未指定 `title`，将使用 `name` 作为显示标题。        |
 | `update_cfg(config)`            | 接收全局配置对象 `Settings`，可调用 `config.query(key, default)` 获取共享配置。 |
 | `register_settings()`           | 返回共享配置项列表（可选），类型为 `list[Shared_Option]`。                    |
 | `getUI()`                       | 获取组件 UI，内部会调用 `_UI()`，**不建议覆写此方法**。                          |
@@ -54,12 +54,13 @@ class MyPlugin(TTSProjet):
 ---
 
 ### 🔊 TTSProjet（用于 TTS 插件）
-`TTSProjet`(**继承自Base_Component**)是用于构建文本转语音插件的基础框架，提供 API 调用、参数过滤、执行流程等典型钩子。
+`TTSProjet`(**继承自`Base_Component`**)是用于构建文本转语音插件的基础框架，提供 API 调用、参数过滤、执行流程等典型钩子。
 
 **推荐覆写的方法：**
 
 | 方法                                   | 说明                                        |
 | ------------------------------------ | ----------------------------------------- |
+|`__init__`等基类方法 |见`Base_Component` |
 | `api(*args, **kwargs)`               | 必须实现。处理 API 调用，返回音频的二进制数据（如 `.wav` 文件内容）。 |
 | `arg_filter(*args)`                  | 可选。对输入参数进行验证与转换，例如将numpy格式音频转为二进制数据或存储为文件。必须返回一个参数元组，它将被输入`save_action`方法。        |
 | `before_gen_action(*args, **kwargs)` | 可选。在调用 `api()` 前执行的预处理逻辑，例如加载模型、配置环境等。       |
@@ -70,12 +71,13 @@ class MyPlugin(TTSProjet):
 ---
 ### 🌍 Traducteur（用于字幕翻译插件）
 
-`Traducteur` (**继承自Base_Component**)是用于构建翻译插件的基类，适用于处理多段字幕文本的自动翻译流程。它封装了批处理任务构建逻辑，并要求开发者实现核心的 `api()` 方法。
+`Traducteur` (**继承自`Base_Component`**)是用于构建翻译插件的基类，适用于处理多段字幕文本的自动翻译流程。它封装了批处理任务构建逻辑，并要求开发者实现核心的 `api()` 方法。
 
 **推荐覆写的方法：**
 
 | 方法                                                                       | 说明                                                              |
 | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+|`__init__`等基类方法 |见`Base_Component` |
 | `construct_tasks(subtitles, batch_size=1)`                               | 将字幕条目分批组织为任务列表，默认按 `batch_size` 聚合。每个任务是一个字符串列表，内容为清洗后的字幕文本。可以选择覆写。    |
 | `api(tasks, target_lang, interrupt_flag, *args, file_name="", **kwargs)` | 必须实现。处理翻译逻辑，接收 `construct_tasks()` 返回的任务列表，并返回翻译后的字符串列表（可以附加消息）。 |
 
@@ -188,7 +190,7 @@ def _UI(self):
     return [self.text_input]    #TTS/翻译类插件需要返回参数列表
 ```
 
-`getUI()` 方法已由父类管理，内部确保 UI 只构建一次，并可自动注入触发按钮（如 `gen_btn`）。
+`getUI()` 方法已由基类管理，内部确保 UI 只构建一次，并可自动注入触发按钮（如 `gen_btn`）。
 
 ---
 

@@ -145,6 +145,26 @@ This flag is triggered by the user through a cancel button. You only need to che
 
 ## 4. Extension Registration Mechanism
 
+### 📁 Extension Directory Structure
+
+* All extension modules should be placed under the `Sava_Extensions/<extension_type>/<extension_name>/` directory.  
+* Each extension must contain an `__init__.py` file, which includes the `register(context)` function.
+
+Example:
+
+```
+Sava_Extensions/
+└── tts_engine/
+    ├── Custom/
+    │   ├── __init__.py
+    │   └── custom.py
+    └── MyPlugin/
+        ├── __init__.py
+        └── my_plugin.py
+```
+
+---
+
 Extensions must be registered via the `register(context)` function in the `__init__.py` file:
 
 ```python

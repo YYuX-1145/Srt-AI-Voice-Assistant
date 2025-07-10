@@ -59,8 +59,8 @@ class WAV2SRT(Base_Component):  # Must inherit from base class.
                     self.wav2srt_whisper_size = gr.Radio(choices=["small", "medium", "large-v3-turbo"], value="large-v3-turbo", label=i18n('Whisper Size'), interactive=True)
                     self.wav2srt_engine.change(lambda x: gr.update(visible=x == "whisper"), inputs=[self.wav2srt_engine], outputs=[self.wav2srt_whisper_size])
                     self.wav2srt_min_length = gr.Slider(label=i18n('(ms)Minimum length of each segment'), minimum=0, maximum=10000, step=100, value=3000)
-                    self.wav2srt_min_interval = gr.Slider(label=i18n('(ms)Minium slice interval'), minimum=0, maximum=5000, step=10, value=300)
-                    self.wav2srt_sil = gr.Slider(label=i18n('(ms)Maxium silence length'), minimum=0, maximum=1000, step=50, value=500)
+                    self.wav2srt_min_interval = gr.Slider(label=i18n('(ms)Minimum slice interval'), minimum=0, maximum=5000, step=10, value=300)
+                    self.wav2srt_sil = gr.Slider(label=i18n('(ms)Maximum silence length'), minimum=0, maximum=1000, step=50, value=500)
                     # self.wav2srt_args = gr.Textbox(value="", label=i18n('Other Parameters'), interactive=True)
                 with gr.Column():
                     gr.Markdown(i18n('WAV2SRT_INFO'))

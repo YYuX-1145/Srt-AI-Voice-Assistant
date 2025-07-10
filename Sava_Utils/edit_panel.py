@@ -116,13 +116,16 @@ def getspklist(value="None"):
     return gr.update(choices=speaker_list_choices, value=value if len(speaker_list_choices) > 1 else "None")
 
 
-def load_work(dirname):
+def load_workspace(dirname):
     try:
         if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
         with open(os.path.join(current_path, "SAVAdata", "workspaces", dirname, "st.pkl"), 'rb') as f:
-            subtitles = pickle.load(f)
+            subtitles:Subtitles = pickle.load(f)
             subtitles.dir = dirname
+            if subtitles.proj not in BTN_VISIBLE_DICT:
+                gr.Warning(f"TTS Engine not Found: {subtitles.proj}")
+                subtitles.proj = None
         return subtitles, *load_page(subtitles)
     except Exception as e:
         gr.Warning(f"Error: {str(e)}")

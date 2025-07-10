@@ -13,6 +13,7 @@ os.environ["current_path"] = current_path
 import shutil
 import gradio as gr
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import json
@@ -123,7 +124,7 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
 def generate_preprocess(interrupt_event, *args, project=None):
     try:
         in_file, fps, offset, max_workers = args[: len(BASE_ARGS)]
-        args = TTS_Engine_dict[project].arg_filter(*args[ len(BASE_ARGS):])
+        args = TTS_Engine_dict[project].arg_filter(*args[len(BASE_ARGS) :])
         kwargs = {'in_files': in_file, 'fps': fps, 'offset': offset, 'proj': project, 'max_workers': max_workers}
     except Exception as e:
         info = f"{i18n('An error occurred')}: {str(e)}"
@@ -238,19 +239,25 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
             else:
                 with open(filepath, 'wb') as file:
                     file.write(audio)
-            if Sava_Utils.config.max_accelerate_ratio > 1.0:
+            if Sava_Utils.config.max_accelerate_ratio > 1.0 or Sava_Utils.config.min_slowdown_ratio < 1.0:  # enabled
                 audio, sr = Sava_Utils.audio_utils.load_audio(filepath)
                 target_dur = int(subtitle.end_time - subtitle.start_time) * sr
-                if target_dur > 0 and (audio.shape[-1] - target_dur) > (0.01 * sr):
-                    ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
-                    cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio:.2f} -y "{filepath}.wav"'
-                    p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    logger.info(f"{i18n('Execute command')}:{cmd}")
-                    exit_code = p.wait()
-                    if exit_code == 0:
-                        shutil.move(f"{filepath}.wav", filepath)
+                if target_dur > (0.01 * sr):
+                    if Sava_Utils.config.max_accelerate_ratio > 1.0 and (audio.shape[-1] - target_dur) > (0.01 * sr):  # accelerate
+                        ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
+                    elif Sava_Utils.config.min_slowdown_ratio < 1.0 and (target_dur - audio.shape[-1]) > (0.01 * sr):  # slowdown
+                        ratio = max(audio.shape[-1] / target_dur, Sava_Utils.config.min_slowdown_ratio)
                     else:
-                        logger.error("Failed to execute ffmpeg.")
+                        ratio = None
+                    if ratio is not None:
+                        cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio:.2f} -y "{filepath}.wav"'
+                        p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        logger.info(f"{i18n('Execute command')}:{cmd}")
+                        exit_code = p.wait()
+                        if os.path.isfile(f"{filepath}.wav"):
+                            shutil.move(f"{filepath}.wav", filepath)
+                        else:
+                            logger.error("Failed to execute ffmpeg.")
             subtitle.is_success = True
             return filepath
         else:
@@ -473,7 +480,7 @@ if __name__ == "__main__":
                             TTS_UI_LOADER.get_all_regen_btn([INTERRUPT_EVENT, page_slider, workers, STATE], edit_rows, gen_multispeaker)
 
                         page_slider.change(show_page, inputs=[page_slider, STATE], outputs=edit_rows)
-                        workloadbtn.click(load_work, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
+                        workloadbtn.click(load_workspace, inputs=[worklist], outputs=[STATE, page_slider, *edit_rows])
                         recompose_btn.click(recompose, inputs=[page_slider, STATE], outputs=[audio_output, output_info, *edit_rows])
 
                         apply_spkmap2workspace_btn.click(apply_spkmap2workspace, inputs=[speaker_map_dict, page_slider, STATE], outputs=edit_rows)
@@ -509,7 +516,7 @@ if __name__ == "__main__":
                     i.getUI(input_file)
             with gr.TabItem(i18n('Extended Contents')):
                 global_comp = {
-                    "main_menu": {"file_input": input_file, "audio_output": audio_output, "output_info": output_info, "work_space_list":worklist},
+                    "main_menu": {"file_input": input_file, "audio_output": audio_output, "output_info": output_info, "work_space_list": worklist},
                     "components": COMPONENTS,
                 }
                 available = EXTENTION_LOADER.getUI(global_comp)

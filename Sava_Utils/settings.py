@@ -60,6 +60,7 @@ gradio_hf_hub_themes = [
 
 
 class Settings:
+
     def __init__(
         self,
         language: str = "Auto",
@@ -71,6 +72,7 @@ class Settings:
         server_mode: bool = False,
         min_interval: float = 0.3,
         max_accelerate_ratio: float = 1.0,
+        min_slowdown_ratio: float = 1.0,
         output_sr: int = 0,
         remove_silence: bool = False,
         num_edit_rows: int = 7,
@@ -88,6 +90,7 @@ class Settings:
         self.server_mode = server_mode
         self.min_interval = min_interval
         self.max_accelerate_ratio = max_accelerate_ratio
+        self.min_slowdown_ratio = min_slowdown_ratio
         self.output_sr = int(output_sr)
         self.remove_silence = remove_silence
         self.num_edit_rows = max(int(num_edit_rows), 1)
@@ -320,9 +323,10 @@ class Settings_Manager:
                     self.concurrency_count = gr.Number(label=i18n('Concurrency Count'), value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                     self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
                 with gr.Column():
-                    with gr.Row():
+                    with gr.Column():
                         self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
                         self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
+                        self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)
                     with gr.Row():
                         self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
                         self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
@@ -361,6 +365,7 @@ class Settings_Manager:
             self.server_mode,
             self.min_interval,
             self.max_accelerate_ratio,
+            self.max_slowdown_ratio,
             self.output_sr,
             self.remove_silence,
             self.num_edit_rows,

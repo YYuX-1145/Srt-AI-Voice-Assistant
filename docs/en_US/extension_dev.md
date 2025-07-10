@@ -79,14 +79,14 @@ This is the top-level base class for all extension components, providing a unifi
 | Method                                                                   | Description                                                                                                                      |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 |Base class methods like `__init__` |See`Base_Component` |
-| `construct_tasks(subtitles, batch_size=1)`                               | Organizes subtitle entries into task batches. Each task is a cleaned-up subtitle list. Optional to override.                     |
+| `construct_tasks(subtitles, batch_size=1)`                               | Organizes subtitle entries into batches. Each batch is a list of strings that contain cleaned texts. Optional to override.                     |
 | `api(tasks, target_lang, interrupt_flag, *args, file_name="", **kwargs)` | Must be implemented. Handles the translation logic; takes a task list and returns translated strings (optionally with messages). |
 
 ---
 
 #### 📦 self.construct_tasks(subtitles, batch_size=1)
 
-The default implementation splits the subtitle list into smaller task batches to improve context continuity. Each task is a group of strings returned as `list[list[str]]`.
+The default implementation splits the subtitle list into task batches to improve context continuity. Each task is a list of strings. And this default method returns a `list[list[str]]`, a list of task batches.
 
 ```python
 # batch_size = 2
@@ -117,7 +117,7 @@ Core implementation of the translation logic, must be overridden by the subclass
 
 | Parameter        | Description                                                                                                 |
 | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `tasks`          | Task batches from `construct_tasks()`, as a 2D list of strings.                                             |
+| `tasks`          | Task batches from `construct_tasks()`.                                             |
 | `target_lang`    | Target language as a string (e.g., "中文", "English", "日本語", etc.). May be modified in the future.                             |
 | `interrupt_flag` | Interruption control object of type `Flag`; use `interrupt_flag.is_set()` to check if the task is canceled. |
 | `*args`          | Parameters returned from `_UI()`; user inputs like model options.                                           |

@@ -5,6 +5,10 @@
 !tts_engine/BV2/*
 !tts_engine/CUSTOM_OLD/
 !tts_engine/CUSTOM_OLD/*
+!translator/
+!translator/youdao
+!translator/youdao/*
+!translator/youdao/utils/*
 !extension/
 !extension/WAV2SRT/
 !extension/WAV2SRT/*

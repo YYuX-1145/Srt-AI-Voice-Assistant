@@ -160,7 +160,7 @@ Sava_Extensions/
     │   └── custom.py
     └── MyPlugin/
         ├── __init__.py
-        └── my_plugin.py
+        └── ...
 ```
 
 ---

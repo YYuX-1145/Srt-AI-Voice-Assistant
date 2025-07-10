@@ -165,6 +165,7 @@ i18n_dict = {
     "Default Request Address for Ollama": "Adresse de requête par défaut pour Ollama",
     "Apply & Save": "Appliquer et enregistrer les paramètres actuels",
     "Restart UI": "Redémarrer l'UI",
+    "ext_safety_notice": "⚠️Les extensions peuvent exécuter du code arbitraire. Veuillez les installer uniquement à partir de sources fiables ou examiner attentivement leur code source. Des extensions malveillantes peuvent perturber l'application et même nuire à votre ordinateur!⚠️",
     # TTS
     "An error has occurred. Please check if the API is running correctly. Details": "Une erreur s'est produite. Veuillez vérifier si l'API fonctionne correctement. Détails de l'erreur",
     "Advanced Parameters": "Paramètres avancés de synthèse",

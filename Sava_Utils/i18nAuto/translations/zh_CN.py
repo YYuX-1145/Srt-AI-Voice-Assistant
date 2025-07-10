@@ -168,6 +168,7 @@ i18n_dict = {
     "Default Request Address for Ollama": "Ollama默认请求地址",
     "Apply & Save": "应用并保存当前设置",
     "Restart UI": "重启UI",
+    "ext_safety_notice": "⚠️外部插件可以执行任意代码。请仅从可信来源安装，或仔细审查其源码。恶意插件可能破坏程序运行，甚至危及您的计算机安全！⚠️",
     # TTS
     "An error has occurred. Please check if the API is running correctly. Details": "发生错误，请检查API是否正确运行。报错内容",
     "Advanced Parameters": "高级合成参数",

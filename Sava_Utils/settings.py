@@ -393,6 +393,7 @@ class Settings_Manager:
                                 except Exception as e:
                                     print(e)
         with gr.TabItem(i18n('Extension Management')):
+            gr.Markdown(i18n('ext_safety_notice'))
             ext_mgr_table = gr.Dataframe(
                 value=self.get_ext_tab(),
                 show_label=False,

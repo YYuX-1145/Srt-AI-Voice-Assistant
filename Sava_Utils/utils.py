@@ -2,7 +2,7 @@ import os
 import time
 import subprocess
 from . import logger, i18n
-from .librosa_load import get_rms
+from .audio_utils import get_rms
 import gradio as gr
 import numpy as np
 import csv
@@ -18,6 +18,11 @@ LABELED_TXT_PATTERN = re.compile(r'^([^:：]{1,20})[:：](.+)')
 
 
 class Flag:
+    """
+    A lightweight interrupt flag utility for task cancellation.
+    Used in translation workflows to detect user-initiated aborts.
+    """
+
     def __init__(self):
         self.stop = False
         self.using = False
@@ -34,6 +39,10 @@ class Flag:
         self.using = False
 
     def is_set(self):
+        """
+        Returns True if a stop request has been issued by the user.
+        Call this periodically in long-running loops to safely abort.
+        """
         return self.stop
 
     def __enter__(self):
@@ -299,7 +308,7 @@ def read_labeled_file(file_name, spk_dict, fps=30, offset=0):
     return subtitle_list    
 
 
-def create_multi_speaker(in_files, use_labled_text_mode, spk_dict, fps, offset):
+def create_multi_speaker(in_files, fps, offset, use_labled_text_mode, spk_dict):
     if in_files in [[], None] or len(in_files) > 1:
         gr.Info(i18n('Creating a multi-speaker project can only upload one file at a time!'))
         return getworklist(), *load_page(Subtitles()), Subtitles()

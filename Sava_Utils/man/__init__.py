@@ -7,7 +7,7 @@ class Man:
         if language in ["Auto", None]:
             language = locale.getdefaultlocale()[0]
         ls = dict()
-        for x in ['README', 'changelog', 'title', 'help_custom', 'issues', 'help']:
+        for x in ['README', 'changelog', 'title', 'help_custom', 'issues', 'help', 'extension_dev']:
             try:
                 exec(f"from .{language} import {x}", globals(), ls)
             except ImportError:
@@ -20,7 +20,8 @@ class Man:
             "help_custom": ls["help_custom"].help_custom,
             "issues": ls["issues"].issues,
             "help": ls["help"].help,
+            "extension_dev": ls["extension_dev"].extension_dev,
         }
 
     def getInfo(self, key):
-        return self.Manual_dict[key]
+        return self.Manual_dict.get(key, "")

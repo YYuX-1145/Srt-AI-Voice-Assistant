@@ -27,6 +27,8 @@ i18n_dict = {
     "OLLAMA_NOTICE": "⚠️LLMs use much VRAM while they're running and do not forget to select and unload the corresponding model after usage in order to free up VRAM.",
     # Polyphone Editor
     "POLYPHONE_NOTICE": "⚠️This feature allows you to modify the polyphonic character configuration of GPT-SoVITS. Changes will take effect after saving and restarting the API.⚠️",
+    # Settings
+    "ext_safety_notice": "⚠️Extensions can execute arbitrary code. Please install only from trusted sources or carefully review the source code. Malicious extensions may disrupt the application and even do harm to your computer!⚠️",
     # EXTENSIONS
     # WAV2SRT
     "WAV2SRT_INFO": """

@@ -5,9 +5,11 @@ body:
     attributes:
       label: Self-Checks
       options:
-        - label: I have already read the documentation and couldn't find any useful information to solve my problem. | 我已经阅读完内置说明，但仍无法解决问题。
+        - label: I have filled in a clear title that allows others to understand the core issue at a glance, rather than using vague ones like "What's going on", "Error occurs", or "Stuck". | 我已填写了一个清晰的标题，使他人能够一眼看出遇到的问题，而不是使用诸如“这怎么办”、“大佬救命”、“报错”这类模糊的标题。
           required: true
-        - label: I have searched for the existing issues. | 我已经查看过现有的issue。
+        - label: I have already read the [documentation](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/docs) and couldn't find any useful information to solve my problem. | 我已经阅读完[内置说明](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/tree/main/docs/zh_CN)，但仍无法解决问题。
+          required: true
+        - label: I have searched for the [existing issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues?q=is%3Aissue). | 我已经查看过[现有的issue](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues?q=is%3Aissue)。
           required: true
           
   - type: textarea

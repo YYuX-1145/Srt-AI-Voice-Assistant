@@ -184,6 +184,11 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
         try:
             args = TTS_Engine_dict[project].arg_filter(*args)
             TTS_Engine_dict[project].before_gen_action(*args, config=Sava_Utils.config)
+        except KeyError:
+            ok = False
+            logger.error(f"{i18n('TTS engine not found')}: {project}")
+            gr.Warning(f"{i18n('TTS engine not found')}: {project}")
+            continue
         except Exception as e:
             ok = False
             gr.Warning(str(e))

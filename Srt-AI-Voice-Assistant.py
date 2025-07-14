@@ -250,8 +250,8 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                 if target_dur > (0.01 * sr):
                     if Sava_Utils.config.max_accelerate_ratio > 1.0 and (audio.shape[-1] - target_dur) > (0.01 * sr):  # accelerate
                         ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
-                    elif Sava_Utils.config.min_slowdown_ratio < 1.0 and (target_dur - audio.shape[-1]) > (0.01 * sr):  # slowdown
-                        ratio = max(audio.shape[-1] / target_dur, Sava_Utils.config.min_slowdown_ratio)
+                    elif Sava_Utils.config.min_slowdown_ratio < 1.0 and (target_dur - audio.shape[-1]) > max(Sava_Utils.config.min_interval * sr, 0.01 * sr):  # slowdown
+                        ratio = max(audio.shape[-1] / max(target_dur - Sava_Utils.config.min_interval * sr, audio.shape[-1] * 0.5), Sava_Utils.config.min_slowdown_ratio)
                     else:
                         ratio = None
                     if ratio is not None:

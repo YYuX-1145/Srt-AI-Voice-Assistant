@@ -1,5 +1,9 @@
 ## ChangeLog
-
+### V4.6.1 Key Updates:
+1. You can now customize the TTS/translation APIs and extensions with user interfaces. Bert-VITS2 and the old custom API module will become official extensions and be disabled by default. The settings page layout has been adjusted accordingly. For extension development, please refer to the documentation, this project’s source code, and existing extensions.
+2. Automatic speech speed now includes slow-down ratio adjustment.
+3. Added advanced scripting.
+* Note: After this update, all speakers from previous versions will be deprecated. Sorry for any inconvenience caused by this update.
 ### V4-2503 Update:
 #### To make versions more clear, version are assigned in addition to release dates.
 #### After this update, the synthesis history and saved speakers from the previous version need to be recreated; otherwise, errors may occur!

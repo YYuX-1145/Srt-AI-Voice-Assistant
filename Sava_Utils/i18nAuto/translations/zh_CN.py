@@ -151,6 +151,7 @@ i18n_dict = {
     "Edit Panel Row Count": "编辑栏行数",
     "Export subtitles with speaker name. Fill in your template to enable.": "导出字幕时导出角色名，填写模版视为启用",
     "Enable Advanced Scripting": "启用高级脚本（开发者模式）",
+    "Advanced Scripting": "自定义脚本",
     "Theme": "选择主题，部分主题可能需要科学上网",
     "Clear temporary files": "立即清除临时文件",
     "Storage Management": "储存空间管理",

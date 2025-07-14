@@ -520,7 +520,7 @@ if __name__ == "__main__":
                     with gr.Accordion(i18n('Advanced Scripting'), open=False):
                         with gr.Row(equal_height=True):
                             script_content = gr.Code(language='python', value="for i in subtitles:print(i.text)",show_label=False, autocomplete=True, interactive=True)
-                            script_output = gr.TextArea(show_label=False, value="", placeholder="Output Message", interactive=False)
+                            script_output = gr.TextArea(label="Output Message", show_label=True, value="", interactive=False, show_copy_button=True)
                         with gr.Row(equal_height=True):
                             select_script = gr.Dropdown(value="", show_label=False, choices=ref_script_choices().get("choices", [""]), scale=12, allow_custom_value=True, interactive=True)
                             gr.Button(value="🔄️", min_width=40).click(ref_script_choices, outputs=[select_script])

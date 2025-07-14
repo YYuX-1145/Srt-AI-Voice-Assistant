@@ -111,6 +111,15 @@ class Subtitle(Base_subtitle):
     def get_srt_time(self):
         return f"{to_time(self.start_time)} --> {to_time(self.end_time)}"
 
+    def get_state(self):
+        if self.is_success:
+            if self.is_delayed:
+                return "delayed"
+            return "ok"
+        elif self.is_success is None:
+            return "None"
+        return "failed"
+
     def copy(self):
         x = copy.deepcopy(self)
         self.copy_count += 1
@@ -205,13 +214,7 @@ class Subtitles:
         return sr, audio_content
 
     def get_state(self, idx):
-        if self.subtitles[idx].is_success:
-            if self.subtitles[idx].is_delayed:
-                return "delayed"
-            return "ok"
-        elif self.subtitles[idx].is_success is None:
-            return "None"
-        return "failed"
+        return self.subtitles[idx].get_state()
 
     def append(self, subtitle: Subtitle):
         self.subtitles.append(subtitle)

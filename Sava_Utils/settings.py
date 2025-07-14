@@ -77,6 +77,7 @@ class Settings:
         remove_silence: bool = False,
         num_edit_rows: int = 7,
         export_spk_pattern: str = "",
+        enable_advanced_scripting: bool = False,
         theme: str = "default",
         shared_opts: dict = dict(),
         **kwargs,
@@ -95,6 +96,7 @@ class Settings:
         self.remove_silence = remove_silence
         self.num_edit_rows = max(int(num_edit_rows), 1)
         self.export_spk_pattern = export_spk_pattern
+        self.enable_advanced_scripting = enable_advanced_scripting
         self.theme = theme
         self.shared_opts = shared_opts
 
@@ -264,7 +266,7 @@ class Settings_Manager:
         self._apply_to_components()
         all_vals = list(Sava_Utils.config.to_list()[:-1]) + [Sava_Utils.config.shared_opts[key] for key in self.shared_opts_info]
         if Sava_Utils.config.num_edit_rows != current_edit_rows:
-            Sava_Utils.config.num_edit_rows = current_edit_rows 
+            Sava_Utils.config.num_edit_rows = current_edit_rows
         logger.info(i18n('Settings saved successfully!'))
         gr.Info(i18n('Settings saved successfully!'))
         return all_vals
@@ -309,18 +311,18 @@ class Settings_Manager:
         with gr.Row():
             self.save_settings_btn = gr.Button(value=i18n('Apply & Save'), variant="primary", scale=2)
             self.restart_btn = gr.Button(value=i18n('Restart UI'), variant="stop")
-        gr.Markdown(f"⚠️{i18n('Click Apply & Save for these settings to take effect.')}⚠️")
+        gr.Markdown(f"⚠️{i18n('Click Apply & Save for these settings to take effect.')} *: {i18n('Requires a restart')}⚠️")
         with gr.TabItem(i18n('General')):
             with gr.Group():
-                self.language = gr.Dropdown(label="Language (Requires a restart)", value=Sava_Utils.config.language, allow_custom_value=False, choices=['Auto', "en_US", "zh_CN", "ja_JP", "ko_KR", "fr_FR"])
+                self.language = gr.Dropdown(label="Language" + '*', value=Sava_Utils.config.language, allow_custom_value=False, choices=['Auto', "en_US", "zh_CN", "ja_JP", "ko_KR", "fr_FR"])
                 with gr.Row():
-                    self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.'), value=Sava_Utils.config.server_port, minimum=0)
-                    self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access. Restart to take effect.'), value=Sava_Utils.config.LAN_access)
+                    self.server_port = gr.Number(label=i18n('The port used by this program, 0=auto. When conflicts prevent startup, use -p parameter to specify the port.') + '*', value=Sava_Utils.config.server_port, minimum=0)
+                    self.LAN_access = gr.Checkbox(label=i18n('Enable LAN access.') + '*', value=Sava_Utils.config.LAN_access)
                 with gr.Row():
                     self.overwrite_workspace = gr.Checkbox(label=i18n('Overwrite history records with files of the same name instead of creating a new project.'), value=Sava_Utils.config.overwrite_workspace, interactive=True)
                     self.clear_cache = gr.Checkbox(label=i18n('Clear temporary files on each startup'), value=Sava_Utils.config.clear_tmp, interactive=True)
                 with gr.Row():
-                    self.concurrency_count = gr.Number(label=i18n('Concurrency Count'), value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
+                    self.concurrency_count = gr.Number(label=i18n('Concurrency Count') + '*', value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                     self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
                 with gr.Column():
                     with gr.Column():
@@ -331,9 +333,10 @@ class Settings_Manager:
                         self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
                         self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
                     with gr.Row():
-                        self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count (Requires a restart)'), minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
+                        self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count') + '*', minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
                         self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
-                self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme (Requires a restart)'), interactive=True, allow_custom_value=True)
+                self.enable_advanced_scripting = gr.Checkbox(label=i18n('Enable Advanced Scripting') + '*', value=Sava_Utils.config.enable_advanced_scripting, interactive=True)
+                self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme') + '*', interactive=True, allow_custom_value=True)
 
         with gr.TabItem(i18n('Storage Management')):
             self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
@@ -370,6 +373,7 @@ class Settings_Manager:
             self.remove_silence,
             self.num_edit_rows,
             self.export_spk_pattern,
+            self.enable_advanced_scripting,
             self.theme,
         ]
 

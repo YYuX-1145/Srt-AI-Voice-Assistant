@@ -2,8 +2,10 @@ import gradio as gr
 import os
 import pickle
 import re
+import builtins
+import traceback
+from io import StringIO
 from . import i18n
-from itertools import islice
 from .subtitle import Subtitles, Subtitle
 from .tts_engines import TTS_UI_LOADER
 import Sava_Utils
@@ -32,12 +34,13 @@ def show_page(page_start, subtitle_list: Subtitles):
         pageend = length + 1
     btn = BTN_VISIBLE_DICT[subtitle_list.proj]
     for i in range(page_start - 1, pageend - 1):
+        subtitle = subtitle_list[i]
         ret.append(gr.update(value=i, visible=False))
-        ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
-        ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].text}", interactive=True, visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].speaker}", interactive=False, visible=True))
-        ret.append(gr.update(value=subtitle_list.get_state(i), interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.index, interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.get_srt_time(), interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle.text}", interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle.speaker}", interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.get_state(), interactive=False, visible=True))
         ret += btn
     for i in range(Sava_Utils.config.num_edit_rows - pageend + page_start):
         ret.append(gr.update(value=-1, visible=False))
@@ -55,12 +58,13 @@ def load_single_line(subtitle_list: Subtitles, index):  # with page slider
     ret = [gr.update()]
     i = int(index)
     if i >= 0 and i < len(subtitle_list):
+        subtitle = subtitle_list[i]
         ret.append(gr.update(value=i, visible=False))
-        ret.append(gr.update(value=subtitle_list[i].index, interactive=False, visible=True))
-        ret.append(gr.update(value=subtitle_list[i].get_srt_time(), interactive=True, visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].text}", interactive=True, visible=True))
-        ret.append(gr.update(value=f"{subtitle_list[i].speaker}", interactive=False, visible=True))
-        ret.append(gr.update(value=subtitle_list.get_state(i), interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.index, interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.get_srt_time(), interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle.text}", interactive=True, visible=True))
+        ret.append(gr.update(value=f"{subtitle.speaker}", interactive=False, visible=True))
+        ret.append(gr.update(value=subtitle.get_state(), interactive=False, visible=True))
     else:
         ret.append(gr.update(value=-1, visible=False))
         ret.append(gr.update(value=-1, interactive=False, visible=False))
@@ -286,15 +290,15 @@ def find_next(subtitles: Subtitles, text_to_find: str, enable_re: bool, page_ind
             return *ck, *load_page(subtitles, 1)
     else:
         pat = text_to_find
-    for index, item in enumerate(islice(subtitles, current_index + 1, None), current_index + 1):
-        if match_text(item.text, pat):
+    for index in range(current_index + 1, len(subtitles)):
+        if match_text(subtitles[index].text, pat):
             next_index = index
             ck[next_index % Sava_Utils.config.num_edit_rows] = True
             target_page = (next_index // Sava_Utils.config.num_edit_rows) * Sava_Utils.config.num_edit_rows + 1
-            if target_page != page_index:
-                page_content = load_page(subtitles, target_page)
+            if target_page == page_index:
+                page_content = [gr.update() for _ in range((6 + NUM_PROJ) * Sava_Utils.config.num_edit_rows + 1 + NUM_PROJ)]
             else:
-                page_content = [gr.update() for _ in range(10 * Sava_Utils.config.num_edit_rows + 1 + 4)]
+                page_content = load_page(subtitles, target_page)
             return *ck, *page_content
     gr.Info(i18n('No more results'))
     return *ck, *load_page(subtitles, 1)
@@ -318,7 +322,7 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
                 if count != 0:
                     item.is_success = None
                     replaced.insert(0, item.index)
-                    if exec_code and not Sava_Utils.config.server_mode:
+                    if exec_code and Sava_Utils.config.enable_advanced_scripting and not Sava_Utils.config.server_mode:
                         exec(exec_code)
         except Exception as e:
             gr.Warning(f"Error: {str(e)}")
@@ -333,10 +337,79 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
                 item.is_success = None
                 replaced.insert(0, item.index)
                 try:
-                    if exec_code and not Sava_Utils.config.server_mode:
+                    if exec_code and Sava_Utils.config.enable_advanced_scripting and not Sava_Utils.config.server_mode:
                         exec(exec_code)
                 except Exception as e:
                     gr.Warning(f"Error: {str(e)}")
                     return load_page(subtitles, page_index)
     gr.Info(f"Found and replaced {len(replaced)} subtitle(s).\n{replaced}")
     return load_page(subtitles, page_index)
+
+SCRIPT_DIR = os.path.join(current_path, "SAVAdata", "scripts")
+def ref_script_choices():
+    choices = os.listdir(SCRIPT_DIR) if os.path.isdir(SCRIPT_DIR) else []
+    choices.insert(0, "")
+    return gr.update(choices=choices)
+
+
+def load_script_content(name: str):
+    if name in [None, "", []]:
+        gr.Info(i18n('Must not be empty!'))
+        return gr.update()
+    name = name.strip()
+    try:
+        with open(os.path.join(SCRIPT_DIR, name), "r", encoding='utf-8') as f:
+            ret = f.read()
+        return ret
+    except Exception as e:
+        gr.Warning(str(e))
+        return gr.update()
+
+
+def save_script_content(content: str, name: str):
+    if name in [None, "", []]:
+        gr.Info(i18n('Must not be empty!'))
+        return ref_script_choices()
+    name = name.strip()
+    try:
+        os.makedirs(SCRIPT_DIR, exist_ok=True)
+        with open(os.path.join(SCRIPT_DIR, name), "w", encoding='utf-8') as f:
+            f.write(content)
+        gr.Info(f"{i18n('Saved successfully')}: {name}")
+    except Exception as e:
+        gr.Warning(str(e))
+    return ref_script_choices()
+
+
+def rm_script(name):
+    name = name.strip()
+    if name in [None, "", []]:
+        gr.Info(i18n('Must not be empty!'))
+        return ref_script_choices()
+    try:
+        os.remove(os.path.join(SCRIPT_DIR, name))
+        gr.Info(f"{name} {i18n('was removed successfully.')}")
+    except Exception as e:
+        gr.Warning(str(e))
+    return ref_script_choices()
+
+
+def run_script(page: int, subtitles: Subtitles, code: str):
+    message = ""
+    if subtitles is None or len(subtitles) == 0:
+        gr.Info(i18n('There is no subtitle in the current workspace'))
+        return message, *load_page(Subtitles())
+    fg_out = StringIO()
+
+    def print(*args, **kwargs):
+        if "file" in kwargs:
+            return builtins.print(*args, **kwargs)
+        return builtins.print(*args, file=fg_out, **kwargs)
+
+    try:
+        exec(code)
+        message += fg_out.getvalue()
+    except:
+        traceback.print_exc(file=fg_out)
+        message += '\n' + fg_out.getvalue()
+    return message, *load_page(subtitles, target_index=page)

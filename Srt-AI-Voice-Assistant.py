@@ -489,7 +489,7 @@ if __name__ == "__main__":
                             with gr.Row(equal_height=True):
                                 find_text_expression = gr.Textbox(show_label=False, placeholder=i18n('Find What'), scale=3)
                                 target_text = gr.Textbox(show_label=False, placeholder=i18n('Replace With'), scale=3)
-                                find_and_rep_exec = gr.Textbox(show_label=False, placeholder=r'Exec... e.g. item.speaker="Name"', scale=3, visible=not Sava_Utils.config.server_mode)
+                                find_and_rep_exec = gr.Textbox(show_label=False, placeholder=r'Exec... e.g. item.speaker="Name"', scale=3, visible=Sava_Utils.config.enable_advanced_scripting and not Sava_Utils.config.server_mode)
                                 enable_re = gr.Checkbox(label=i18n('Enable Regular Expression'), min_width=60, scale=1)
                                 find_next_btn = gr.Button(value=i18n('Find Next'), variant="secondary", min_width=50, scale=1)
                                 replace_all_btn = gr.Button(value=i18n('Replace All'), variant="primary", min_width=50, scale=1)
@@ -511,6 +511,18 @@ if __name__ == "__main__":
                         del_spk_list_btn.click(del_spk, inputs=[speaker_list], outputs=[speaker_list])
                         start_gen_multispeaker_btn = gr.Button(value=i18n('Start Multi-speaker Synthesizing'), variant="primary")
                         start_gen_multispeaker_btn.click(lambda process=gr.Progress(track_tqdm=True), *args: gen_multispeaker(*args), inputs=[INTERRUPT_EVENT, page_slider, workers, STATE], outputs=edit_rows + [audio_output])
+                if Sava_Utils.config.enable_advanced_scripting and not Sava_Utils.config.server_mode:
+                    with gr.Accordion(i18n('Advanced Scripting'), open=False):
+                        with gr.Row(equal_height=True):
+                            script_content = gr.Code(language='python', value="for i in subtitles:print(i.text)",show_label=False, autocomplete=True, interactive=True)
+                            script_output = gr.TextArea(show_label=False, value="", placeholder="Output Message", interactive=False)
+                        with gr.Row(equal_height=True):
+                            select_script = gr.Dropdown(value="", show_label=False, choices=ref_script_choices().get("choices", [""]), scale=12, allow_custom_value=True, interactive=True)
+                            gr.Button(value="🔄️", min_width=40).click(ref_script_choices, outputs=[select_script])
+                            load_script_content_btn = gr.Button(value="⏏️", min_width=40).click(load_script_content, inputs=[select_script], outputs=[script_content])
+                            save_script_btn = gr.Button(value="💾", min_width=40).click(save_script_content, inputs=[script_content, select_script], outputs=[select_script])
+                            rm_script_btn = gr.Button(value="🗑️", variant='stop', min_width=40).click(rm_script, inputs=[select_script], outputs=[select_script])
+                            gr.Button(value="Run", scale=3, variant='primary').click(run_script, inputs=[page_slider, STATE, script_content], outputs=[script_output, page_slider, *edit_rows])
             with gr.TabItem(i18n('Auxiliary Functions')):
                 for i in COMPONENTS[2].values():
                     i.getUI(input_file)

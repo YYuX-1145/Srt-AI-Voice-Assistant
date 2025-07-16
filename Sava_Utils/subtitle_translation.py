@@ -114,6 +114,7 @@ class Translation_module(Base_Component):
                         s_merged.export(fp=op, open_explorer=False, raw=True)
                         output_list.append(op)
                 except Exception as e:
+                    traceback.print_exc()
                     err = f"{i18n('Failed to translate')} {os.path.basename(in_file.name)} :{str(e)}"
                     gr.Warning(err)
                     message += err + "\n"
@@ -154,7 +155,10 @@ class Translation_module(Base_Component):
                                     TRANSLATOR_ARGS = self.TRANSLATORS[translator].getUI()
                                     if not hasattr(self.TRANSLATORS[translator], "start_translate_btn"):
                                         setattr(self.TRANSLATORS[translator], "start_translate_btn", gr.Button(value=i18n('Start Translating'), variant="primary"))
-                                    self.TRANSLATORS[translator].start_translate_btn.click(lambda progress=gr.Progress(track_tqdm=True), *args: self.start_translation(*args, translator=translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
+                                    def make_handler(tr):
+                                        return lambda *args, process=gr.Progress(track_tqdm=True): self.start_translation(*args, translator=tr)
+                                        # avoid late binding
+                                    self.TRANSLATORS[translator].start_translate_btn.click(make_handler(translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
                                 v = False
                                 self.menu.append(tr_ui)
                             except:

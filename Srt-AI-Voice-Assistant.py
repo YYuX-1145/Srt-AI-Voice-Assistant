@@ -1,6 +1,7 @@
 import os
 import sys
 import io
+import base64
 
 if getattr(sys, "frozen", False):
     current_path = os.path.dirname(sys.executable)
@@ -414,6 +415,15 @@ if __name__ == "__main__":
                                 update_spkmap_btn_current = gr.Button(value=i18n('From Workspace'))
                             apply_spkmap2workspace_btn = gr.Button(value=i18n('Apply to current Workspace'))
                         create_multispeaker_btn = gr.Button(value=i18n('Create Multi-Speaker Dubbing Project'))
+                        with open(os.path.join(current_path, "assets/AD.jpg"), "rb") as f:
+                            base64_data = base64.b64encode(f.read()).decode()
+                        gr.HTML(
+                            f"""
+            <a href="https://www.compshare.cn/images/compshareImage-1cis3a4ir3c9?referral_code=IHlncJt4RcQDdxKLEZ6pAY&ytag=GPU_srtonline" target="_blank">
+                <img src="data:image/jpeg;base64,{base64_data}" style="width:100%; max-width:600px; border-radius: 12px;" />
+            </a>
+        """
+                        )
                     with gr.Column():
                         TTS_UI_LOADER.getUI()
                     with gr.Column():

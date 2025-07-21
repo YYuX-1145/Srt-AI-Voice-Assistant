@@ -127,11 +127,11 @@ class TTS_UI_Loader(Base_Component):
             outputs.append(all_regen_btn)
             visible = False
         for item, ARGS in zip(outputs[-len(self.components) :], self.TTS_ARGS):
-            item.click(lambda process=gr.Progress(track_tqdm=True), *args: gen_multispeaker(*args, remake=True), inputs=inputs + ARGS, outputs=outputs)
+            item.click(lambda progress=gr.Progress(track_tqdm=True), *args: gen_multispeaker(*args, remake=True), inputs=inputs + ARGS, outputs=outputs)
 
     def get_save_spk_btn(self, speaker_dropdown, save_spk):
         def make_handler(project_name):
-            return lambda *args, process=gr.Progress(track_tqdm=True): save_spk(*args, project=project_name)
+            return lambda *args: save_spk(*args, project=project_name)
 
         visible = True
         ret = []
@@ -144,7 +144,7 @@ class TTS_UI_Loader(Base_Component):
 
     def activate(self, inputs, outputs, generate_preprocess):
         def make_handler(project_name):
-            return lambda *args, process=gr.Progress(track_tqdm=True): generate_preprocess(*args, project=project_name)
+            return lambda progress=gr.Progress(track_tqdm=True), *args: generate_preprocess(*args, project=project_name)
             # avoid late binding
 
         for item, ARGS in zip(self.components, self.TTS_ARGS):

@@ -156,7 +156,7 @@ class Translation_module(Base_Component):
                                     if not hasattr(self.TRANSLATORS[translator], "start_translate_btn"):
                                         setattr(self.TRANSLATORS[translator], "start_translate_btn", gr.Button(value=i18n('Start Translating'), variant="primary"))
                                     def make_handler(tr):
-                                        return lambda *args, process=gr.Progress(track_tqdm=True): self.start_translation(*args, translator=tr)
+                                        return lambda process=gr.Progress(track_tqdm=True), *args: self.start_translation(*args, translator=tr)
                                         # avoid late binding
                                     self.TRANSLATORS[translator].start_translate_btn.click(make_handler(translator), inputs=BASE_ARGS + TRANSLATOR_ARGS, outputs=[self.output_info, self.translation_output])
                                 v = False

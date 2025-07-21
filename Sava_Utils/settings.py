@@ -184,7 +184,7 @@ def restart():
     else:
         os.system("clear")
     if os.environ.get('exe') != 'True':
-        os.execl(sys.executable, f'"{sys.executable}"', f'"{sys.argv[0]}"')
+        os.execl(sys.executable, sys.executable, sys.argv[0])
     else:
         try:
             a = os.environ["_PYI_APPLICATION_HOME_DIR"]

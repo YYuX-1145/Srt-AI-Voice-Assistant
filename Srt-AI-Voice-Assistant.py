@@ -445,25 +445,26 @@ if __name__ == "__main__":
                             audio_player = gr.Audio(show_label=False, value=None, interactive=False, autoplay=True, scale=4, waveform_options={"show_recording_waveform": False})
                             recompose_btn = gr.Button(value=i18n('Reassemble Audio'), scale=1, min_width=100)
                             export_btn = gr.Button(value=i18n('Export Subtitles'), scale=1, min_width=100)
-                        for x in range(Sava_Utils.config.num_edit_rows):
-                            edit_real_index = gr.Number(show_label=False, visible=False, value=-1, interactive=False)  # real index
-                            with gr.Row(equal_height=True, height=55):
-                                edit_check = gr.Checkbox(value=False, interactive=True, min_width=40, show_label=False, label="", scale=0)
-                                edit_check_list.append(edit_check)
-                                edit_rows.append(edit_real_index)  # real index
-                                edit_real_index_list.append(edit_real_index)
-                                edit_rows.append(gr.Textbox(scale=1, visible=False, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
-                                edit_start_end_time = gr.Textbox(scale=3, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)
-                                edit_start_end_time_list.append(edit_start_end_time)
-                                edit_rows.append(edit_start_end_time)  # start time and end time
-                                s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # content
-                                edit_rows.append(s_txt)
-                                edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
-                                edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
-                                with gr.Row(equal_height=True):
-                                    __ = gr.Button(value="▶️", scale=1, min_width=50)
-                                    __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
-                                    edit_rows += TTS_UI_LOADER.get_regenbtn([page_slider, edit_real_index, edit_start_end_time, s_txt, STATE], [audio_player, page_slider] + edit_rows[-6:], remake)
+                        with gr.Group() if Sava_Utils.config.compact_layout else gr.Column():
+                            for x in range(Sava_Utils.config.num_edit_rows):
+                                edit_real_index = gr.Number(show_label=False, visible=False, value=-1, interactive=False)  # real index
+                                with gr.Row(equal_height=True, height=55):
+                                    edit_check = gr.Checkbox(value=False, interactive=True, min_width=40, show_label=False, label="", scale=0)
+                                    edit_check_list.append(edit_check)
+                                    edit_rows.append(edit_real_index)  # real index
+                                    edit_real_index_list.append(edit_real_index)
+                                    edit_rows.append(gr.Textbox(scale=1, visible=False, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
+                                    edit_start_end_time = gr.Textbox(scale=3, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)
+                                    edit_start_end_time_list.append(edit_start_end_time)
+                                    edit_rows.append(edit_start_end_time)  # start time and end time
+                                    s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # content
+                                    edit_rows.append(s_txt)
+                                    edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
+                                    edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
+                                    with gr.Row(equal_height=True):
+                                        __ = gr.Button(value="▶️", scale=1, min_width=50)
+                                        __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
+                                        edit_rows += TTS_UI_LOADER.get_regenbtn([page_slider, edit_real_index, edit_start_end_time, s_txt, STATE], [audio_player, page_slider] + edit_rows[-6:], remake)
                         workrefbtn.click(getworklist, inputs=[], outputs=[worklist])
                         export_btn.click(lambda file_list, x: ([i.name for i in file_list] if file_list else []) + ([o] if (o := x.export()) else []), inputs=[input_file, STATE], outputs=[input_file])
                         with gr.Row(equal_height=True):

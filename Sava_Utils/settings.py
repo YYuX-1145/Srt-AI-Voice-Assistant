@@ -68,7 +68,7 @@ class Settings:
         LAN_access: bool = False,
         overwrite_workspace: bool = False,
         clear_tmp: bool = False,
-        concurrency_count: int = 2,
+        concurrency_count: int = 4,
         server_mode: bool = False,
         min_interval: float = 0.3,
         max_accelerate_ratio: float = 1.0,
@@ -76,6 +76,7 @@ class Settings:
         output_sr: int = 0,
         remove_silence: bool = False,
         num_edit_rows: int = 7,
+        compact_layout: bool = False,
         export_spk_pattern: str = "",
         enable_advanced_scripting: bool = False,
         theme: str = "default",
@@ -95,6 +96,7 @@ class Settings:
         self.output_sr = int(output_sr)
         self.remove_silence = remove_silence
         self.num_edit_rows = max(int(num_edit_rows), 1)
+        self.compact_layout = compact_layout
         self.export_spk_pattern = export_spk_pattern
         self.enable_advanced_scripting = enable_advanced_scripting
         self.theme = theme
@@ -334,7 +336,8 @@ class Settings_Manager:
                         self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
                     with gr.Row():
                         self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count') + '*', minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
-                        self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
+                        self.compact_layout = gr.Checkbox(label=i18n('Compact Layout for Edit Panel') + '*', value=Sava_Utils.config.compact_layout, interactive=True)
+                self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
                 self.enable_advanced_scripting = gr.Checkbox(label=i18n('Enable Advanced Scripting') + '*', value=Sava_Utils.config.enable_advanced_scripting, interactive=True)
                 self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme') + '*', interactive=True, allow_custom_value=True)
 
@@ -372,6 +375,7 @@ class Settings_Manager:
             self.output_sr,
             self.remove_silence,
             self.num_edit_rows,
+            self.compact_layout,
             self.export_spk_pattern,
             self.enable_advanced_scripting,
             self.theme,

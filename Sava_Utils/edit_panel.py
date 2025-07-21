@@ -4,6 +4,7 @@ import pickle
 import re
 import builtins
 import traceback
+import time
 from io import StringIO
 from . import i18n
 from .subtitle import Subtitles, Subtitle
@@ -76,18 +77,17 @@ def load_single_line(subtitle_list: Subtitles, index):  # with page slider
 
 
 def play_audio(idx, subtitle_list: Subtitles):
+    yield None
     i = int(idx)
     if i == -1 or not subtitle_list.dir:
         gr.Info(i18n('Not available!'))
-        return None
     else:
         p = os.path.join(subtitle_list.get_abs_dir(), f"{subtitle_list[i].index}.wav")
         if os.path.exists(p):
-            yield None
+            time.sleep(0.05)
             yield p
         else:
             gr.Info(i18n('Not available!'))
-            return None
 
 
 def refworklist():

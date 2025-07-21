@@ -149,6 +149,7 @@ i18n_dict = {
     "Sampling rate of output audio, 0=Auto": "输出音频采样率，0=自动",
     "Remove inhalation and silence at the beginning and the end of the audio": "去除音频开头结尾的吸气声和静音",
     "Edit Panel Row Count": "编辑栏行数",
+    "Compact Layout for Edit Panel": "编辑栏紧凑布局",
     "Export subtitles with speaker name. Fill in your template to enable.": "导出字幕时导出角色名，填写模版视为启用",
     "Enable Advanced Scripting": "启用高级脚本（开发者模式）",
     "Advanced Scripting": "自定义脚本",

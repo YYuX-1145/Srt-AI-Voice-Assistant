@@ -128,7 +128,7 @@ def load_workspace(dirname):
             subtitles:Subtitles = pickle.load(f)
             subtitles.dir = dirname
             if subtitles.proj not in BTN_VISIBLE_DICT:
-                gr.Warning(f"TTS Engine not Found: {subtitles.proj}")
+                gr.Warning(f"TTS Engine Not Found: {subtitles.proj}")
                 subtitles.proj = None
         return subtitles, *load_page(subtitles)
     except Exception as e:

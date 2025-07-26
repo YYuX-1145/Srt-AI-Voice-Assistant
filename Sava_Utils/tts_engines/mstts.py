@@ -45,7 +45,6 @@ SERVER_Regions = [
 
 class MSTTS(TTSProjet):
     def __init__(self):
-        # self.ms_access_token = None
         self.ms_speaker_info = {}
         self.cfg_ms_region = ""
         self.cfg_ms_key = ""
@@ -96,7 +95,7 @@ class MSTTS(TTSProjet):
     def getms_speakers(self):
         if not os.path.exists(os.path.join(current_path, "SAVAdata", "ms_speaker_info_raw.json")):
             try:
-                assert self.cfg_ms_key not in [None, ""], i18n('Please fill in your key to get MSTTS speaker list.')
+                assert self.cfg_ms_key, i18n('Please fill in your key to get MSTTS speaker list.')
                 headers = {"Ocp-Apim-Subscription-Key": self.cfg_ms_key}
                 url = f"https://{self.cfg_ms_region}.tts.speech.microsoft.com/cognitiveservices/voices/list"
                 data = requests.get(url=url, headers=headers)
@@ -107,7 +106,7 @@ class MSTTS(TTSProjet):
             except Exception as e:
                 err = f"{i18n('Can not get speaker list of MSTTS. Details')}: {e}"
                 gr.Warning(err)
-                logger.error(err)
+                logger.warning(err)
                 self.ms_speaker_info = {}
                 return None
         dataraw = json.load(open(os.path.join(current_path, "SAVAdata", "ms_speaker_info_raw.json"), encoding="utf-8"))  # list
@@ -125,21 +124,6 @@ class MSTTS(TTSProjet):
             json.dump(classified_info, f, indent=2, ensure_ascii=False)
         self.ms_speaker_info = json.load(open(os.path.join("SAVAdata", "ms_speaker_info.json"), encoding="utf-8"))
 
-    # Deprecated.
-    # def getms_token(self):
-    #     fetch_token_url = f"https://{self.cfg_ms_region}.api.cognitive.microsoft.com/sts/v1.0/issueToken"
-    #     headers = {"Ocp-Apim-Subscription-Key": self.cfg_ms_key}
-    #     try:
-    #         assert self.cfg_ms_key, i18n('Please fill in your key!')
-    #         response = requests.post(fetch_token_url, headers=headers)
-    #         response.raise_for_status()
-    #         self.ms_access_token = str(response.text)
-    #     except Exception as e:
-    #         err = f"{i18n('Failed to obtain access token from Microsoft. Check your API key, server status, and network connection. Details')}: {e}"
-    #         gr.Warning(err)
-    #         logger.error(err)
-    #         self.ms_access_token = None
-
     def api(self, language, speaker, style, role, rate, pitch, text, **kwargs):
         xml_body = ElementTree.Element("speak", version="1.0")
         xml_body.set("xml:lang", "en-US")
@@ -154,14 +138,11 @@ class MSTTS(TTSProjet):
         prosody.text = text
         body = ElementTree.tostring(xml_body)
         try:
-            # if self.ms_access_token is None:
-            #     self.getms_token()
-            #     assert self.ms_access_token is not None, i18n('Failed to obtain access token from Microsoft.')
+            assert self.cfg_ms_key, i18n('Please fill in your key!')
             headers = {
                 "Ocp-Apim-Subscription-Key": self.cfg_ms_key,
                 "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm",
                 "Content-Type": "application/ssml+xml",
-                # "Authorization": "Bearer " + self.ms_access_token,
                 "User-Agent": "py_sava",
             }
             response = requests.post(
@@ -206,11 +187,6 @@ class MSTTS(TTSProjet):
         language, speaker, style, role, rate, pitch = args
         audio = self.api(language, speaker, style, role, rate, pitch, text)
         return audio
-
-    # def before_gen_action(self, *args, **kwargs):
-    #     if self.ms_access_token is None:
-    #         self.getms_token()
-    #         assert self.ms_access_token is not None, i18n('Failed to obtain access token from Microsoft.')
 
     def arg_filter(self, *args):
         ms_language, ms_speaker, ms_style, ms_role, ms_speed, ms_pitch = args

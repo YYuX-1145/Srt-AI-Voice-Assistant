@@ -163,10 +163,9 @@ class Subtitles:
     def get_abs_dir(self):
         return os.path.join(current_path, "SAVAdata", "workspaces", self.dir)
 
-    def audio_join(self, sr=None):  # -> tuple[int,np.array]
+    def audio_join(self, sr=None, gr_comp=True) -> dict|str:
         assert self.dir is not None
         abs_path = self.get_abs_dir()
-        audiolist = []
         delayed_list = []
         failed_list = []
         fl = [i for i in os.listdir(abs_path) if i.endswith(".wav")]
@@ -179,39 +178,37 @@ class Subtitles:
         interval = int(Sava_Utils.config.min_interval * sr)
         del fl
         ptr = 0
-        for id, i in enumerate(self.subtitles):
-            start_frame = int(i.start_time * sr)
-            if ptr <= start_frame:
-                silence_len = start_frame - ptr
-                audiolist.append(np.zeros(silence_len))
-                ptr += silence_len
-                self.subtitles[id].is_delayed = False
-            elif start_frame != 0 and ptr > start_frame:
-                self.subtitles[id].is_delayed = True
-                delayed_list.append(self.subtitles[id].index)
-            f_path = os.path.join(abs_path, f"{i.index}.wav")
-            if os.path.exists(f_path):
-                wav, sr = load_audio(f_path, sr=sr)
-                dur = wav.shape[-1]  # frames
-                self.subtitles[id].real_st = ptr
-                ptr += dur
-                audiolist.append(wav)
-                self.subtitles[id].real_et = ptr
-                ptr += interval
-                audiolist.append(np.zeros(interval))
-                # self.subtitles[id].is_success = True
-            else:
-                failed_list.append(self.subtitles[id].index)
+        audio_path = os.path.join(current_path, "SAVAdata", "output", f"{self.dir}.wav")
+        with sf.SoundFile(audio_path, 'w', self.sr, channels=1) as audio_file:
+            for id, i in enumerate(self.subtitles):
+                start_frame = int(i.start_time * sr)
+                if ptr <= start_frame:
+                    silence_len = start_frame - ptr
+                    audio_file.write(np.zeros(silence_len))
+                    ptr += silence_len
+                    self.subtitles[id].is_delayed = False
+                elif start_frame != 0 and ptr > start_frame:
+                    self.subtitles[id].is_delayed = True
+                    delayed_list.append(self.subtitles[id].index)
+                f_path = os.path.join(abs_path, f"{i.index}.wav")
+                if os.path.exists(f_path):
+                    wav, sr = load_audio(f_path, sr=sr)
+                    self.subtitles[id].real_st = ptr
+                    ptr += wav.shape[-1]  # frames
+                    audio_file.write(wav)
+                    self.subtitles[id].real_et = ptr
+                    ptr += interval
+                    audio_file.write(np.zeros(interval))
+                    # self.subtitles[id].is_success = True
+                else:
+                    failed_list.append(self.subtitles[id].index)
         if delayed_list != []:
-            # logger.warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
             gr.Warning(f"{i18n('The following subtitles are delayed due to the previous audio being too long.')}:{delayed_list}")
         if failed_list != []:
             logger.warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
             gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
-        audio_content = np.concatenate(audiolist)
         self.dump()
-        sf.write(os.path.join(current_path, "SAVAdata", "output", f"{self.dir}.wav"), audio_content, sr)
-        return sr, audio_content
+        return gr.update(value=audio_path, waveform_options={"show_recording_waveform": ptr < 3600*self.sr}) if gr_comp else audio_path
 
     def get_state(self, idx):
         return self.subtitles[idx].get_state()

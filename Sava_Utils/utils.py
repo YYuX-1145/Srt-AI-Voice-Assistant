@@ -145,14 +145,14 @@ def read_srt(filename, offset):
             # id = int(file[indexlist[i] - 1].strip().replace("\ufeff", ""))
             text = "".join(file[x] for x in range(indexlist[i] + 1, indexlist[i + 1] - 2))
             st = Subtitle(id, st, et, text, ntype="srt")
-            st.add_offset(offset=offset)
+            st.apply_offset(offset=offset)
             subtitle_list.append(st)
             id += 1
         st, et = file[indexlist[-1]].split(" --> ")
         # id = int(file[indexlist[-1] - 1].strip().replace("\ufeff", ""))
         text = "".join(file[x] for x in range(indexlist[-1] + 1, filelength))
         st = Subtitle(id, st, et, text, ntype="srt")
-        st.add_offset(offset=offset)
+        st.apply_offset(offset=offset)
         subtitle_list.append(st)
     except Exception as e:
         err = f"{i18n('Failed to read file')}: {str(e)}"
@@ -179,7 +179,7 @@ def read_prcsv(filename, fps, offset):
                     ntype="prcsv",
                     fps=fps,
                 )
-                st.add_offset(offset=offset)
+                st.apply_offset(offset=offset)
                 subtitle_list.append(st)
                 stid += 1
     except Exception as e:

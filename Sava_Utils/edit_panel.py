@@ -128,7 +128,7 @@ def load_workspace(dirname):
             subtitles:Subtitles = pickle.load(f)
             subtitles.dir = dirname
             if subtitles.proj not in BTN_VISIBLE_DICT:
-                gr.Warning(f"TTS Engine not Found: {subtitles.proj}")
+                gr.Warning(f"TTS Engine Not Found: {subtitles.proj}")
                 subtitles.proj = None
         return subtitles, *load_page(subtitles)
     except Exception as e:
@@ -194,8 +194,11 @@ def copy_subtitle(page, subtitles: Subtitles, *args):
         gr.Info(i18n('No subtitles selected.'))
     else:
         for i in reversed(targetlist):
-            subtitles.insert(i + 1 + subtitles[i].copy_count, subtitles[i].copy())
-        subtitles.sort(i, targetlist[-1] + 1 + subtitles[i].copy_count, partial=True)
+            subtitle = subtitles[i]
+            _ = subtitle.index.split('-')
+            _.append(0)
+            offset = sum(x >= int(_[1]) for x in subtitle.copy_count)
+            subtitles.insert(i + offset, subtitles[i].copy())
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 

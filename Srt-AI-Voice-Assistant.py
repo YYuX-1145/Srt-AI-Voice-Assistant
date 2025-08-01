@@ -70,7 +70,7 @@ def generate(*args, interrupt_event: Sava_Utils.utils.Flag, proj="", in_files=[]
         # subtitle_list.sort()
         subtitle_list.set_dir_name(os.path.basename(in_file.name).replace(".", "-"))
         subtitle_list.set_proj(proj)
-        TTS_Engine_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
+        TTS_Engine_dict[proj].before_gen_action(*args, notify=False, force=False)
         abs_dir = subtitle_list.get_abs_dir()
         if Sava_Utils.config.server_mode:
             max_workers = 1
@@ -183,13 +183,13 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
             args = info["raw_data"]
             project = info["project"]
         try:
+            if project not in TTS_Engine_dict:
+                ok = False
+                logger.error(f"{i18n('TTS Engine Not Found')}: {project}")
+                gr.Warning(f"{i18n('TTS Engine Not Found')}: {project}")
+                continue
             args = TTS_Engine_dict[project].arg_filter(*args)
-            TTS_Engine_dict[project].before_gen_action(*args, config=Sava_Utils.config)
-        except KeyError:
-            ok = False
-            logger.error(f"{i18n('TTS engine not found')}: {project}")
-            gr.Warning(f"{i18n('TTS engine not found')}: {project}")
-            continue
+            TTS_Engine_dict[project].before_gen_action(*args)
         except Exception as e:
             ok = False
             gr.Warning(str(e))
@@ -282,7 +282,7 @@ def remake(*args):
     page, idx, timestamp, s_txt, subtitle_list = args[:5]
     args = args[5:]
     idx = int(idx)
-    if idx == -1:
+    if idx == -1 or len(subtitle_list) == 0:
         gr.Info(i18n('Not available!'))
         return fp, *load_single_line(subtitle_list, idx)
     if Sava_Utils.config.server_mode and len(s_txt) > 512:
@@ -303,37 +303,30 @@ def remake(*args):
                 info = pickle.load(f)
             args = info["raw_data"]
             proj = info["project"]
-            args = TTS_Engine_dict[proj].arg_filter(*args)
-        except KeyError:
-            logger.error(f"{i18n('TTS engine not found')}: {proj}")
-            gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
-            return fp, *load_single_line(subtitle_list, idx)
         except FileNotFoundError:
             logger.error(f"{i18n('Speaker archive not found')}: {spk}")
             gr.Warning(f"{i18n('Speaker archive not found')}: {spk}")
             return fp, *load_single_line(subtitle_list, idx)
-
     else:
         if subtitle_list.proj is None:
             gr.Info(i18n('You must specify the speakers while using multi-speaker dubbing!'))
             return fp, *load_single_line(subtitle_list, idx)
-        # args = [None, *args]  # ~~fill data~~
-        try:
-            proj = subtitle_list.proj
-            args = TTS_Engine_dict[proj].arg_filter(*args)
-        except KeyError:
-            logger.error(f"{i18n('TTS engine not found')}: {proj}")
-            gr.Warning(f"{i18n('TTS engine not found')}: {proj}")
+        proj = subtitle_list.proj
+    try:              
+        if proj not in TTS_Engine_dict:
+            logger.error(f"{i18n('TTS Engine Not Found')}: {proj}")
+            gr.Warning(f"{i18n('TTS Engine Not Found')}: {proj}")
             return fp, *load_single_line(subtitle_list, idx)
-        except Exception as e:
-            # print(e)
-            return fp, *load_single_line(subtitle_list, idx)
-    TTS_Engine_dict[proj].before_gen_action(*args, config=Sava_Utils.config, notify=False, force=False)
+        args = TTS_Engine_dict[proj].arg_filter(*args)
+        TTS_Engine_dict[proj].before_gen_action(*args, notify=False, force=False)
+    except Exception as e:
+        gr.Warning(f"Error: {str(e)}")
+        return fp, *load_single_line(subtitle_list, idx)    
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[idx])
     if fp is not None:
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
     else:
-        gr.Warning("Audio re-generation failed!")
+        gr.Warning(i18n('Audio re-generation failed!'))
     subtitle_list.dump()
     return fp, *load_single_line(subtitle_list, idx)
 

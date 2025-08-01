@@ -19,10 +19,6 @@ SRT_TIME_Pattern = re.compile(r"\d+:\d+:\d+,\d+")
 def compare_index_lt(i1, i2):
     l1 = list(map(int, i1.split("-")))
     l2 = list(map(int, i2.split("-")))
-    while len(l1) < len(l2):
-        l1.append(0)
-    while len(l2) < len(l1):
-        l2.append(0)
     return l1 < l2
 
 
@@ -98,9 +94,9 @@ class Subtitle(Base_subtitle):
         self.real_st = 0
         self.real_et = 0  # frames
         self.speaker = speaker
-        self.copy_count = 0
+        self.copy_count: list[int] = [0]
 
-    def add_offset(self, offset=0):
+    def apply_offset(self, offset=0):
         self.start_time += offset
         if self.start_time < 0:
             self.start_time = 0.0
@@ -121,12 +117,16 @@ class Subtitle(Base_subtitle):
         return "failed"
 
     def copy(self):
-        x = copy.deepcopy(self)
-        self.copy_count += 1
-        x.copy_count = 0
-        x.index = f"{self.index}-{self.copy_count}"
+        x = copy.copy(self)
+        self.copy_count.append(self.copy_count[-1] + 1)
+        x.index = f"{self.index.split('-')[0]}-{self.copy_count[-1]}"
         x.is_success = None
         return x
+
+    def __del__(self):
+        _ = self.index.split('-')
+        _.append(0)
+        self.copy_count.remove(int(_[1]))
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}"
@@ -156,14 +156,14 @@ class Subtitles:
                 shutil.rmtree(os.path.join(current_path, "SAVAdata", "workspaces", self.dir))
                 break
             self.dir = f"{dir_name}({count})"
-            count+=1
+            count += 1
         os.makedirs(os.path.join(current_path, "SAVAdata", "workspaces", self.dir), exist_ok=True)
         self.dump()
 
     def get_abs_dir(self):
         return os.path.join(current_path, "SAVAdata", "workspaces", self.dir)
 
-    def audio_join(self, sr=None, gr_comp=True) -> dict|str:
+    def audio_join(self, sr=None, gr_comp=True) -> dict | str:
         assert self.dir is not None
         abs_path = self.get_abs_dir()
         delayed_list = []
@@ -208,7 +208,7 @@ class Subtitles:
             logger.warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
             gr.Warning(f"{i18n('Failed to synthesize the following subtitles or they were not synthesized')}:{failed_list}")
         self.dump()
-        return gr.update(value=audio_path, waveform_options={"show_recording_waveform": ptr < 3600*self.sr}) if gr_comp else audio_path
+        return gr.update(value=audio_path, waveform_options={"show_recording_waveform": ptr < 3600 * self.sr}) if gr_comp else audio_path
 
     def get_state(self, idx):
         return self.subtitles[idx].get_state()

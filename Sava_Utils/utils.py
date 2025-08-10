@@ -347,10 +347,10 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, dynamic=True, 
     return audio[cutting_point1:cutting_point2]
 
 
-def loudnorm_2pass(wav_bytes:bytes):
+def loudnorm_2pass(wav_bytes: bytes, I=-17.0, TP=-1.5, LRA=11.0):
     sr = int.from_bytes(wav_bytes[24:28], 'little')
     # first pass
-    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={Sava_Utils.config.loud_norm_target_db:.1f}:TP={Sava_Utils.config.loud_norm_tp:.1f}:LRA={Sava_Utils.config.loud_norm_lra:.1f}:print_format=json -f null -'
+    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={I:.1f}:TP={TP:.1f}:LRA={LRA:.1f}:print_format=json -f null -'
     p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, stderr = p.communicate(wav_bytes)
     stderr = stderr.decode("utf-8", errors="ignore")
@@ -362,7 +362,7 @@ def loudnorm_2pass(wav_bytes:bytes):
     loudnorm_info = json.loads(stderr[start:end])
     # print(loudnorm_info)
     # second pass
-    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={Sava_Utils.config.loud_norm_target_db:.1f}:TP={Sava_Utils.config.loud_norm_tp:.1f}:LRA={Sava_Utils.config.loud_norm_lra:.1f}:measured_I={loudnorm_info["input_i"]}:measured_LRA={loudnorm_info["input_lra"]}:measured_TP={loudnorm_info["input_tp"]}:measured_thresh={loudnorm_info["input_thresh"]}:print_format=summary -ar {sr} -f wav pipe:1'
+    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={I:.1f}:TP={TP:.1f}:LRA={LRA:.1f}:measured_I={loudnorm_info["input_i"]}:measured_LRA={loudnorm_info["input_lra"]}:measured_TP={loudnorm_info["input_tp"]}:measured_thresh={loudnorm_info["input_thresh"]}:print_format=summary -ar {sr} -f wav pipe:1'
     p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result, err = p.communicate(wav_bytes)
     if p.returncode == 0 and result:

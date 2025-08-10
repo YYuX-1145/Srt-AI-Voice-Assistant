@@ -236,7 +236,7 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
     if audio is not None:
         if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
             if Sava_Utils.config.loud_norm:
-                result = loudnorm_2pass(audio)
+                result = loudnorm_2pass(audio, I=Sava_Utils.config.loud_norm_target_db, TP=Sava_Utils.config.loud_norm_tp, LRA=Sava_Utils.config.loud_norm_lra)
                 if result is not None:
                     audio = result
             if Sava_Utils.config.remove_silence:

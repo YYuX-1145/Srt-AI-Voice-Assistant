@@ -7,6 +7,7 @@ import gradio as gr
 import numpy as np
 import csv
 import re
+import json
 import shutil
 import platform
 import Sava_Utils
@@ -326,11 +327,15 @@ def create_multi_speaker(in_files, fps, offset, use_labled_text_mode, spk_dict):
     return getworklist(value=subtitle_list.dir), *load_page(subtitle_list), subtitle_list
 
 
-def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-27):
+def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, dynamic=True, threshold_db=-27, threshold_ratio=0.4):
     # Padding(sec) is actually margin of safety
     hop_length = 512
     rms_list = get_rms(audio, hop_length=hop_length).squeeze(0)
-    threshold = 10 ** (threshold_db / 20.0)
+    if dynamic:
+        non_zero_rms = rms_list[rms_list >= 0.01]
+        threshold = np.mean(non_zero_rms) * threshold_ratio
+    else:
+        threshold = 10 ** (threshold_db / 20.0)
     x = rms_list > threshold
     i = np.argmax(x)
     j = rms_list.shape[-1] - 1 - np.argmax(x[::-1])
@@ -340,3 +345,29 @@ def remove_silence(audio, sr, padding_begin=0.1, padding_fin=0.2, threshold_db=-
     cutting_point2 = min(j * hop_length + int(padding_fin * sr), audio.shape[-1])
     # print(audio.shape[-1],cutting_point1,cutting_point2)
     return audio[cutting_point1:cutting_point2]
+
+
+def loudnorm_2pass(wav_bytes: bytes, I=-17.0, TP=-1.5, LRA=11.0):
+    sr = int.from_bytes(wav_bytes[24:28], 'little')
+    # first pass
+    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={I:.1f}:TP={TP:.1f}:LRA={LRA:.1f}:print_format=json -f null -'
+    p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, stderr = p.communicate(wav_bytes)
+    stderr = stderr.decode("utf-8", errors="ignore")
+    start = stderr.rfind("{")
+    end = stderr.rfind("}") + 1
+    if start==-1 or end==-1:
+        print(stderr)
+        return None
+    loudnorm_info = json.loads(stderr[start:end])
+    # print(loudnorm_info)
+    # second pass
+    cmd = f'ffmpeg -i pipe:0 -af loudnorm=I={I:.1f}:TP={TP:.1f}:LRA={LRA:.1f}:measured_I={loudnorm_info["input_i"]}:measured_LRA={loudnorm_info["input_lra"]}:measured_TP={loudnorm_info["input_tp"]}:measured_thresh={loudnorm_info["input_thresh"]}:print_format=summary -ar {sr} -f wav pipe:1'
+    p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result, err = p.communicate(wav_bytes)
+    if p.returncode == 0 and result:
+        return result
+    else:
+        logger.error(f"Failed to execute ffmpeg: {cmd}")
+        print(err)
+        return None

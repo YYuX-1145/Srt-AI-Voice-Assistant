@@ -101,3 +101,11 @@ def load_audio(filepath, sr=None):
         return y, sr
     else:
         return y, sr_native
+
+def get_shape_sr_from_bytes(wav_bytes):
+    sr = int.from_bytes(wav_bytes[24:28], 'little')
+    channels = int.from_bytes(wav_bytes[22:24], 'little')
+    bit_depth = int.from_bytes(wav_bytes[34:36], 'little')
+    data_size = int.from_bytes(wav_bytes[40:44], 'little')
+    n_frames = data_size // ((bit_depth // 8) * channels)
+    return (channels,n_frames), sr

@@ -235,34 +235,38 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
     audio = TTS_Engine_dict[proj].save_action(*args, text=subtitle.text)
     if audio is not None:
         if audio[:4] == b'RIFF' and audio[8:12] == b'WAVE':
-            # sr=int.from_bytes(audio[24:28],'little')
-            filepath = os.path.join(dir, f"{subtitle.index}.wav")
+            if Sava_Utils.config.loud_norm:
+                result = loudnorm_2pass(audio)
+                if result is not None:
+                    audio = result
             if Sava_Utils.config.remove_silence:
-                audio, sr = Sava_Utils.audio_utils.load_audio(io.BytesIO(audio))
-                audio = remove_silence(audio, sr)
-                sf.write(filepath, audio, sr)
-            else:
-                with open(filepath, 'wb') as file:
-                    file.write(audio)
+                y, sr = Sava_Utils.audio_utils.load_audio(io.BytesIO(audio))
+                buffer = io.BytesIO()
+                y = remove_silence(y, sr, dynamic=Sava_Utils.config.remove_silence_dyn_mode, threshold_db=Sava_Utils.config.remove_silence_static_threshold_db, threshold_ratio=Sava_Utils.config.remove_silence_dyn_threshold_ratio)
+                sf.write(buffer, y, sr, format="WAV")
+                audio = buffer.getvalue()
             if Sava_Utils.config.max_accelerate_ratio > 1.0 or Sava_Utils.config.min_slowdown_ratio < 1.0:  # enabled
-                audio, sr = Sava_Utils.audio_utils.load_audio(filepath)
+                shape, sr = Sava_Utils.audio_utils.get_shape_sr_from_bytes(audio)
                 target_dur = int(subtitle.end_time - subtitle.start_time) * sr
                 if target_dur > (0.01 * sr):
-                    if Sava_Utils.config.max_accelerate_ratio > 1.0 and (audio.shape[-1] - target_dur) > (0.01 * sr):  # accelerate
-                        ratio = min(audio.shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
-                    elif Sava_Utils.config.min_slowdown_ratio < 1.0 and (target_dur - audio.shape[-1]) > max(Sava_Utils.config.min_interval * sr, 0.01 * sr):  # slowdown
-                        ratio = max(audio.shape[-1] / max(target_dur - Sava_Utils.config.min_interval * sr, audio.shape[-1] * 0.5), Sava_Utils.config.min_slowdown_ratio)
+                    if Sava_Utils.config.max_accelerate_ratio > 1.0 and (shape[-1] - target_dur) > (0.01 * sr):  # accelerate
+                        ratio = min(shape[-1] / target_dur, Sava_Utils.config.max_accelerate_ratio)
+                    elif Sava_Utils.config.min_slowdown_ratio < 1.0 and (target_dur - shape[-1]) > max(Sava_Utils.config.min_interval * sr, 0.01 * sr):  # slowdown
+                        ratio = max(shape[-1] / max(target_dur - Sava_Utils.config.min_interval * sr, shape[-1] * 0.5), Sava_Utils.config.min_slowdown_ratio)
                     else:
                         ratio = None
                     if ratio is not None:
-                        cmd = f'ffmpeg -i "{filepath}" -filter:a atempo={ratio:.2f} -y "{filepath}.wav"'
-                        p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        logger.info(f"{i18n('Execute command')}:{cmd}")
-                        exit_code = p.wait()
-                        if os.path.isfile(f"{filepath}.wav"):
-                            shutil.move(f"{filepath}.wav", filepath)
+                        cmd = f'ffmpeg -i pipe:0 -filter:a atempo={ratio:.2f} -f wav pipe:1'
+                        p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        result, err = p.communicate(audio)
+                        if p.returncode == 0 and result:
+                            audio = result
                         else:
-                            logger.error("Failed to execute ffmpeg.")
+                            logger.error(f"Failed to execute ffmpeg: {cmd}")
+                            print(err)
+            filepath = os.path.join(dir, f"{subtitle.index}.wav")
+            with open(filepath, 'wb') as file:
+                file.write(audio)    
             subtitle.is_success = True
             return filepath
         else:

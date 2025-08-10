@@ -73,8 +73,15 @@ class Settings:
         min_interval: float = 0.3,
         max_accelerate_ratio: float = 1.0,
         min_slowdown_ratio: float = 1.0,
-        output_sr: int = 0,
+        loud_norm: bool = False,
+        loud_norm_target_db: float = -17.0,
+        loud_norm_tp: float = -1.0,
+        loud_norm_lra: float = 11.0,
         remove_silence: bool = False,
+        remove_silence_dyn_mode: bool = True,
+        remove_silence_static_threshold_db: float = -27.0,
+        remove_silence_dyn_threshold_ratio: float = 0.4,
+        output_sr: int = 0,
         num_edit_rows: int = 7,
         compact_layout: bool = False,
         export_spk_pattern: str = "",
@@ -93,8 +100,15 @@ class Settings:
         self.min_interval = min_interval
         self.max_accelerate_ratio = max_accelerate_ratio
         self.min_slowdown_ratio = min_slowdown_ratio
-        self.output_sr = int(output_sr)
+        self.loud_norm = loud_norm
+        self.loud_norm_target_db = loud_norm_target_db
+        self.loud_norm_tp = loud_norm_tp
+        self.loud_norm_lra = loud_norm_lra
         self.remove_silence = remove_silence
+        self.remove_silence_dyn_mode = remove_silence_dyn_mode
+        self.remove_silence_static_threshold_db = remove_silence_static_threshold_db
+        self.remove_silence_dyn_threshold_ratio = remove_silence_dyn_threshold_ratio
+        self.output_sr = int(output_sr)
         self.num_edit_rows = max(int(num_edit_rows), 1)
         self.compact_layout = compact_layout
         self.export_spk_pattern = export_spk_pattern
@@ -327,16 +341,27 @@ class Settings_Manager:
                     self.concurrency_count = gr.Number(label=i18n('Concurrency Count') + '*', value=Sava_Utils.config.concurrency_count, minimum=2, interactive=True)
                     self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
                 with gr.Column():
-                    with gr.Column():
-                        self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
-                        self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
-                        self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)
-                    with gr.Row():
-                        self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
-                        self.remove_silence = gr.Checkbox(label=i18n('Remove inhalation and silence at the beginning and the end of the audio'), value=Sava_Utils.config.remove_silence, interactive=True)
-                    with gr.Row():
-                        self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count') + '*', minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
-                        self.compact_layout = gr.Checkbox(label=i18n('Compact Layout for Edit Panel') + '*', value=Sava_Utils.config.compact_layout, interactive=True)
+                    self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
+            with gr.Accordion(i18n("Auto Speech Speed")):  
+                self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
+                self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)            
+            with gr.Accordion(i18n('Loudness Normalization (requires ffmpeg)')):
+                self.loud_norm = gr.Checkbox(label=i18n('Enabled'), value=Sava_Utils.config.loud_norm, interactive=True)
+                self.loud_norm_target_db = gr.Slider(label=i18n('Target Loudness(db)'), value=Sava_Utils.config.loud_norm_target_db, minimum=-22, maximum=-14, step=0.1, interactive=True)
+                self.loud_norm_tp = gr.Slider(label=i18n('True Peak(db)'), value=Sava_Utils.config.loud_norm_tp, minimum=-3, maximum=0, step=0.1, interactive=True)
+                self.loud_norm_lra = gr.Slider(label=i18n('Loudness Range Target'), value=Sava_Utils.config.loud_norm_lra, minimum=4, maximum=20, step=0.1, interactive=True)
+            with gr.Accordion(i18n('Remove inhalation and silence at the beginning and the end of the audio')):
+                self.remove_silence = gr.Checkbox(label=i18n('Enabled'), value=Sava_Utils.config.remove_silence, interactive=True)
+                self.remove_silence_dyn_mode = gr.Checkbox(label=i18n('Dynamic Mode'), value=Sava_Utils.config.remove_silence_dyn_mode, interactive=True)
+                self.remove_silence_static_threshold_db = gr.Slider(label=i18n('Static Threshold(db)'), value=Sava_Utils.config.remove_silence_static_threshold_db, minimum=-40, maximum=-15, step=0.1, interactive=True, visible=not Sava_Utils.config.remove_silence_dyn_mode)
+                self.remove_silence_dyn_threshold_ratio = gr.Slider(label=i18n('Dynamic Threshold Ratio'), value=Sava_Utils.config.remove_silence_dyn_threshold_ratio, minimum=0, maximum=0.7, step=0.01, interactive=True, visible=Sava_Utils.config.remove_silence_dyn_mode)
+                self.remove_silence_dyn_mode.change(lambda x:(gr.update(visible=not x),gr.update(visible=x)),inputs=[self.remove_silence_dyn_mode],outputs=[self.remove_silence_static_threshold_db,self.remove_silence_dyn_threshold_ratio])
+            with gr.Group():
+                with gr.Row():
+                    self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])                      
+                with gr.Row():
+                    self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count') + '*', minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
+                    self.compact_layout = gr.Checkbox(label=i18n('Compact Layout for Edit Panel') + '*', value=Sava_Utils.config.compact_layout, interactive=True)
                 self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
                 self.enable_advanced_scripting = gr.Checkbox(label=i18n('Enable Advanced Scripting') + '*', value=Sava_Utils.config.enable_advanced_scripting, interactive=True)
                 self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme') + '*', interactive=True, allow_custom_value=True)
@@ -372,8 +397,15 @@ class Settings_Manager:
             self.min_interval,
             self.max_accelerate_ratio,
             self.max_slowdown_ratio,
-            self.output_sr,
+            self.loud_norm,
+            self.loud_norm_target_db,
+            self.loud_norm_tp,
+            self.loud_norm_lra,
             self.remove_silence,
+            self.remove_silence_dyn_mode,
+            self.remove_silence_static_threshold_db,
+            self.remove_silence_dyn_threshold_ratio,
+            self.output_sr,
             self.num_edit_rows,
             self.compact_layout,
             self.export_spk_pattern,

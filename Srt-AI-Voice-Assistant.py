@@ -258,6 +258,7 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                     if ratio is not None:
                         cmd = f'ffmpeg -i pipe:0 -filter:a atempo={ratio:.2f} -f wav pipe:1'
                         p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        logger.info(f"{i18n('Execute command')}: {cmd}")
                         result, err = p.communicate(audio)
                         if p.returncode == 0 and result:
                             audio = result

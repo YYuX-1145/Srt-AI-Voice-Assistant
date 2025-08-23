@@ -78,6 +78,7 @@ class MSTTS(TTSProjet):
                 lambda v, c: v.strip(),
                 label=i18n('API=KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!'),
                 interactive=True,
+                type="password",
             )
         )
         options.append(

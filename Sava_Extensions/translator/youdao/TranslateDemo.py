@@ -45,6 +45,7 @@ class Youdao(Traducteur):
                 lambda x, _: x.strip(),
                 label=i18n('APP_SECRET'),
                 interactive=True,
+                type="password",
             )
         )
         return options

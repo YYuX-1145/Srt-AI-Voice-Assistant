@@ -357,7 +357,7 @@ def loudnorm_2pass(wav_bytes: bytes, I=-17.0, TP=-1.5, LRA=11.0):
     start = stderr.rfind("{")
     end = stderr.rfind("}") + 1
     if start==-1 or end==-1:
-        print(stderr)
+        logger.error(f"Failed to execute ffmpeg: {stderr}")
         return None
     loudnorm_info = json.loads(stderr[start:end])
     # print(loudnorm_info)

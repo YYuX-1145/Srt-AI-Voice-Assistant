@@ -342,9 +342,9 @@ class Settings_Manager:
                     self.server_mode = gr.Checkbox(label=i18n('Server Mode can only be enabled by modifying configuration file or startup parameters.'), value=Sava_Utils.config.server_mode, interactive=False)
                 with gr.Column():
                     self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
-            with gr.Accordion(i18n("Auto Speech Speed")):  
+            with gr.Accordion(i18n("Auto Speech Speed")):
                 self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
-                self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)            
+                self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)
             with gr.Accordion(i18n('Loudness Normalization (requires ffmpeg)')):
                 self.loud_norm = gr.Checkbox(label=i18n('Enabled'), value=Sava_Utils.config.loud_norm, interactive=True)
                 self.loud_norm_target_db = gr.Slider(label=i18n('Target Loudness(db)'), value=Sava_Utils.config.loud_norm_target_db, minimum=-22, maximum=-14, step=0.1, interactive=True)
@@ -355,36 +355,16 @@ class Settings_Manager:
                 self.remove_silence_dyn_mode = gr.Checkbox(label=i18n('Dynamic Mode'), value=Sava_Utils.config.remove_silence_dyn_mode, interactive=True)
                 self.remove_silence_static_threshold_db = gr.Slider(label=i18n('Static Threshold(db)'), value=Sava_Utils.config.remove_silence_static_threshold_db, minimum=-40, maximum=-15, step=0.1, interactive=True, visible=not Sava_Utils.config.remove_silence_dyn_mode)
                 self.remove_silence_dyn_threshold_ratio = gr.Slider(label=i18n('Dynamic Threshold Ratio'), value=Sava_Utils.config.remove_silence_dyn_threshold_ratio, minimum=0, maximum=0.7, step=0.01, interactive=True, visible=Sava_Utils.config.remove_silence_dyn_mode)
-                self.remove_silence_dyn_mode.change(lambda x:(gr.update(visible=not x),gr.update(visible=x)),inputs=[self.remove_silence_dyn_mode],outputs=[self.remove_silence_static_threshold_db,self.remove_silence_dyn_threshold_ratio])
+                self.remove_silence_dyn_mode.change(lambda x: (gr.update(visible=not x), gr.update(visible=x)), inputs=[self.remove_silence_dyn_mode], outputs=[self.remove_silence_static_threshold_db, self.remove_silence_dyn_threshold_ratio])
             with gr.Group():
                 with gr.Row():
-                    self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])                      
+                    self.output_sr = gr.Dropdown(label=i18n('Sampling rate of output audio, 0=Auto'), value='0', allow_custom_value=True, choices=['0', '16000', '22050', '24000', '32000', '44100', '48000'])
                 with gr.Row():
                     self.num_edit_rows = gr.Number(label=i18n('Edit Panel Row Count') + '*', minimum=1, maximum=50, value=Sava_Utils.config.num_edit_rows)
                     self.compact_layout = gr.Checkbox(label=i18n('Compact Layout for Edit Panel') + '*', value=Sava_Utils.config.compact_layout, interactive=True)
                 self.export_spk_pattern = gr.Text(label=i18n('Export subtitles with speaker name. Fill in your template to enable.'), placeholder=r"{#NAME}: {#TEXT}", value=Sava_Utils.config.export_spk_pattern)
                 self.enable_advanced_scripting = gr.Checkbox(label=i18n('Enable Advanced Scripting') + '*', value=Sava_Utils.config.enable_advanced_scripting, interactive=True)
                 self.theme = gr.Dropdown(choices=gradio_hf_hub_themes, value=Sava_Utils.config.theme, label=i18n('Theme') + '*', interactive=True, allow_custom_value=True)
-
-        with gr.TabItem(i18n('Storage Management')):
-            self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
-            self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])
-            self.workspaces_archieves_state = gr.State(value=list())
-            self.list_workspaces_btn = gr.Button(value=i18n('List Archives'), variant="primary")
-            self.list_workspaces_btn.click(Sava_Utils.edit_panel.refworklist, outputs=[self.workspaces_archieves_state])
-            workspaces_manager_ui_empty_md = f"### <center>{i18n('No Archives Found. Click the <List Archives> button to refresh.')}</center>"
-
-            @gr.render(inputs=self.workspaces_archieves_state)
-            def workspaces_manager_ui(x: list):
-                if len(x) == 0:
-                    gr.Markdown(value=workspaces_manager_ui_empty_md)
-                    return
-                with gr.Group():
-                    for i in x:
-                        with gr.Row(equal_height=True):
-                            item = gr.Textbox(value=i, show_label=False, interactive=False, scale=8)
-                            b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
-                            b.click(rm_workspace, inputs=[item], outputs=[item, b])
 
         components_list = [
             self.language,
@@ -432,6 +412,27 @@ class Settings_Manager:
                                         self.shared_opts_info.append(c.key)
                                 except Exception as e:
                                     print(e)
+
+        with gr.TabItem(i18n('Storage Management')):
+            self.clear_cache_btn = gr.Button(value=i18n('Clear temporary files'), variant="primary")
+            self.clear_cache_btn.click(Sava_Utils.utils.clear_cache, inputs=[], outputs=[])
+            self.workspaces_archieves_state = gr.State(value=list())
+            self.list_workspaces_btn = gr.Button(value=i18n('List Archives'), variant="primary")
+            self.list_workspaces_btn.click(Sava_Utils.edit_panel.refworklist, outputs=[self.workspaces_archieves_state])
+            workspaces_manager_ui_empty_md = f"### <center>{i18n('No Archives Found. Click the <List Archives> button to refresh.')}</center>"
+
+            @gr.render(inputs=self.workspaces_archieves_state)
+            def workspaces_manager_ui(x: list):
+                if len(x) == 0:
+                    gr.Markdown(value=workspaces_manager_ui_empty_md)
+                    return
+                with gr.Group():
+                    for i in x:
+                        with gr.Row(equal_height=True):
+                            item = gr.Textbox(value=i, show_label=False, interactive=False, scale=8)
+                            b = gr.Button(value="🗑️", variant="stop", scale=1, min_width=40)
+                            b.click(rm_workspace, inputs=[item], outputs=[item, b])
+
         with gr.TabItem(i18n('Extension Management')):
             gr.Markdown(i18n('ext_safety_notice'))
             ext_mgr_table = gr.Dataframe(

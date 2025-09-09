@@ -93,21 +93,21 @@ class GSV(TTSProjet):
         # due to the bug of gradio, must return the component instance instead of gr.update
         self.PARAMETERS_DICT = {
             "GPT_SoVITS": [
-                gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription'), interactive=True, visible=True),
+                gr.Textbox(label=i18n('Transcription of Main Reference Audio'), placeholder=i18n('Transcription'), interactive=True, visible=True),
                 gr.Slider(value=5),
                 gr.Slider(value=1.0),
                 gr.Slider(value=1.0),
                 gr.Slider(minimum=0, maximum=2, step=0.05, value=1.35),
             ],
             "indextts2": [
-                gr.Textbox(label=i18n('Emotion Text'), value="", placeholder=i18n('Emotion Text'), interactive=True, visible=True),
+                gr.Textbox(label=i18n('Emotion Text'), placeholder=i18n('Emotion Text'), interactive=True, visible=True),
                 gr.Slider(value=30),
                 gr.Slider(value=0.8),
                 gr.Slider(value=0.8),
                 gr.Slider(value=10.0, minimum=0.1, maximum=20.0, step=0.1),
             ],
             "CosyVoice2": [
-                gr.update(value="", placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
+                gr.update(placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
                 gr.update(),
                 gr.update(),
                 gr.update(),

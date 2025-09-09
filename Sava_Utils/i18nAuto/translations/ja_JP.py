@@ -138,7 +138,7 @@ i18n_dict = {
         "Main Reference Audio": "主参考音声",
         "Auxiliary Reference Audios": "補助参考音声",
         "Transcription of Main Reference Audio": "主参考音声の文字起こし",
-        "Transcription | Pretrained Speaker (Cosy)": "参考音声の文字起こし|Cosyの事前学習済み音色",
+        "Transcription": "参考音声の文字起こし",
         "Language of Main Reference Audio": "参考音声の言語",
         "Model Path": "モデルのパス",
         "Switch Models": "モデルを切り替える",

@@ -181,7 +181,7 @@ i18n_dict = {
     "Main Reference Audio": "Audio de référence principal",
     "Auxiliary Reference Audios": "Audios de référence auxiliaires",
     "Transcription of Main Reference Audio": "Transcription de l'audio de référence principal",
-    "Transcription | Pretrained Speaker (Cosy)": "Transcription | Voix pré-entraînée (Cosy)",
+    "Transcription": "Transcription",
     "Language of Main Reference Audio": "Langue de l'audio de référence",
     "Model Path": "Chemin du modèle",
     "Switch Models": "Changer de modèle",

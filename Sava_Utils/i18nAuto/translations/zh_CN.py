@@ -193,7 +193,7 @@ i18n_dict = {
     "Main Reference Audio": "主参考音频",
     "Auxiliary Reference Audios": "辅参考音频",
     "Transcription of Main Reference Audio": "主参考音频文本",
-    "Transcription | Pretrained Speaker (Cosy)": "参考音频文本|Cosy预训练音色",
+    "Transcription": "参考音频文本",
     "Language of Main Reference Audio": "参考音频语言",
     "Model Path": "模型路径",
     "Switch Models": "模型切换",

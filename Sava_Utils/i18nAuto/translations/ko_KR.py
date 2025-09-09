@@ -138,7 +138,7 @@ i18n_dict={
         "Main Reference Audio":"주 참조 오디오",
         "Auxiliary Reference Audios":"보조 참조 오디오",
         "Transcription of Main Reference Audio":"주 참조 오디오 텍스트",
-        "Transcription | Pretrained Speaker (Cosy)":"참조 오디오 텍스트|Cosy 사전 훈련된 음색",
+        "Transcription":"참조 오디오 텍스트",
         "Language of Main Reference Audio":"참조 오디오 언어",
         "Model Path":"모델 경로",
         "Switch Models":"모델 전환",

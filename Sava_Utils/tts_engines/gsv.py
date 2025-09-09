@@ -89,6 +89,31 @@ class GSV(TTSProjet):
         self.current_sovits_model = dict()
         self.current_gpt_model = dict()
         self.refresh_presets_list()
+
+        # due to the bug of gradio, must return the component instance instead of gr.update
+        self.PARAMETERS_DICT = {
+            "GPT_SoVITS": [
+                gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription'), interactive=True, visible=True),
+                gr.Slider(value=5),
+                gr.Slider(value=1.0),
+                gr.Slider(value=1.0),
+                gr.Slider(minimum=0, maximum=2, step=0.05, value=1.35),
+            ],
+            "indextts2": [
+                gr.Textbox(label=i18n('Emotion Text'), value="", placeholder=i18n('Emotion Text'), interactive=True, visible=True),
+                gr.Slider(value=30),
+                gr.Slider(value=0.8),
+                gr.Slider(value=0.8),
+                gr.Slider(value=10.0, minimum=0.1, maximum=20.0, step=0.1),
+            ],
+            "CosyVoice2": [
+                gr.update(value="", placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                gr.update(),
+            ],
+        }
         super().__init__("AR-TTS", title="AR-TTS")
 
     def update_cfg(self, config: Settings):
@@ -143,6 +168,24 @@ class GSV(TTSProjet):
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content
+            elif artts_name == "indextts2":
+                emo_ref_audio_path=kwargs["aux_ref_audio_paths"]
+                data_json = {
+                    "text": kwargs["text"],
+                    "emo_text": kwargs["prompt_text"],
+                    "ref_audio_path": kwargs["ref_audio_path"],
+                    "emo_ref_audio_path": emo_ref_audio_path[0] if emo_ref_audio_path else '',
+                    "top_k": kwargs["top_k"],
+                    "top_p": kwargs["top_p"],
+                    "temperature": kwargs["temperature"],
+                    "repetition_penalty":kwargs["repetition_penalty"],
+                    "speed": kwargs["speed_factor"],
+                }
+                API_URL = f"http://127.0.0.1:{port}/tts"
+                # print(data_json)
+                response = requests.post(url=API_URL, json=data_json)
+                response.raise_for_status()
+                return response.content                
             else:
                 # cosy2
                 files = None
@@ -231,13 +274,13 @@ class GSV(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
+            self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "indextts2", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
             self.language2 = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Reference Audio'), open=True):
                 self.refer_audio = gr.Audio(label=i18n('Main Reference Audio'))
                 self.aux_ref_audio = gr.File(label=i18n('Auxiliary Reference Audios'), file_types=['.wav'], file_count="multiple", type="binary")
                 with gr.Row():
-                    self.refer_text = gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription | Pretrained Speaker (Cosy)'))
+                    self.refer_text = gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription'))
                     self.refer_lang = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[-2], label=i18n('Language of Main Reference Audio'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode):
                 self.sovits_path = gr.Dropdown(value="", label=f"Sovits {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
@@ -248,7 +291,6 @@ class GSV(TTSProjet):
                     self.scan_gsvmodel_btn.click(self.find_gsv_models, inputs=[], outputs=[self.sovits_path, self.gpt_path])
             with gr.Row():
                 self.api_port2 = gr.Number(label="API Port", value=9880, interactive=not self.server_mode, visible=not self.server_mode)
-            # self.choose_ar_tts.change(lambda x:9880 if x=="GPT_SoVITS" else 50000,inputs=[self.choose_ar_tts],outputs=[self.api_port2])
             with gr.Accordion(i18n('Advanced Parameters'), open=False):
                 self.batch_size = gr.Slider(minimum=1, maximum=200, step=1, label="batch_size", value=20, interactive=True)
                 self.batch_threshold = gr.Slider(minimum=0, maximum=1, step=0.01, label="batch_threshold", value=0.75, interactive=True)
@@ -312,6 +354,19 @@ class GSV(TTSProjet):
             self.gpt_path,
             self.sovits_path,
         ]
+        self.PARAMETERS = [
+            self.refer_text,
+            self.top_k,
+            self.top_p,
+            self.temperature,
+            self.repetition_penalty,
+        ]
+
+        # self.PARAMETERS_DICT = {
+        # }
+
+        self.choose_ar_tts.change(lambda x: self.PARAMETERS_DICT[x], inputs=self.choose_ar_tts, outputs=self.PARAMETERS)
+
         return GSV_ARGS
 
     def register_settings(self):

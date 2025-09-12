@@ -79,7 +79,7 @@ class WAV2SRT(Base_Component):  # Must inherit from base class.
                             self.merge_video_btn = gr.Button(value=i18n('Start Merging Video'), variant='primary')
                             self.merge_video_ref_btn = gr.Button(value='🔄️', variant='secondary')
                     self.wav2srt_output = gr.File(label=i18n('Output File'), file_count="multiple", interactive=False)
-                    self.wav2srt_output_status = gr.Textbox(label=i18n('Output Info'), value="", interactive=False)
+                    self.wav2srt_output_status = gr.TextArea(label=i18n('Output Info'), value="", interactive=False)
                     with gr.Row():
                         self.wav2srt_run = gr.Button(value=i18n('Start'), variant="primary", interactive=True)
                         self.wav2srt_terminate = gr.Button(value=i18n('Stop'), variant="secondary", interactive=True)

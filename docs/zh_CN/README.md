@@ -1,12 +1,12 @@
 # Srt-AI-Voice-Assistant
 ### 本项目可利用多个AI-TTS为你的字幕或文本文件配音。<br>并提供包括字幕识别、翻译在内的多种便捷的辅助功能。
 
-### [没有N卡？不会配置环境？点此部署一键启动镜像](https://www.compshare.cn/images/273f6315-2a1d-404d-930b-2e3ea23c163e?referral_code=IHlncJt4RcQDdxKLEZ6pAY&ytag=GPU_yy_sljxjh0616)
+### [没有N卡？不会配置环境？点此部署一键启动镜像](https://www.compshare.cn/images/M0sem5L49kmr?referral_code=IHlncJt4RcQDdxKLEZ6pAY&ytag=GPU_yy_sljxjh0915)
 如遇到bug或者有什么建议，可以在 [Issues](https://github.com/YYuX-1145/Srt-AI-Voice-Assistant/issues) 上反馈  
 
 ## 特性
 - ✅ 代码开源，界面友好，本地运行，可局域网访问
-- ✅ 支持多个TTS项目：BV2,GSV,CosyVoice2,AzureTTS，以及你可以自定义API!
+- ✅ 支持多个TTS项目：BV2,GSV,IndexTTS2,CosyVoice2,AzureTTS，以及你可以自定义API!
 - ✅ 保存个性化设置和预设
 - ✅ 批量模式
 - ✅ 字幕编辑

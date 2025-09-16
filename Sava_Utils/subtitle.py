@@ -30,12 +30,12 @@ def to_time(time_raw: float):
 
 
 class Base_subtitle:
-    def __init__(self, index: int, start_time, end_time, text: str, ntype: str, fps=30):
+    def __init__(self, index: str, start_time, end_time, text: str, ntype: str, fps=30):
         self.index: str = str(index)
         self.start_time_raw: str = start_time
         self.end_time_raw: str = end_time
-        self.start_time = 0.0
-        self.end_time = 0.0
+        self.start_time: float = 0.0  # unit: seconds
+        self.end_time: float = 0.0
         self.text: str = text.strip()
         # def normalize(self,ntype:str,fps=30):
         if ntype == "prcsv":
@@ -91,12 +91,12 @@ class Subtitle(Base_subtitle):
         super().__init__(index, start_time, end_time, text, ntype, fps)
         self.is_success = None
         self.is_delayed = False
-        self.real_st = 0
-        self.real_et = 0  # frames
+        self.real_st = 0  # frames
+        self.real_et = 0
         self.speaker = speaker
-        self.copy_count: list[int] = [0]
+        self._copy_count: list[int] = [0]
 
-    def apply_offset(self, offset=0):
+    def apply_offset(self, offset: float = 0.0):  # unit: seconds
         self.start_time += offset
         if self.start_time < 0:
             self.start_time = 0.0
@@ -118,15 +118,15 @@ class Subtitle(Base_subtitle):
 
     def copy(self):
         x = copy.copy(self)
-        self.copy_count.append(self.copy_count[-1] + 1)
-        x.index = f"{self.index.split('-')[0]}-{self.copy_count[-1]}"
+        self._copy_count.append(self._copy_count[-1] + 1)
+        x.index = f"{self.index.split('-')[0]}-{self._copy_count[-1]}"
         x.is_success = None
         return x
 
     def __del__(self):
         _ = self.index.split('-')
         _.append(0)
-        self.copy_count.remove(int(_[1]))
+        self._copy_count.remove(int(_[1]))
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}"

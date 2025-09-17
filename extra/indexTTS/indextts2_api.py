@@ -34,6 +34,8 @@ parser.add_argument("--model_dir", type=str, default="./checkpoints", help="Mode
 parser.add_argument("-a", "--bind_addr", type=str, default="127.0.0.1", help="default: 127.0.0.1")
 parser.add_argument("-p", "--port", type=int, default="9880", help="default: 9880")
 parser.add_argument("--fp16", action="store_true", default=False, help="Use FP16 for inference if available")
+parser.add_argument("--use_deepspeed", action="store_true", default=False, help="Use Deepspeed to accelerate if available")
+parser.add_argument("--cuda_kernel", action="store_true", default=False, help="Use cuda kernel for inference if available")
 args = parser.parse_args()
 
 # device = args.device
@@ -42,7 +44,13 @@ host = args.bind_addr
 argv = sys.argv
 
 
-tts_pipeline = IndexTTS2(model_dir=args.model_dir, cfg_path=os.path.join(args.model_dir, "config.yaml"), use_fp16=args.fp16)
+tts_pipeline = IndexTTS2(
+    model_dir=args.model_dir,
+    cfg_path=os.path.join(args.model_dir, "config.yaml"),
+    use_fp16=args.fp16,
+    use_deepspeed=args.use_deepspeed,
+    use_cuda_kernel=args.cuda_kernel,
+)
 
 APP = FastAPI()
 
@@ -91,12 +99,17 @@ async def tts_handle(req: dict):
     if check_res is not None:
         return check_res
     try:
+        emo_text=req["emo_text"]
+        use_emo_text=bool(req["emo_text"])
+        if emo_text=='auto':
+            emo_text = None
+            use_emo_text = True
         sampling_rate, wav_data = tts_pipeline.infer(
             spk_audio_prompt=req["ref_audio_path"],
             emo_audio_prompt=req["emo_ref_audio_path"] if req["emo_ref_audio_path"] else None,
             text=req["text"],
-            emo_text=req["emo_text"],
-            use_emo_text=bool(req["emo_text"]),
+            emo_text=emo_text,
+            use_emo_text=use_emo_text,
             emo_alpha=req["emo_alpha"],
             top_p=req["top_p"],
             top_k=req["top_k"],

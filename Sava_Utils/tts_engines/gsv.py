@@ -100,7 +100,7 @@ class GSV(TTSProjet):
                 gr.Slider(minimum=0, maximum=2, step=0.05, value=1.35),
             ],
             "indextts2": [
-                gr.Textbox(label=i18n('Emotion Text'), placeholder=i18n('Emotion Text'), interactive=True, visible=True),
+                gr.Textbox(label=i18n('Emotion Text'), placeholder=i18n('auto'), interactive=True, visible=True),
                 gr.Slider(value=30),
                 gr.Slider(value=0.8),
                 gr.Slider(value=0.8),

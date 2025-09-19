@@ -150,7 +150,7 @@ async def tts_get_endpoint(
         "text": text,
         "emo_text": emo_text,
         "ref_audio_path": ref_audio_path,
-        "emo_ref_audio_paths": emo_ref_audio_path,
+        "emo_ref_audio_path": emo_ref_audio_path,
         "top_k": top_k,
         "top_p": top_p,
         "temperature": temperature,

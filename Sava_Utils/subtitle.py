@@ -94,7 +94,7 @@ class Subtitle(Base_subtitle):
         self.real_st = 0  # frames
         self.real_et = 0
         self.speaker = speaker
-        self._copy_count: list[int] = [0]
+        self.copy_count: list[int] = [0]
 
     def apply_offset(self, offset: float = 0.0):  # unit: seconds
         self.start_time += offset
@@ -110,23 +110,23 @@ class Subtitle(Base_subtitle):
     def get_state(self):
         if self.is_success:
             if self.is_delayed:
-                return "delayed"
-            return "ok"
+                return "Delayed"
+            return "OK"
         elif self.is_success is None:
             return "None"
-        return "failed"
+        return "Failed"
 
     def copy(self):
         x = copy.copy(self)
-        self._copy_count.append(self._copy_count[-1] + 1)
-        x.index = f"{self.index.split('-')[0]}-{self._copy_count[-1]}"
+        self.copy_count.append(self.copy_count[-1] + 1)
+        x.index = f"{self.index.split('-')[0]}-{self.copy_count[-1]}"
         x.is_success = None
         return x
 
     def __del__(self):
         _ = self.index.split('-')
         _.append(0)
-        self._copy_count.remove(int(_[1]))
+        self.copy_count.remove(int(_[1]))
 
     def __str__(self) -> str:
         return f"id:{self.index},start:{self.start_time_raw}({self.start_time}),end:{self.end_time_raw}({self.end_time}),text:{self.text}.State: is_success:{self.is_success},is_delayed:{self.is_delayed}"

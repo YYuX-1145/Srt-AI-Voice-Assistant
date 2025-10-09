@@ -125,7 +125,7 @@ def load_workspace(dirname):
         if dirname in ["", [], None]:
             raise Exception(i18n('Must not be empty!'))
         with open(os.path.join(current_path, "SAVAdata", "workspaces", dirname, "st.pkl"), 'rb') as f:
-            subtitles:Subtitles = pickle.load(f)
+            subtitles: Subtitles = pickle.load(f)
             subtitles.dir = dirname
             if subtitles.proj not in BTN_VISIBLE_DICT:
                 gr.Warning(f"TTS Engine Not Found: {subtitles.proj}")
@@ -202,21 +202,28 @@ def copy_subtitle(page, subtitles: Subtitles, *args):
     return *[False for i in range(Sava_Utils.config.num_edit_rows)], *load_page(subtitles, target_index=page)
 
 
-def apply_start_end_time(page, subtitles: Subtitles, *args):
-    if subtitles is None or len(subtitles) == 0:
-        gr.Info(i18n('There is no subtitle in the current workspace'))
-        return show_page(page, Subtitles())
-    indexlist = [int(i) for i in args[: Sava_Utils.config.num_edit_rows]]
-    timelist = args[Sava_Utils.config.num_edit_rows :]
-    # for i in range(page-1,min(page+Sava_Utils.config.num_edit_rows-1,len(subtitles)-1)):
-    for i, title_index in enumerate(indexlist):
-        try:
-            if title_index != -1:
-                subtitles[title_index].reset_srt_time(timelist[i])
-        except ValueError as e:
-            gr.Info(str(e))
-    subtitles.dump()
-    return show_page(page, subtitles)
+def apply_start_end_time(edit_real_index, edit_start_end_time: str, subtitles: Subtitles):
+    edit_real_index = int(edit_real_index)
+    if edit_real_index == -1 or subtitles is None or len(subtitles) == 0:
+        return gr.update()
+    try:
+        subtitles[edit_real_index].reset_srt_time(edit_start_end_time)
+    except ValueError as e:
+        gr.Info(str(e))
+    # subtitles.dump()
+    return subtitles[edit_real_index].get_srt_time()
+
+
+def modify_text(edit_real_index, text: str, subtitles: Subtitles):
+    edit_real_index = int(edit_real_index)
+    if edit_real_index == -1 or subtitles is None or len(subtitles) == 0:
+        return gr.update()
+    sub = subtitles[edit_real_index]
+    if text!=sub.text:
+        sub.text = text
+        sub.is_success = None
+    # subtitles.dump()
+    return sub.text, sub.get_state()
 
 
 def apply_spk(speaker, page, subtitles: Subtitles, *args):
@@ -348,7 +355,10 @@ def find_and_replace(subtitles: Subtitles, find_text_expression: str, target_tex
     gr.Info(f"Found and replaced {len(replaced)} subtitle(s).\n{replaced}")
     return load_page(subtitles, page_index)
 
+
 SCRIPT_DIR = os.path.join(current_path, "SAVAdata", "scripts")
+
+
 def ref_script_choices():
     choices = os.listdir(SCRIPT_DIR) if os.path.isdir(SCRIPT_DIR) else []
     choices.insert(0, "")

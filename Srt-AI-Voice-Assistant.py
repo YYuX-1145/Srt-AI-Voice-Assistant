@@ -267,7 +267,7 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                             print(err)
             filepath = os.path.join(dir, f"{subtitle.index}.wav")
             with open(filepath, 'wb') as file:
-                file.write(audio)    
+                file.write(audio)
             subtitle.is_success = True
             return filepath
         else:
@@ -316,7 +316,7 @@ def remake(*args):
             gr.Info(i18n('You must specify the speakers while using multi-speaker dubbing!'))
             return fp, *load_single_line(subtitle_list, idx)
         proj = subtitle_list.proj
-    try:              
+    try:
         if proj not in TTS_Engine_dict:
             logger.error(f"{i18n('TTS Engine Not Found')}: {proj}")
             gr.Warning(f"{i18n('TTS Engine Not Found')}: {proj}")
@@ -325,7 +325,7 @@ def remake(*args):
         TTS_Engine_dict[proj].before_gen_action(*args, notify=False, force=False)
     except Exception as e:
         gr.Warning(f"Error: {str(e)}")
-        return fp, *load_single_line(subtitle_list, idx)    
+        return fp, *load_single_line(subtitle_list, idx)
     fp = save(args, proj=proj, dir=subtitle_list.get_abs_dir(), subtitle=subtitle_list[idx])
     if fp is not None:
         gr.Info(i18n('Audio re-generation was successful! Click the <Reassemble Audio> button.'))
@@ -453,12 +453,14 @@ if __name__ == "__main__":
                                     edit_real_index_list.append(edit_real_index)
                                     edit_rows.append(gr.Textbox(scale=1, visible=False, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
                                     edit_start_end_time = gr.Textbox(scale=3, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)
+                                    edit_start_end_time.blur(apply_start_end_time, inputs=[edit_real_index, edit_start_end_time, STATE], outputs=[edit_start_end_time])
                                     edit_start_end_time_list.append(edit_start_end_time)
                                     edit_rows.append(edit_start_end_time)  # start time and end time
-                                    s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # content
+                                    s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # text content
                                     edit_rows.append(s_txt)
                                     edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
                                     edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
+                                    s_txt.blur(modify_text, inputs=[edit_real_index, s_txt, STATE], outputs=[s_txt,edit_rows[-1]])
                                     with gr.Row(equal_height=True):
                                         __ = gr.Button(value="▶️", scale=1, min_width=50)
                                         __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
@@ -472,8 +474,8 @@ if __name__ == "__main__":
                             reverse_selection_btn.click(None, inputs=edit_check_list, outputs=edit_check_list, js="(...vals) => vals.map(v => !v)")
                             clear_selection_btn = gr.Button(value=i18n('Clear Selection'), interactive=True, min_width=50)
                             clear_selection_btn.click(None, inputs=[], outputs=edit_check_list, js=f"() => Array({Sava_Utils.config.num_edit_rows}).fill(false)")
-                            apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
-                            apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
+                            # apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
+                            # apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
                             copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)
                             copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
                             merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=50)
@@ -518,7 +520,7 @@ if __name__ == "__main__":
                 if Sava_Utils.config.enable_advanced_scripting and not Sava_Utils.config.server_mode:
                     with gr.Accordion(i18n('Advanced Scripting'), open=False):
                         with gr.Row(equal_height=True):
-                            script_content = gr.Code(language='python', value="for i in subtitles:print(i.text)",show_label=False, autocomplete=True, interactive=True)
+                            script_content = gr.Code(language='python', value="for i in subtitles:print(i.text)", show_label=False, autocomplete=True, interactive=True)
                             script_output = gr.TextArea(label="Output Message", show_label=True, value="", interactive=False, show_copy_button=True)
                         with gr.Row(equal_height=True):
                             select_script = gr.Dropdown(value="", show_label=False, choices=ref_script_choices().get("choices", [""]), scale=12, allow_custom_value=True, interactive=True)

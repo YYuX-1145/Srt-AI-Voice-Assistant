@@ -453,14 +453,14 @@ if __name__ == "__main__":
                                     edit_real_index_list.append(edit_real_index)
                                     edit_rows.append(gr.Textbox(scale=1, visible=False, show_label=False, interactive=False, value='-1', max_lines=1, min_width=40))  # index(raw)
                                     edit_start_end_time = gr.Textbox(scale=3, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)
-                                    edit_start_end_time.blur(apply_start_end_time, inputs=[edit_real_index, edit_start_end_time, STATE], outputs=[edit_start_end_time])
+                                    edit_start_end_time.blur(apply_start_end_time, inputs=[edit_real_index, edit_start_end_time, STATE], outputs=[edit_start_end_time], show_progress="hidden")
                                     edit_start_end_time_list.append(edit_start_end_time)
                                     edit_rows.append(edit_start_end_time)  # start time and end time
                                     s_txt = gr.Textbox(scale=6, visible=False, show_label=False, interactive=False, value="NO INFO", max_lines=1)  # text content
                                     edit_rows.append(s_txt)
                                     edit_rows.append(gr.Textbox(show_label=False, visible=False, interactive=False, min_width=100, value="None", scale=1, max_lines=1))  # speaker
                                     edit_rows.append(gr.Textbox(value="NO INFO", show_label=False, visible=False, interactive=False, min_width=100, scale=1, max_lines=1))  # is success or delayed?
-                                    s_txt.blur(modify_text, inputs=[edit_real_index, s_txt, STATE], outputs=[s_txt,edit_rows[-1]])
+                                    s_txt.blur(modify_text, inputs=[edit_real_index, s_txt, STATE], outputs=[s_txt, edit_rows[-1]], show_progress="hidden")
                                     with gr.Row(equal_height=True):
                                         __ = gr.Button(value="▶️", scale=1, min_width=50)
                                         __.click(play_audio, inputs=[edit_real_index, STATE], outputs=[audio_player])
@@ -477,11 +477,11 @@ if __name__ == "__main__":
                             # apply_se_btn = gr.Button(value=i18n('Apply Timestamp modifications'), interactive=True, min_width=50)
                             # apply_se_btn.click(apply_start_end_time, inputs=[page_slider, STATE, *edit_real_index_list, *edit_start_end_time_list], outputs=edit_rows)
                             copy_btn = gr.Button(value=i18n('Copy'), interactive=True, min_width=50)
-                            copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
+                            copy_btn.click(copy_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows], show_progress="hidden")
                             merge_btn = gr.Button(value=i18n('Merge'), interactive=True, min_width=50)
-                            merge_btn.click(merge_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
+                            merge_btn.click(merge_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows], show_progress="hidden")
                             delete_btn = gr.Button(value=i18n('Delete'), interactive=True, min_width=50)
-                            delete_btn.click(delete_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
+                            delete_btn.click(delete_subtitle, inputs=[page_slider, STATE, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows], show_progress="hidden")
 
                             TTS_UI_LOADER.get_all_regen_btn([INTERRUPT_EVENT, page_slider, workers, STATE], edit_rows, gen_multispeaker)
 
@@ -499,8 +499,8 @@ if __name__ == "__main__":
                                 enable_re = gr.Checkbox(label=i18n('Enable Regular Expression'), min_width=60, scale=1)
                                 find_next_btn = gr.Button(value=i18n('Find Next'), variant="secondary", min_width=50, scale=1)
                                 replace_all_btn = gr.Button(value=i18n('Replace All'), variant="primary", min_width=50, scale=1)
-                                find_next_btn.click(find_next, inputs=[STATE, find_text_expression, enable_re, page_slider, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows])
-                                replace_all_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, find_and_rep_exec, enable_re, page_slider], outputs=[page_slider, *edit_rows])
+                                find_next_btn.click(find_next, inputs=[STATE, find_text_expression, enable_re, page_slider, *edit_check_list, *edit_real_index_list], outputs=[*edit_check_list, page_slider, *edit_rows], show_progress="hidden")
+                                replace_all_btn.click(find_and_replace, inputs=[STATE, find_text_expression, target_text, find_and_rep_exec, enable_re, page_slider], outputs=[page_slider, *edit_rows], show_progress="hidden")
                 with gr.Accordion(label=i18n('Multi-speaker dubbing')):
                     with gr.Row(equal_height=True):
                         speaker_list = gr.Dropdown(label=i18n('Select/Create Speaker'), value="None", choices=refspklist(), allow_custom_value=not Sava_Utils.config.server_mode, scale=4)

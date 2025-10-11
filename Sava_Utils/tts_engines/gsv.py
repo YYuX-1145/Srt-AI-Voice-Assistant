@@ -1,7 +1,7 @@
 from . import TTSProjet
 import requests
 import gradio as gr
-from ..utils import positive_int,rc_open_window
+from ..utils import positive_int, rc_open_window
 from .. import logger
 from .. import i18n
 from ..settings import Shared_Option, Settings
@@ -12,6 +12,7 @@ import time
 import json
 import wave
 import shutil
+import re
 import io
 
 current_path = os.environ.get("current_path")
@@ -93,27 +94,46 @@ class GSV(TTSProjet):
         # due to the bug of gradio, must return the component instance instead of gr.update
         self.PARAMETERS_DICT = {
             "GPT_SoVITS": [
+                gr.update(visible=True),  # switch model column
+                gr.update(visible=False),  # emo_vec column
                 gr.Textbox(label=i18n('Transcription of Main Reference Audio'), placeholder=i18n('Transcription'), interactive=True, visible=True),
-                gr.Slider(value=5),
-                gr.Slider(value=1.0),
-                gr.Slider(value=1.0),
-                gr.Slider(minimum=0, maximum=2, step=0.05, value=1.35),
+                gr.Slider(minimum=1, maximum=200, step=1, label="batch_size", value=20, interactive=True, visible=True),  # batch_size
+                gr.Slider(minimum=0, maximum=1, step=0.01, label="batch_threshold", value=0.75, interactive=True, visible=True),  # batch_threshold
+                gr.Slider(value=5, visible=True),  # top_k
+                gr.Slider(value=1.0, visible=True),  # top_p
+                gr.Slider(value=1.0, visible=True),  # temperature
+                gr.Slider(minimum=0, maximum=2, step=0.05, value=1.35, visible=True),  # repetition_penalty
+                gr.Checkbox(label="Parallel_Infer", value=True, interactive=True, show_label=True, visible=True),  # parallel_infer
+                gr.Checkbox(label="Split_Bucket", value=True, interactive=True, show_label=True, visible=True),  # split_bucket
             ],
             "indextts2": [
+                gr.update(visible=False),
+                gr.update(visible=True),
                 gr.Textbox(label=i18n('Emotion Text'), placeholder=i18n('auto'), interactive=True, visible=True),
-                gr.Slider(value=30),
-                gr.Slider(value=0.8),
-                gr.Slider(value=0.8),
-                gr.Slider(value=10.0, minimum=0.1, maximum=20.0, step=0.1),
+                gr.update(visible=False),
+                gr.Slider(minimum=0, maximum=1, step=0.01, label="emo_alpha", value=0.7, interactive=True, visible=True),
+                gr.Slider(value=30, visible=True),
+                gr.Slider(value=0.8, visible=True),
+                gr.Slider(value=0.8, visible=True),
+                gr.Slider(value=10.0, minimum=0.1, maximum=20.0, step=0.1, visible=True),
+                gr.Checkbox(label="do_sample", value=True, interactive=False, show_label=True, visible=True),
+                gr.Checkbox(label="normalize_emo_vec", value=True, interactive=True, show_label=True, visible=True),
             ],
             "CosyVoice2": [
-                gr.update(placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
-                gr.update(),
-                gr.update(),
-                gr.update(),
-                gr.update(),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(label=i18n('Transcription of Main Reference Audio'), placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
             ],
         }
+        self.emo_vec_pattern = re.compile(r"^\d\.\d{2}(?:\s+\d\.\d{2}){7}$")
         super().__init__("AR-TTS", title="AR-TTS")
 
     def update_cfg(self, config: Settings):
@@ -140,6 +160,7 @@ class GSV(TTSProjet):
             rc_open_window(command=command, dir=self.gsv_dir)
             time.sleep(0.1)
             gr.Info(f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}")
+
         start_gsv_btn = gr.Button(value="GPT-SoVITS")
         start_gsv_btn.click(start_gsv)
 
@@ -169,23 +190,32 @@ class GSV(TTSProjet):
                 response.raise_for_status()
                 return response.content
             elif artts_name == "indextts2":
-                emo_ref_audio_path=kwargs["aux_ref_audio_paths"]
+                emo_ref_audio_path = kwargs["aux_ref_audio_paths"]
+                emo_text = kwargs["prompt_text"]
+                if self.emo_vec_pattern.fullmatch(emo_text):
+                    emo_vec = list(map(float, emo_text.split()))
+                    emo_text = ""
+                else:
+                    emo_vec = []
                 data_json = {
                     "text": kwargs["text"],
                     "emo_text": kwargs["prompt_text"],
                     "ref_audio_path": kwargs["ref_audio_path"],
                     "emo_ref_audio_path": emo_ref_audio_path[0] if emo_ref_audio_path else '',
+                    "emo_alpha": kwargs["batch_threshold"],
                     "top_k": kwargs["top_k"],
                     "top_p": kwargs["top_p"],
                     "temperature": kwargs["temperature"],
-                    "repetition_penalty":kwargs["repetition_penalty"],
+                    "repetition_penalty": kwargs["repetition_penalty"],
                     "speed": kwargs["speed_factor"],
+                    "normalize_emo_vec": kwargs["split_bucket"],
+                    "emo_vec": emo_vec,
                 }
                 API_URL = f"http://127.0.0.1:{port}/tts"
                 # print(data_json)
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
-                return response.content                
+                return response.content
             else:
                 # cosy2
                 files = None
@@ -282,13 +312,27 @@ class GSV(TTSProjet):
                 with gr.Row():
                     self.refer_text = gr.Textbox(label=i18n('Transcription of Main Reference Audio'), value="", placeholder=i18n('Transcription'))
                     self.refer_lang = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[-2], label=i18n('Language of Main Reference Audio'), interactive=True, allow_custom_value=False)
-            with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode):
+            with gr.Accordion(i18n('Switch Models'), open=False, visible=not self.server_mode) as switch_model_column:
                 self.sovits_path = gr.Dropdown(value="", label=f"Sovits {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
                 self.gpt_path = gr.Dropdown(value="", label=f"GPT {i18n('Model Path')}", interactive=True, allow_custom_value=True, choices=[''])
                 with gr.Row():
                     self.switch_gsvmodel_btn = gr.Button(value=i18n('Switch Models'), variant="primary", scale=4)
                     self.scan_gsvmodel_btn = gr.Button(value=i18n('🔄️'), variant="secondary", scale=1, min_width=60)
                     self.scan_gsvmodel_btn.click(self.find_gsv_models, inputs=[], outputs=[self.sovits_path, self.gpt_path])
+            with gr.Accordion("Emotion Vector", visible=False, open=False) as emotion_vector_group:
+                with gr.Group():
+                    with gr.Column():
+                        vec1 = gr.Slider(label="Happy", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec2 = gr.Slider(label="Angry", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec3 = gr.Slider(label="Sad", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec4 = gr.Slider(label="Afraid", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec5 = gr.Slider(label="Disgusted", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec6 = gr.Slider(label="Melancholic", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec7 = gr.Slider(label="Surprised", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                        vec8 = gr.Slider(label="Calm", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                    vec = [vec1, vec2, vec3, vec4, vec5, vec6, vec7, vec8]
+                    for v in vec:
+                        v.release(lambda *args: " ".join(f"{x:.2f}" for x in args), inputs=vec, outputs=[self.refer_text])
             with gr.Row():
                 self.api_port2 = gr.Number(label="API Port", value=9880, interactive=not self.server_mode, visible=not self.server_mode)
             with gr.Accordion(i18n('Advanced Parameters'), open=False):
@@ -355,11 +399,17 @@ class GSV(TTSProjet):
             self.sovits_path,
         ]
         self.PARAMETERS = [
+            switch_model_column,
+            emotion_vector_group,
             self.refer_text,
+            self.batch_size,
+            self.batch_threshold,
             self.top_k,
             self.top_p,
             self.temperature,
             self.repetition_penalty,
+            self.parallel_infer,
+            self.split_bucket,
         ]
 
         # self.PARAMETERS_DICT = {

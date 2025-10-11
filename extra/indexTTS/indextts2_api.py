@@ -63,7 +63,9 @@ class TTS_Request(BaseModel):
     top_k: int = 30
     top_p: float = 0.8
     temperature: float = 0.8
-    emo_alpha: float = 1.0
+    emo_alpha: float = 0.7
+    emo_vec: list = []
+    normalize_emo_vec: bool = False
     speed_factor: float = 1.0
     seed: int = -1
     parallel_infer: bool = True
@@ -99,11 +101,19 @@ async def tts_handle(req: dict):
     if check_res is not None:
         return check_res
     try:
-        emo_text=req["emo_text"]
-        use_emo_text=bool(req["emo_text"])
-        if emo_text=='auto':
+        emo_text = req["emo_text"]
+        use_emo_text = bool(req["emo_text"])
+        if emo_text == 'auto':
             emo_text = None
             use_emo_text = True
+        emo_vec = req["emo_vec"]
+        if len(emo_vec) == 0:
+            emo_vec = None
+        else:
+            use_emo_text = False
+            emo_text = None
+            if req["normalize_emo_vec"]:
+                emo_vec = tts_pipeline.normalize_emo_vec(emo_vec)
         sampling_rate, wav_data = tts_pipeline.infer(
             spk_audio_prompt=req["ref_audio_path"],
             emo_audio_prompt=req["emo_ref_audio_path"] if req["emo_ref_audio_path"] else None,
@@ -111,15 +121,16 @@ async def tts_handle(req: dict):
             emo_text=emo_text,
             use_emo_text=use_emo_text,
             emo_alpha=req["emo_alpha"],
+            emo_vector=emo_vec,
             top_p=req["top_p"],
             top_k=req["top_k"],
             temperature=req["temperature"],
             repetition_penalty=req["repetition_penalty"],
             output_path=None,
         )
-        return Response(pack_wav(BytesIO(),wav_data,sampling_rate).getvalue(), media_type=f"audio/wav")
+        return Response(pack_wav(BytesIO(), wav_data, sampling_rate).getvalue(), media_type=f"audio/wav")
     except Exception as e:
-        print("Error:",e)
+        print("Error:", e)
         traceback.print_exc()
         return JSONResponse(status_code=400, content={"message": "tts failed", "Exception": str(e)})
 
@@ -140,7 +151,8 @@ async def tts_get_endpoint(
     top_k: int = 30,
     top_p: float = 0.8,
     temperature: float = 0.8,
-    emo_alpha: float = 1.0,
+    emo_alpha: float = 0.7,
+    normalize_emo_vec: bool = False,
     speed_factor: float = 1.0,
     seed: int = -1,
     parallel_infer: bool = True,
@@ -155,6 +167,8 @@ async def tts_get_endpoint(
         "top_p": top_p,
         "temperature": temperature,
         "emo_alpha": float(emo_alpha),
+        "emo_vec": [],
+        "normalize_emo_vec": normalize_emo_vec,
         "speed_factor": float(speed_factor),
         "seed": seed,
         "parallel_infer": parallel_infer,

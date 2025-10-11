@@ -319,17 +319,20 @@ class GSV(TTSProjet):
                     self.switch_gsvmodel_btn = gr.Button(value=i18n('Switch Models'), variant="primary", scale=4)
                     self.scan_gsvmodel_btn = gr.Button(value=i18n('🔄️'), variant="secondary", scale=1, min_width=60)
                     self.scan_gsvmodel_btn.click(self.find_gsv_models, inputs=[], outputs=[self.sovits_path, self.gpt_path])
-            with gr.Accordion("Emotion Vector", visible=False, open=False) as emotion_vector_group:
+            with gr.Accordion(i18n("Emotion Vector"), visible=False, open=False) as emotion_vector_group:
                 with gr.Group():
-                    with gr.Column():
-                        vec1 = gr.Slider(label="Happy", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec2 = gr.Slider(label="Angry", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec3 = gr.Slider(label="Sad", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec4 = gr.Slider(label="Afraid", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec5 = gr.Slider(label="Disgusted", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec6 = gr.Slider(label="Melancholic", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec7 = gr.Slider(label="Surprised", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
-                        vec8 = gr.Slider(label="Calm", minimum=0.0, maximum=1.0, value=0.0, step=0.05)
+                    with gr.Row():
+                        vec1 = gr.Slider(label=i18n("Happy"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                        vec5 = gr.Slider(label=i18n("Disgusted"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                    with gr.Row():
+                        vec2 = gr.Slider(label=i18n("Angry"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)                        
+                        vec6 = gr.Slider(label=i18n("Melancholic"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                    with gr.Row():
+                        vec3 = gr.Slider(label=i18n("Sad"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                        vec7 = gr.Slider(label=i18n("Surprised"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                    with gr.Row():
+                        vec4 = gr.Slider(label=i18n("Afraid"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
+                        vec8 = gr.Slider(label=i18n("Calm"), minimum=0.0, maximum=1.0, value=0.0, step=0.05, min_width=100)
                     vec = [vec1, vec2, vec3, vec4, vec5, vec6, vec7, vec8]
                     for v in vec:
                         v.release(lambda *args: " ".join(f"{x:.2f}" for x in args), inputs=vec, outputs=[self.refer_text])

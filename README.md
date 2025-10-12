@@ -31,7 +31,7 @@ You can customize the behavior of the application with the following command-lin
 | `--lan`           | Enable LAN access         |
 | `--no_ext`        | Disable all extensions    |
 | `--share`         | Create a publicly shareable link for the gradio app.|
-| `--server_mode`   | Activate server mode     |
+| `--server_mode`   | Activate server mode, which disables all functions that might cause conflicts in multi-user environments.     |
 
 **And then prepare TTS engines yourself. For Windows users, you can download the packaged version or use the integrated package with GPT-SoVITS.**
 

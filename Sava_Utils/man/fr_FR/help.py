@@ -87,9 +87,6 @@ help = r"""
 
 #### 4. Modifier les horodatages
 * Éditez les heures de début/fin au format SRT.
-* Cliquez sur `Appliquer les horodatages` pour enregistrer les modifications.
-
-⚠️ Les modifications non appliquées seront perdues lors de la navigation.
 
 ## 2. Dépannage
 * Lorsque vous trouvez un problème :  

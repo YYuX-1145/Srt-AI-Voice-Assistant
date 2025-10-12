@@ -87,9 +87,6 @@ help = r"""
 
 #### 4. Modify Timestamps
 * Edit start/end times in SRT format.
-* Click `Apply Timestamps` to save changes.
-
-⚠️ Unapplied changes will be lost during navigation.
 
 ## 2. Troubleshooting
 * When reporting issues:  

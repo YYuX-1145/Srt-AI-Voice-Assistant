@@ -603,19 +603,19 @@ class GSV(TTSProjet):
         for item in S2_PRETRAINED:
             m = os.path.join(self.gsv_dir, item)
             if os.path.exists(m):
-                s2.append(m)
+                s2.append((item,m))
         for item in S2_MODEL_PATH:
             cd = os.path.join(self.gsv_dir, item)
             if os.path.isdir(cd):
-                s2 += [os.path.join(self.gsv_dir, item, i) for i in os.listdir(cd) if i.endswith(".pth")]
+                s2 += [(f"{item}/{i}",os.path.join(self.gsv_dir, item, i)) for i in os.listdir(cd) if i.endswith(".pth")]
         for item in S1_PRETRAINED:
             m = os.path.join(self.gsv_dir, item)
             if os.path.exists(m):
-                s1.append(m)
+                s1.append((item, m))
         for item in S1_MODEL_PATH:
             cd = os.path.join(self.gsv_dir, item)
             if os.path.isdir(cd):
-                s1 += [os.path.join(self.gsv_dir, item, i) for i in os.listdir(cd) if i.endswith(".ckpt")]
+                s1 += [(f"{item}/{i}", os.path.join(self.gsv_dir, item, i)) for i in os.listdir(cd) if i.endswith(".ckpt")]
         return gr.update(choices=s2), gr.update(choices=s1)
 
     def del_preset(self, name):

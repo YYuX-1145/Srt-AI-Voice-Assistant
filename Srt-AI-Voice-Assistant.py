@@ -231,6 +231,18 @@ def gen_multispeaker(interrupt_event: Sava_Utils.utils.Flag, *args, remake=False
     return *show_page(page, subtitles), sr_audio
 
 
+def build_atempo_filter(ratio: float) -> str:
+    filters = []
+    while ratio > 2.0:
+        filters.append("atempo=2.0")
+        ratio /= 2.0
+    while ratio < 0.5:
+        filters.append("atempo=0.5")
+        ratio /= 0.5
+    filters.append(f"atempo={ratio:.4f}")
+    return ",".join(filters)
+
+
 def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
     audio = TTS_Engine_dict[proj].save_action(*args, text=subtitle.text)
     if audio is not None:
@@ -256,7 +268,8 @@ def save(args, proj: str = None, dir: str = None, subtitle: Subtitle = None):
                     else:
                         ratio = None
                     if ratio is not None:
-                        cmd = f'ffmpeg -i pipe:0 -filter:a atempo={ratio:.2f} -f wav pipe:1'
+                        atempo_chain = build_atempo_filter(ratio)
+                        cmd = f'ffmpeg -i pipe:0 -filter:a "{atempo_chain}" -f wav pipe:1'
                         p = subprocess.Popen(cmd, cwd=current_path, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         logger.info(f"{i18n('Execute command')}: {cmd}")
                         result, err = p.communicate(audio)

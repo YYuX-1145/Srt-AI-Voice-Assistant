@@ -343,7 +343,7 @@ class Settings_Manager:
                 with gr.Column():
                     self.min_interval = gr.Slider(label=i18n('Minimum voice interval (seconds)'), minimum=0, maximum=3, value=Sava_Utils.config.min_interval, step=0.1)
             with gr.Accordion(i18n("Auto Speech Speed")):
-                self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=2, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
+                self.max_accelerate_ratio = gr.Slider(label=i18n('Maximum audio acceleration ratio (requires ffmpeg)'), minimum=1, maximum=10, value=Sava_Utils.config.max_accelerate_ratio, step=0.01)
                 self.max_slowdown_ratio = gr.Slider(label=i18n('Minimum audio slowdown ratio (requires ffmpeg)'), minimum=0.5, maximum=1, value=Sava_Utils.config.min_slowdown_ratio, step=0.01)
             with gr.Accordion(i18n('Loudness Normalization (requires ffmpeg)')):
                 self.loud_norm = gr.Checkbox(label=i18n('Enabled'), value=Sava_Utils.config.loud_norm, interactive=True)

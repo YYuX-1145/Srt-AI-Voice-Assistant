@@ -272,5 +272,4 @@ class GSV(TTSProjet):
 ```
 
 Following these conventions allows any extension configuration item to be seamlessly integrated into the global settings system, enabling **unified UI, centralized management, and immediate effect**.
-
 """

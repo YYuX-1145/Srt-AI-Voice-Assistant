@@ -171,6 +171,7 @@ i18n_dict = {
     "Downgrade GPT-SoVITS API version to v1": "使用api_v1而不是v2",
     "Python Interpreter Path for GPT-SoVITS": "设置GSV环境路径",
     "Root Path of GPT-SoVITS": "GSV项目根目录",
+    "Relative or absolute path of the API backend": "API后端相对或绝对路径",
     "Server Region": "服务区域",
     "API=KEY Warning: Key is stored in plaintext. DO NOT send the key to others or share your configuration file!": "密钥 警告:密钥明文保存，请勿将密钥发送给他人或者分享设置文件！",
     "Select required languages, separated by commas or spaces.": "筛选需要的语言，用逗号或空格隔开",

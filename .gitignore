@@ -4,6 +4,7 @@ __pycache__
 SAVAdata
 dist
 build
+hooks
 *.spec
 *.exe
 *.7z

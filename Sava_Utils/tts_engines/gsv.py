@@ -119,19 +119,6 @@ class GSV(TTSProjet):
                 gr.Checkbox(label="do_sample", value=True, interactive=False, show_label=True, visible=True),
                 gr.Checkbox(label="normalize_emo_vec", value=True, interactive=True, show_label=True, visible=True),
             ],
-            "CosyVoice2": [
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(label=i18n('Transcription of Main Reference Audio'), placeholder=i18n('Pretrained Speaker'), interactive=True, visible=True),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-            ],
         }
         self.emo_vec_pattern = re.compile(r"^\d\.\d{2}(?:\s+\d\.\d{2}){7}$")
         super().__init__("AR-TTS", title="AR-TTS")
@@ -140,6 +127,7 @@ class GSV(TTSProjet):
         self.gsv_fallback = config.query("gsv_fallback")
         self.gsv_dir = config.query("gsv_dir")
         self.gsv_pydir = config.query("gsv_pydir")
+        self.gsv_api_path = config.query("gsv_api_path")
         self.gsv_args = config.query("gsv_args")
         super().update_cfg(config)
 
@@ -148,15 +136,22 @@ class GSV(TTSProjet):
             if self.gsv_pydir == "":
                 gr.Warning(i18n('Please go to the settings page to specify the corresponding environment path and do not forget to save it!'))
                 return
-            if self.gsv_fallback:
-                apath = "api.py"
-                gr.Info(i18n('API downgraded to v1, functionality is limited.'))
-                logger.warning(i18n('API downgraded to v1, functionality is limited.'))
+            if self.gsv_api_path:
+                if not os.path.isabs(self.gsv_api_path):
+                    apath = os.path.join(self.gsv_dir, self.gsv_api_path)
+                else:
+                    apath = self.gsv_api_path
             else:
-                apath = "api_v2.py"
-            if not os.path.exists(os.path.join(self.gsv_dir, apath)):
-                raise gr.Error(f'File NOT Found: {os.path.join(self.gsv_dir, apath)}')
-            command = f'"{self.gsv_pydir}" "{os.path.join(self.gsv_dir,apath)}" {self.gsv_args}'
+                if self.gsv_fallback:
+                    rpath = "api.py"
+                    gr.Info(i18n('API downgraded to v1, functionality is limited.'))
+                    logger.warning(i18n('API downgraded to v1, functionality is limited.'))
+                else:
+                    rpath = "api_v2.py"
+                apath = os.path.join(self.gsv_dir, rpath)
+            if not os.path.exists(apath):
+                raise gr.Error(f'File NOT Found: {apath}')
+            command = f'"{self.gsv_pydir}" "{apath}" {self.gsv_args}'
             rc_open_window(command=command, dir=self.gsv_dir)
             time.sleep(0.1)
             gr.Info(f"GSV-API{i18n(' has been launched, please ensure the configuration is correct.')}")
@@ -216,31 +211,6 @@ class GSV(TTSProjet):
                 response = requests.post(url=API_URL, json=data_json)
                 response.raise_for_status()
                 return response.content
-            else:
-                # cosy2
-                files = None
-                if kwargs["ref_audio_path"] == '':
-                    print("使用预训练音色模式...")
-                    data_json = {
-                        "spk_id": kwargs["prompt_text"],
-                        "tts_text": kwargs["text"],
-                        "speed": kwargs["speed_factor"],
-                    }
-                    API_URL = f"http://127.0.0.1:{port}/inference_sft"
-                else:
-                    print("使用3s克隆模式...")
-                    data_json = {"prompt_text": kwargs["prompt_text"], "tts_text": kwargs["text"], "speed": kwargs["speed_factor"]}
-                    API_URL = f"http://127.0.0.1:{port}/inference_zero_shot"
-                    files = [('prompt_wav', ('prompt_wav', open(kwargs["ref_audio_path"], 'rb'), 'application/octet-stream'))]
-                response = requests.request("GET", url=API_URL, data=data_json, files=files, stream=False)
-                response.raise_for_status()
-                wav_buffer = io.BytesIO()
-                with wave.open(wav_buffer, "wb") as wav_file:
-                    wav_file.setnchannels(1)
-                    wav_file.setsampwidth(2)
-                    wav_file.setframerate(24000)  # cosy api does not provide sr.
-                    wav_file.writeframes(response.content)
-                return wav_buffer.getvalue()
         except Exception as e:
             err = f"{i18n('An error has occurred. Please check if the API is running correctly. Details')}: {e}  "
             try:
@@ -304,7 +274,7 @@ class GSV(TTSProjet):
 
     def _UI(self):
         with gr.Column():
-            self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "indextts2", "CosyVoice2"], value="GPT_SoVITS", interactive=not self.server_mode)
+            self.choose_ar_tts = gr.Radio(label=i18n('Select TTS Project'), choices=["GPT_SoVITS", "indextts2"], value="GPT_SoVITS", interactive=not self.server_mode)
             self.language2 = gr.Dropdown(choices=list(dict_language.items()), value=list(dict_language.values())[5], label=i18n('Inference text language'), interactive=True, allow_custom_value=False)
             with gr.Accordion(i18n('Reference Audio'), open=True):
                 self.refer_audio = gr.Audio(label=i18n('Main Reference Audio'))
@@ -472,6 +442,16 @@ class GSV(TTSProjet):
                 gr.Textbox,
                 lambda v, c: v.strip('"'),
                 label=i18n('Root Path of GPT-SoVITS'),
+                interactive=True,
+            )
+        )
+        options.append(
+            Shared_Option(
+                "gsv_api_path",
+                "",
+                gr.Textbox,
+                lambda v, c: v.strip('"'),
+                label=i18n('Relative or absolute path of the API backend'),
                 interactive=True,
             )
         )
